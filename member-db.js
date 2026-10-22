@@ -2,6 +2,7 @@
 // 가입 · 로그인 정보가 서버(Firebase)에 저장되어 어느 기기에서 가입해도 한곳에 모인다.
 // 비밀번호는 Firebase가 관리하고, 사이트는 비밀번호를 저장하지 않는다.
 // 로그인한 회원 정보는 다른 화면(장바구니 · 마이페이지)이 바로 읽을 수 있도록 localStorage에 사본만 남긴다.
+// 로그인한 회원의 장바구니 · 주문 · 상담 내역도 계정(userdata/{uid})에 저장해 어느 브라우저에서든 이어서 보인다.
 (()=>{
 if(window.SangsangDB)return;
 const CONFIG={
@@ -40,7 +41,10 @@ const ready=(async()=>{
    // 관리자가 삭제한 계정은 회원 정보가 없으므로 로그인 상태를 풀어 준다
    if(!profile){await auth.signOut();return}
   }
-  cache(profile);resolveFirst();
+  cache(profile);
+  // 장바구니 · 주문 · 상담 내역을 계정에서 불러오고(로그인), 이 브라우저에서 지운다(로그아웃)
+  if(profile)await pull(user.uid,profile.id).catch(()=>{});else clearLocal();
+  resolveFirst();
   window.dispatchEvent(new Event('sangsang-member-change'));
  });
 })();
@@ -53,6 +57,97 @@ function cache(p){
  write(SESSION,{id,name:p.name});write(MEMBERS,{[id]:rest});
 }
 const errCode=e=>String(e?.code||'').replace('auth/','');
+
+// ---------------- 장바구니 · 주문 · 상담 내역을 회원 계정(Firestore)에 저장 ----------------
+// 화면 스크립트(cart.js · cart-page.js · mypage.js · inquiry.js)는 지금처럼 localStorage를 읽고 쓴다.
+// 여기서 로그인한 회원의 값만 서버 userdata/{uid}와 맞춰, 다른 브라우저 · 기기에서 다시 로그인해도 그대로 보인다.
+//  userdata/{uid}              cart: { items, nextVideoId }
+//  userdata/{uid}/orders/{no}  주문 1건
+//  userdata/{uid}/consults/{key} 결제 전 상담 신청 1건
+const DRAFT='sangsang-studio-draft-v1',ORDERS='sangsang-orders',INQUIRIES='sangsang-studio-inquiries-v1';
+const OWNER='sangsang-data-owner',PENDING='sangsang-cart-pending';
+const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
+let syncUid=null,syncId=null,applying=false,cartTimer=0;
+const userDoc=()=>db.doc(`userdata/${syncUid}`);
+const consultKey=r=>String(r.savedAt||'').replace(/[^0-9A-Za-z]/g,'');
+const myOrders=id=>(read(ORDERS,[])||[]).filter(o=>o&&o.memberId===id&&o.no);
+const myConsults=id=>(read(INQUIRIES,[])||[]).filter(r=>r&&r.memberId===id&&r.savedAt);
+const cartOf=()=>{const p=read(DRAFT,{})?.personal||{};return {items:Array.isArray(p.items)?p.items:[],nextVideoId:Number(p.nextVideoId)||0}};
+// Firestore는 undefined 값을 받지 않으므로 JSON으로 한 번 정리해서 보낸다
+const plain=v=>JSON.parse(JSON.stringify(v));
+// 우리가 고친 값은 다시 서버로 보내지 않도록 applying 동안 쓴다
+function apply(k,v){applying=true;try{localStorage.setItem(k,JSON.stringify(v))}catch{}finally{applying=false}}
+function notify(){window.dispatchEvent(new Event('sangsang-cart-change'));window.dispatchEvent(new Event('sangsang-data-sync'))}
+
+function pushCart(){
+ clearTimeout(cartTimer);
+ cartTimer=setTimeout(()=>{if(!syncUid)return;userDoc().set({cart:plain(cartOf()),updatedAt:new Date().toISOString()},{merge:true}).then(()=>{try{localStorage.removeItem(PENDING)}catch{}}).catch(()=>{})},400);
+}
+async function pushMissing(){
+ if(!syncUid)return;
+ const ref=userDoc(),done=[];
+ for(const o of myOrders(syncId))if(!known.orders.has(o.no)){known.orders.add(o.no);done.push(ref.collection('orders').doc(o.no).set(plain(o)))}
+ for(const r of myConsults(syncId)){const k=consultKey(r);if(!known.consults.has(k)){known.consults.add(k);done.push(ref.collection('consults').doc(k).set(plain(r)))}}
+ await Promise.all(done).catch(()=>{});
+}
+const known={orders:new Set(),consults:new Set()};
+
+// 로그인했을 때: 계정에 저장된 값을 이 브라우저로 불러온다
+async function pull(uid,id){
+ const ref=db.doc(`userdata/${uid}`);
+ const [snap,os,cs]=await Promise.all([ref.get(),ref.collection('orders').get(),ref.collection('consults').get()]);
+ const owner=read(OWNER,null),local=cartOf(),server=snap.data()?.cart;
+ let items=Array.isArray(server?.items)?server.items:[],next=Number(server?.nextVideoId)||0,changed=false;
+ if(owner?.id===id&&read(PENDING,false)){
+  // 같은 회원이 저장되기 전에 고친 장바구니는 이 브라우저 값을 쓴다
+  items=local.items;next=local.nextVideoId;changed=true;
+ }else if(owner?.id!==id&&local.items.length){
+  // 로그인 전에 비회원으로 담은 영상은 회원 장바구니에 더한다
+  items=items.map(i=>({...i}));next=Math.max(next,...items.map(i=>Number(i.id)||0));
+  for(const it of local.items){
+   const same=items.find(x=>x.quality===it.quality&&x.duration===it.duration);
+   if(same)same.quantity=(Number(same.quantity)||1)+(Number(it.quantity)||1);else items.push({...it,id:String(++next)});
+  }
+  changed=true;
+ }
+ const d=read(DRAFT,{})||{};d.personal={...(d.personal||{}),items,nextVideoId:next};apply(DRAFT,d);
+ const serverOrders=os.docs.map(x=>x.data()),serverConsults=cs.docs.map(x=>x.data());
+ known.orders=new Set(serverOrders.map(o=>o.no));known.consults=new Set(cs.docs.map(x=>x.id));
+ // 이 브라우저에만 있던 내 주문 · 상담(예전 시연 기록)은 계정으로 올리고, 계정에 있는 것은 이 브라우저에 채운다
+ const otherOrders=(read(ORDERS,[])||[]).filter(o=>o?.memberId!==id),localMine=myOrders(id);
+ apply(ORDERS,[...otherOrders,...serverOrders,...localMine.filter(o=>!known.orders.has(o.no))]);
+ const otherConsults=(read(INQUIRIES,[])||[]).filter(r=>r?.memberId!==id),localConsults=myConsults(id);
+ apply(INQUIRIES,[...otherConsults,...serverConsults,...localConsults.filter(r=>!known.consults.has(consultKey(r)))]);
+ apply(OWNER,{id,uid});
+ syncUid=uid;syncId=id;
+ if(changed)pushCart();
+ await pushMissing();
+ notify();
+}
+// 로그아웃했을 때: 그 회원의 장바구니 · 주문 · 상담을 이 브라우저에서 지운다 (계정에는 남아 있음)
+function clearLocal(){
+ syncUid=null;syncId=null;clearTimeout(cartTimer);
+ const owner=read(OWNER,null);if(!owner)return;
+ const d=read(DRAFT,{})||{};if(d.personal){d.personal={...d.personal,items:[],nextVideoId:0};apply(DRAFT,d)}
+ apply(ORDERS,(read(ORDERS,[])||[]).filter(o=>o?.memberId!==owner.id));
+ apply(INQUIRIES,(read(INQUIRIES,[])||[]).filter(r=>r?.memberId!==owner.id));
+ try{localStorage.removeItem(OWNER);localStorage.removeItem(PENDING)}catch{}
+ notify();
+}
+// 화면 스크립트가 localStorage에 쓸 때마다 로그인한 회원의 값이면 서버에도 저장한다
+const nativeSet=Storage.prototype.setItem;
+Storage.prototype.setItem=function(k,v){
+ nativeSet.call(this,k,v);
+ if(applying||this!==window.localStorage)return;
+ // 저장이 끝나기 전에 페이지를 옮겨도 다음 페이지에서 이어 보내도록 '보내는 중' 표시를 남긴다
+ if(k===DRAFT&&read(OWNER,null)){nativeSet.call(this,PENDING,'true');if(syncUid)pushCart()}
+ else if((k===ORDERS||k===INQUIRIES)&&syncUid)pushMissing();
+};
+async function removeUserData(uid){
+ const ref=db.doc(`userdata/${uid}`);
+ const [os,cs]=await Promise.all([ref.collection('orders').get(),ref.collection('consults').get()]);
+ const b=db.batch();os.docs.concat(cs.docs).forEach(x=>b.delete(x.ref));b.delete(ref);await b.commit();
+}
 
 window.SangsangDB={
  ready,
@@ -91,10 +186,15 @@ window.SangsangDB={
   if(idOf(auth.currentUser)===id){const s=await db.doc(`members/${id}`).get();cache({id,...s.data()});window.dispatchEvent(new Event('sangsang-member-change'))}
  },
  // 관리자 삭제: 회원 정보와 아이디를 지운다 (로그인 계정은 남지만 회원 정보가 없어 로그인되지 않음)
- async deleteMember(id){await ready;const b=db.batch();b.delete(db.doc(`members/${id}`));b.delete(db.doc(`usernames/${id}`));await b.commit()},
- // 본인 탈퇴: 회원 정보 · 아이디 · 로그인 계정을 모두 지운다
+ async deleteMember(id){
+  await ready;
+  const uid=(await db.doc(`members/${id}`).get()).data()?.uid;
+  if(uid)await removeUserData(uid).catch(()=>{});
+  const b=db.batch();b.delete(db.doc(`members/${id}`));b.delete(db.doc(`usernames/${id}`));await b.commit()},
+ // 본인 탈퇴: 회원 정보 · 아이디 · 장바구니 · 주문 · 상담 내역 · 로그인 계정을 모두 지운다
  async leave(){
   await ready;const u=auth.currentUser,id=idOf(u);if(!u||!id)return;
+  await removeUserData(u.uid);
   const b=db.batch();b.delete(db.doc(`members/${id}`));b.delete(db.doc(`usernames/${id}`));await b.commit();
   await u.delete().catch(()=>auth.signOut());
  },

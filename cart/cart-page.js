@@ -1,6 +1,6 @@
 // 장바구니 페이지(cart/index.html) + 주문/결제 페이지(cart/checkout.html)
 // 장바구니 내용은 CONTACT 개인 견적의 '담기' 목록(sangsang-studio-draft-v1)과 같은 값이다.
-// 서버가 없으므로 주문은 이 브라우저(localStorage)에만 시연용으로 저장되고 실제 결제는 일어나지 않는다.
+// 장바구니 · 주문은 localStorage에 쓰고, 로그인한 회원이면 member-db.js가 Firebase 계정에도 저장한다. 실제 결제는 일어나지 않는다.
 (()=>{
 const C=window.INQUIRY_CONFIG;
 const DRAFT='sangsang-studio-draft-v1',ORDERS='sangsang-orders',PICK='sangsang-checkout-ids';
@@ -198,4 +198,6 @@ if(view==='cart'){
  window.addEventListener('sangsang-member-change',()=>{if(shop.querySelector('#checkout'))renderCheckout()});
 }
 window.addEventListener('storage',e=>{if(e.key===DRAFT&&view==='cart')renderCart()});
+// 로그인하면 회원 계정에 저장된 장바구니 · 주문을 불러와(member-db.js) 다시 그린다
+window.addEventListener('sangsang-data-sync',()=>{if(view==='cart'){selected=null;renderCart()}else if(shop.querySelector('#checkout'))renderCheckout()});
 })();

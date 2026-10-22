@@ -1,5 +1,5 @@
 // 마이페이지: 주문 내역 · 상담 신청 내역 · 회원 정보 · 로그아웃 · 회원 탈퇴
-// 모두 이 브라우저(localStorage)에 시연용으로 저장된 값을 읽는다.
+// 로그인하면 member-db.js가 회원 계정(Firebase)에 저장된 주문 · 상담 · 장바구니를 이 브라우저로 불러오고, 여기서는 그 값을 읽는다.
 (()=>{
 const C=window.INQUIRY_CONFIG;
 const MEMBERS='sangsang-members-v2',SESSION='sangsang-member-session',ORDERS='sangsang-orders',INQUIRIES='sangsang-studio-inquiries-v1',DRAFT='sangsang-studio-draft-v1';
@@ -47,7 +47,7 @@ ${consults.length?consults.map(r=>`<article class="my-card">
 <div class="addr"><dt>주소</dt><dd>${a.addr1?`(${esc(a.zip)}) ${esc(a.addr1)}${a.addr2?'<br>'+esc(a.addr2):''}`:'등록된 주소 없음'}</dd></div><div><dt>가입일</dt><dd>${date(m.joined).slice(0,10)}</dd></div></dl>
 <button type="button" class="sub-cta" data-logout>로그아웃</button>
 <button type="button" class="my-leave" data-leave>회원 탈퇴</button>
-<p class="note">가입 정보와 주문은 이 브라우저에만 시연용으로 저장되어 있습니다.</p>
+<p class="note">회원 정보 · 장바구니 · 주문 내역은 회원 계정에 저장되어 다른 기기에서 로그인해도 그대로 보입니다. 결제는 시연용입니다.</p>
 </aside></div>`;
 }
 
@@ -58,7 +58,7 @@ shop.addEventListener('click',e=>{
  if(b.hasAttribute('data-logout')){window.SangsangDB?.logout().catch(()=>{});return}
  if(b.hasAttribute('data-leave')){
   const m=me();if(!m)return;
-  if(!confirm(`${m.name}님, 회원 탈퇴할까요?\n회원 정보가 삭제되고, 이 브라우저의 주문 · 상담 내역도 지워집니다.`))return;
+  if(!confirm(`${m.name}님, 회원 탈퇴할까요?\n회원 정보와 장바구니 · 주문 · 상담 내역이 모두 삭제됩니다.`))return;
   b.disabled=true;
   window.SangsangDB.leave().then(()=>{
    write(ORDERS,(read(ORDERS,[])||[]).filter(o=>o.memberId!==m.id));
@@ -82,6 +82,7 @@ shop.addEventListener('click',e=>{
 });
 // 헤더의 MEMBER 창에서 로그인 · 로그아웃하면 바로 다시 그린다
 window.addEventListener('sangsang-member-change',()=>render());
+window.addEventListener('sangsang-data-sync',()=>render());
 window.addEventListener('storage',e=>{if([MEMBERS,SESSION,ORDERS,INQUIRIES,DRAFT].includes(e.key))render()});
 render();
 })();

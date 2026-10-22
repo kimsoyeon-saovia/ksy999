@@ -431,5 +431,7 @@ document.addEventListener('click',saveDrafts);
 root.addEventListener('input',saveDrafts);
 root.addEventListener('change',saveDrafts);
 render();prepareHero();prepareBodyMotion();sizeProductButtons();updateAudience();updateTopButton();
+// 로그인 · 로그아웃으로 회원 장바구니(member-db.js)를 불러오면 견적서 목록만 다시 그린다
+window.addEventListener('sangsang-data-sync',()=>{try{const p=JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY)||'{}')?.personal||{};states.personal.items=Array.isArray(p.items)?p.items:[];states.personal.nextVideoId=Number(p.nextVideoId)||0;renderQuote();}catch{}});
 })();
 
