@@ -1,0 +1,7 @@
+
+#about>.benefits{max-width:1520px;width:100%}
+.paired-screen .benefit{grid-template-columns:minmax(0,1fr) minmax(0,650px);gap:40px}
+.paired-screen .benefit:nth-child(2){grid-template-columns:minmax(0,650px) minmax(0,1fr)}
+.paired-screen .media-slot{width:100%;min-width:0}
+@media(max-width:1200px) and (min-width:751px){.paired-screen .benefit{grid-template-columns:minmax(0,1fr) minmax(0,55%);gap:28px}.paired-screen .benefit:nth-child(2){grid-template-columns:minmax(0,55%) minmax(0,1fr)}}
+@media(max-width:750px){.paired-screen .benefit,.paired-screen .benefit:nth-child(2){grid-template-columns:minmax(0,1fr);gap:24px}.paired-screen .benefit:nth-child(2) .benefit-copy,.paired-screen .benefit:nth-child(2) .media-slot{grid-column:auto;grid-row:auto}}

@@ -1,0 +1,7 @@
+/* Shared reset for every page (main, ai-video, portfolio, contact).
+   Load it first, before any page stylesheet; page files keep only their own design rules.
+   Header offsets (scroll-padding-top) live in site-header.css. */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}

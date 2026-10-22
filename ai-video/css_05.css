@@ -1,0 +1,18 @@
+
+.hero{text-align:center}.hero-screen>.intro-content>h1,.hero-screen>.intro-content>h2,.hero-screen>.intro-content>.sub{text-align:center}
+.hero-screen>.intro-content>div[style]>.btn{border:0;cursor:pointer;transition:background-color .22s,color .22s,box-shadow .22s}
+.hero-screen>.intro-content>div[style]>.btn:hover,.hero-screen>.intro-content>div[style]>.btn:focus-visible{background:#000;color:#fff}
+#consult{transition:background-color .22s,color .22s}#consult:hover,#consult:focus-visible{background:#1647ff;color:#fff}
+.btn:focus-visible{outline:3px solid #1647ff;outline-offset:5px}
+@keyframes title-rise{from{opacity:0;transform:translateY(65px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spring-pop{0%{opacity:0;transform:translateY(24px) scale(.72)}55%{opacity:1;transform:translateY(-6px) scale(1.055)}75%{transform:translateY(2px) scale(.98)}100%{opacity:1;transform:translateY(0) scale(1)}}
+.hero-screen>.intro-content>h1{animation:title-rise 1s cubic-bezier(.16,1,.3,1) both}
+#portfolio-open{animation:spring-pop .85s .3s both}#inquiry-open{animation:spring-pop .85s .3s both}
+.motion-ready .scroll-reveal{opacity:0;transform:translateY(46px);transition:opacity .85s ease,transform .85s cubic-bezier(.16,1,.3,1);transition-delay:var(--reveal-delay,0ms)}
+.motion-ready .scroll-reveal.is-visible{opacity:1;transform:translateY(0)}
+.visual,.media-preview{overflow:hidden}.parallax-image{transform:translate3d(0,var(--parallax-y,0px),0) scale(1.14);will-change:transform}
+#portfolio-dialog{width:min(1000px,90vw);max-width:1000px;max-height:85vh;overflow:auto;padding:40px;background:#fff;color:#000;border:0}
+#portfolio-dialog::backdrop{background:#000a;backdrop-filter:blur(5px)}
+.portfolio-gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:28px}.portfolio-gallery figure{margin:0}.portfolio-gallery img,.portfolio-gallery video{width:100%;aspect-ratio:1.5;object-fit:cover}.portfolio-gallery figcaption{padding-top:12px;font-size:18px}
+@media(max-width:750px){.portfolio-gallery{grid-template-columns:1fr}#portfolio-dialog{padding:28px}.hero-screen>.intro-content>h2{font-size:clamp(30px,7vw,50px)}.hero-screen>.intro-content>div[style]>.btn{font-size:clamp(24px,7vw,40px)}}
+@media(prefers-reduced-motion:reduce){.hero-screen>.intro-content>h1,#portfolio-open,#inquiry-open{animation:none}.motion-ready .scroll-reveal{opacity:1;transform:none;transition:none}.parallax-image{transform:none;will-change:auto}}

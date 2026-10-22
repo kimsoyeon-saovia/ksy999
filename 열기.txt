@@ -1,0 +1,1 @@
+index.html을 열어 주세요. main, ai-video, portfolio, contact 폴더와 공통 파일을 함께 보관해 주세요.

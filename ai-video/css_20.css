@@ -1,0 +1,6 @@
+
+.hero-screen,#about>.section-head{height:calc(100svh - var(--header-height));min-height:0;box-sizing:border-box;scroll-snap-align:start;scroll-snap-stop:always;scroll-margin-top:0;padding:24px 0;gap:0;overflow:visible}
+.intro-content{width:100%;flex-shrink:0;display:flex;flex-direction:column;align-items:center;text-align:center;transform:scale(var(--intro-scale,1));transform-origin:center}
+#about>.section-head>.intro-content{gap:32px}
+.hero-screen>.intro-content>div[style]{justify-content:center}
+@media(max-width:750px){.hero-screen,#about>.section-head{height:auto;min-height:calc(100svh - var(--header-height));padding:40px 0}.intro-content{transform:none}#about>.section-head h2.split-heading{font-size:clamp(36px,8.5vw,64px)}}

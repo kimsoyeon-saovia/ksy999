@@ -1,0 +1,5 @@
+
+#process .steps{grid-template-columns:repeat(4,minmax(0,1fr));gap:64px}
+#process .step{position:relative;min-width:0}
+#process .step:not(:last-child)::after{content:"→";position:absolute;right:-48px;top:50%;transform:translateY(-50%);width:32px;text-align:center;color:#000;font-family:SeoulAlrimLocal,sans-serif;font-size:36px;font-weight:500;line-height:1;pointer-events:none}
+@media(max-width:750px){#process .steps{grid-template-columns:minmax(0,1fr);gap:60px}#process .step:not(:last-child)::after{top:auto;bottom:-44px;right:calc(50% - 16px);transform:rotate(90deg);font-size:30px}}

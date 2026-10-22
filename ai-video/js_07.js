@@ -1,0 +1,2 @@
+
+document.querySelectorAll('.media-slot').forEach(slot=>{const preview=slot.querySelector('.media-preview'),input=slot.querySelector('[data-media-input]');preview.setAttribute('role','button');preview.tabIndex=0;preview.setAttribute('aria-label','클릭하여 이미지 교체');preview.title='클릭하여 이미지 교체';preview.addEventListener('click',()=>input.click());preview.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();input.click()}})});

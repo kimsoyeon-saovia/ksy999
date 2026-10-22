@@ -1,0 +1,3 @@
+
+.hero-screen .intro-content>.showreel-actions{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:64px;width:100%;margin:40px auto 0;position:relative;z-index:1}
+@media(max-width:750px){.hero-screen .intro-content>.showreel-actions{gap:20px;margin-top:28px}}

@@ -1,0 +1,5 @@
+
+@keyframes contact-blink-in{0%{opacity:0}20%{opacity:1}38%{opacity:.2}58%{opacity:1}76%{opacity:.35}100%{opacity:1}}
+.motion-ready .contact.scroll-reveal{transform:none;transition:none}
+.motion-ready .contact.scroll-reveal.is-visible{transform:none;animation:contact-blink-in 1.8s ease-in-out both}
+@media(prefers-reduced-motion:reduce){.motion-ready .contact.scroll-reveal,.motion-ready .contact.scroll-reveal.is-visible{animation:none;opacity:1;transform:none}}

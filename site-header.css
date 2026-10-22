@@ -1,0 +1,334 @@
+@font-face{font-family:UnifiedSeoul;src:url('ai-video/fonts/asset_01.otf') format('opentype');font-weight:400;font-display:swap}@font-face{font-family:UnifiedSeoul;src:url('ai-video/fonts/asset_03.otf') format('opentype');font-weight:800;font-display:swap}body>header{display:none!important}body{padding-top:81px!important}html{scroll-padding-top:100px!important}@media(max-width:520px){body{padding-top:104px!important}html{scroll-padding-top:120px!important}}@font-face{font-family:SeoulAlrimLocal;src:url('ai-video/fonts/asset_01.otf');font-weight:400 500;font-display:swap}
+@font-face{font-family:SeoulAlrimHeavy;src:url('ai-video/fonts/asset_04.otf');font-weight:900;font-display:swap}
+body[data-site-page="portfolio"] .hero-copy h1{font-family:SeoulAlrimHeavy,sans-serif;font-size:clamp(30px,8.773125vw,165.333333px);font-weight:900;line-height:1.16;letter-spacing:-.035em;margin:0 0 56px}
+body[data-site-page="portfolio"] .hero-copy p{font-family:SeoulAlrimLocal,sans-serif;font-size:52px;font-weight:500;line-height:1.45;letter-spacing:normal;margin:0 0 36px;color:#222}
+body[data-site-page="portfolio"] .cta{box-sizing:border-box;width:315.2px;height:64px;max-width:100%;font-family:UnifiedSeoul,Arial,sans-serif;font-size:32px;font-weight:400;line-height:1;background:#e0ff4f;color:#000;padding:0 20px;display:flex;align-items:center;justify-content:center;gap:0;border:0;border-radius:0;margin:0;flex:none;white-space:nowrap;letter-spacing:normal}
+body[data-site-page="portfolio"] .cta span{font-size:inherit}
+body[data-site-page="portfolio"] .cta:hover,body[data-site-page="portfolio"] .cta:focus-visible{background:#d5f440;color:#000;transform:none;box-shadow:none}
+body[data-site-page="contact"] #inquiry::before{display:none;content:none}
+@media(max-width:1200px){body[data-site-page="portfolio"] .hero-copy h1{font-size:clamp(30px,8.61vw,124pt)}body[data-site-page="portfolio"] .hero-copy p{font-size:clamp(22px,2.71vw,52px)}}
+@media(max-width:750px){body[data-site-page="portfolio"] .cta{font-size:24px}}
+@media(max-width:650px){body[data-site-page="portfolio"] .hero-copy h1{font-size:clamp(32px,8.6vw,56px);margin-bottom:32px}body[data-site-page="portfolio"] .hero-copy p{font-size:clamp(17px,4.2vw,26px)}}
+/* Shared first-title position and footer across all four pages. */
+:root{--hero-title-top:clamp(110px,20.7svh,207px)}
+body[data-site-page="main"] .hero.text-hero,body[data-site-page="portfolio"] main>.hero,body[data-site-page="ai-video"] .hero-screen,body[data-site-page="contact"] #inquiry>.hero{box-sizing:border-box;justify-content:flex-start!important;padding-top:var(--hero-title-top)!important;min-height:calc(100svh - 81px);height:auto}
+body[data-site-page="main"] .hero.text-hero{align-items:flex-start!important}
+body[data-site-page="portfolio"] .hero-copy,body[data-site-page="main"] .hero-content{margin-top:0!important}
+body[data-site-page="ai-video"] .hero-screen>.intro-content{position:relative;transform:none!important}
+body[data-site-page="ai-video"] .hero-screen>.intro-content>h2{position:absolute;bottom:100%;left:0;width:100%;margin:0 0 24px!important}
+body[data-site-page="contact"] #inquiry>.hero h1{margin-top:0!important}
+body[data-site-page="portfolio"] .hero-copy h1{white-space:normal}
+body[data-site-page="portfolio"] .cta{gap:0;text-align:center}
+footer:not(.unified-footer){display:none!important}
+body footer.unified-footer{box-sizing:border-box;display:flex!important;justify-content:space-between;align-items:flex-start;gap:24px;max-width:none;width:92%;margin:0 auto;padding:24px 2% 32px;border:0;border-top:1px solid #ddd;background:#fff;color:#606b89;font-family:UnifiedSeoul,Arial,sans-serif;font-size:12px;line-height:1.9;text-align:left}
+body .unified-footer>div:not(:first-child){color:#444957}
+body .unified-footer .footer-links{display:flex;gap:22px;flex-wrap:wrap}
+body .unified-footer a{color:inherit;text-decoration:none;font-size:inherit}
+body .unified-footer p{display:block;margin:12px 0;font-size:inherit;color:inherit}
+@media(max-width:750px){body footer.unified-footer{flex-direction:column;padding:20px 0 28px}}
+/* Main Heavy title and reachable footer. */
+body[data-site-page="main"] .text-hero .hero-content h1{font-family:SeoulAlrimHeavy,sans-serif;font-weight:900}
+html:has(body[data-site-page="main"]){scroll-snap-type:y proximity!important}
+body[data-site-page="main"] .unified-footer{scroll-snap-align:end;scroll-snap-stop:normal}
+/* Full first-screen video, with copy revealed after playback. */
+body[data-site-page="portfolio"] main>.hero{position:relative;width:100vw;margin-left:calc(50% - 50vw);height:calc(100svh - 81px);min-height:0;padding:var(--hero-title-top) 24px 32px!important;overflow:hidden;background:#000;isolation:isolate}
+.portfolio-banner-video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;z-index:-2}
+body[data-site-page="portfolio"] main>.hero::after{content:"";position:absolute;inset:0;background:#0005;z-index:-1;opacity:0;transition:opacity .65s}
+body[data-site-page="portfolio"] main>.hero .hero-copy{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .8s}
+body[data-site-page="portfolio"] main>.hero.banner-ended .hero-copy{opacity:1;visibility:visible;pointer-events:auto}
+body[data-site-page="portfolio"] main>.hero.banner-ended::after{opacity:1}
+body[data-site-page="portfolio"] .hero-copy h1,body[data-site-page="portfolio"] .hero-copy p{color:#fff}
+@media(max-width:520px){body[data-site-page="portfolio"] main>.hero{height:calc(100svh - 104px)}}
+/* Shared interaction refinements. */
+.top,.back-to-top{display:none!important}
+.unified-top{position:fixed;right:24px;bottom:24px;z-index:900;width:50px;height:50px;padding:0;background:#000!important;color:#fff!important;border:0;border-radius:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:700 18px/1 Arial,sans-serif;opacity:1;transform:translateY(0);transition:opacity .25s ease,transform .25s ease}
+.unified-top{gap:7px}
+.unified-top small{font:700 10px/1 Arial,sans-serif;letter-spacing:.08em}
+/* Flat chevron: wide and short so it reads separately from the TOP label. */
+.unified-top .top-chevron{display:block;width:12px;height:12px;margin-top:6px;border-top:2px solid currentColor;border-left:2px solid currentColor;transform:scaleY(.6) rotate(45deg)}
+.partner p br.m-br{display:none}
+.unified-top.is-hidden{opacity:0;transform:translateY(12px);pointer-events:none}
+.unified-top:focus-visible{outline:3px solid #1754ff;outline-offset:3px}
+@media(max-width:520px){.unified-top{right:16px;bottom:16px}}
+body:not([data-site-page="contact"]) :is(button,a.btn,a.cta,a.hero-box,a.outline-link,a.section-action):not(.filter):not(.video-trigger):not([data-filter]):not([disabled]):hover,body:not([data-site-page="contact"]) :is(button,a.btn,a.cta,a.hero-box,a.outline-link,a.section-action):not(.filter):not(.video-trigger):not([data-filter]):not([disabled]):focus-visible{background:#000!important;color:#fff!important;border-color:#000!important}
+body:not([data-site-page="contact"]) :is(button,a.btn,a.cta,a.hero-box):not(.filter):not(.video-trigger):not([data-filter]):hover :is(span,strong,small){color:inherit!important}
+body[data-site-page="main"] .text-hero h1,body[data-site-page="ai-video"] .hero-screen h1,body[data-site-page="portfolio"] .hero-copy h1,body[data-site-page="contact"] #inquiry>.hero h1,body[data-site-page="main"] .service h3{letter-spacing:10px!important}
+body[data-site-page="main"] .brand-item>span:not(.naver-logo-display){font-family:'Malgun Gothic',Arial,sans-serif!important;font-weight:600;line-height:1.6;height:auto;min-height:26px;overflow:visible;letter-spacing:0;white-space:nowrap;text-rendering:optimizeLegibility}
+.contact-action-row{display:flex;align-items:center;justify-content:flex-start;gap:18px;flex-wrap:wrap}.social-link{display:flex;width:64px;height:64px;flex:none}.social-link img{display:block;width:100%;height:100%;object-fit:contain;border-radius:8px}
+.intro-type-pending{clip-path:inset(0 100% 0 0);opacity:0}.intro-type-pending.intro-type-playing{animation:intro-left-reveal 2.4s ease-out forwards!important}@keyframes intro-left-reveal{from{clip-path:inset(0 100% 0 0);opacity:0}to{clip-path:inset(0);opacity:1}}
+body[data-site-page="portfolio"] .portfolio-banner-video{object-fit:cover}
+body[data-site-page="portfolio"] main>.hero .hero-copy{height:100%}
+body[data-site-page="portfolio"] .hero-copy .cta{position:absolute;left:50%;top:78%;transform:translate(-50%,-50%)!important;width:394px;height:80px;font-family:SeoulAlrimLocal,sans-serif;font-size:40px;font-weight:500;padding:0 20px;max-width:calc(100% - 40px)}
+body[data-site-page="portfolio"] #portfolio{scroll-margin-top:171px}
+body[data-site-page="portfolio"] .filters{gap:32px}
+@media(max-width:750px){body[data-site-page="portfolio"] .hero-copy .cta{height:64px;font-size:26px}body[data-site-page="portfolio"] .filters{gap:20px}.contact-action-row{gap:12px}.social-link{width:56px;height:56px}}
+@media(max-width:520px){body[data-site-page="portfolio"] #portfolio{scroll-margin-top:202px}}
+/* Medium navigation, scene spacing, and page-specific hover behavior. */
+body[data-site-page="main"] .service h3{letter-spacing:5px!important}
+body[data-site-page="ai-video"] .intro-type-pending{opacity:1!important}
+/* Left-to-right reveal with a soft, feathered "\" edge tilted 15° from vertical (75deg gradient). */
+.intro-type-pending{clip-path:none!important;-webkit-mask-image:linear-gradient(75deg,#000 0 38%,transparent 62%);mask-image:linear-gradient(75deg,#000 0 38%,transparent 62%);-webkit-mask-size:300% 100%;mask-size:300% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:100% 0;mask-position:100% 0}
+.intro-type-pending.intro-type-playing{animation:intro-soft-reveal 2.6s cubic-bezier(.4,0,.2,1) forwards!important}
+@keyframes intro-soft-reveal{from{-webkit-mask-position:100% 0;mask-position:100% 0;opacity:1}to{-webkit-mask-position:0 0;mask-position:0 0;opacity:1}}
+body[data-site-page="portfolio"] .hero-copy p{transform:translateY(24px)}
+body[data-site-page="portfolio"] #portfolio{scroll-margin-top:181px}
+body[data-site-page="contact"] .audience a:hover,body[data-site-page="contact"] .audience a:focus-visible{background:#000!important;color:#fff!important;border-color:#000!important}
+body[data-site-page="contact"] .audience a:hover span{color:inherit!important}
+body[data-site-page="main"] .partner,body[data-site-page="main"] .statement-panel{box-sizing:border-box;min-height:calc(100svh - 81px)}
+body[data-site-page="ai-video"] #about>.section-head{box-sizing:border-box;min-height:calc(100svh - 81px);height:auto}
+@media(max-width:520px){body[data-site-page="portfolio"] #portfolio{scroll-margin-top:212px}body[data-site-page="main"] .partner,body[data-site-page="main"] .statement-panel,body[data-site-page="ai-video"] #about>.section-head{min-height:calc(100svh - 104px)}}
+body[data-site-page="main"] .hero.text-hero{padding-bottom:48px}
+body[data-site-page="main"] .motion-toggle{font-family:'Segoe UI','Malgun Gothic',sans-serif!important;font-size:16px!important;font-weight:500!important;line-height:1.6!important;letter-spacing:0!important;text-shadow:none!important;filter:none!important;transform:none!important;-webkit-text-stroke:0!important;text-rendering:auto!important}
+html:has(body[data-site-page="ai-video"]){scroll-snap-type:none!important;scroll-padding-top:81px!important}
+body[data-site-page="ai-video"] #about>.section-head{background:#fff;position:relative;z-index:1;scroll-margin-top:0}
+body[data-site-page="portfolio"] #portfolio{padding-top:100px;scroll-margin-top:81px;background:#fff}
+body[data-site-page="portfolio"] .video-trigger,body[data-site-page="portfolio"] .video-trigger:hover,body[data-site-page="portfolio"] .video-trigger:focus-visible{background:transparent!important;border:0!important}
+.original-panel::after{content:'';position:absolute;inset:0;box-shadow:inset 5px 0 #fff,inset -5px 0 #fff;pointer-events:none;z-index:4}
+.detail-section-label{position:absolute;left:1%;width:98%;display:flex;align-items:center;justify-content:center;gap:22px;background:#fff;color:#111;font-family:'Segoe UI','Malgun Gothic',sans-serif;font-weight:700;line-height:1;z-index:3;transform:translateY(-50%);pointer-events:none}
+.detail-section-label::before,.detail-section-label::after{content:'';width:40px;height:1px;background:#8fe600;flex:none}
+@media(max-width:520px){html:has(body[data-site-page="ai-video"]){scroll-padding-top:104px!important}body[data-site-page="portfolio"] #portfolio{scroll-margin-top:104px}}
+.original-panel::after{box-shadow:inset 10px 0 #fff,inset -10px 0 #fff,inset 0 -3px #fff}
+body[data-site-page="ai-video"] .hero-background{height:100%!important;max-height:100%!important}
+.clean-player.embedded-play .center-play{display:none}
+body[data-site-page="main"] .statement-content h2{font-size:clamp(45.6px,6vw,91.2px)}
+body[data-site-page="main"] .statement-follow{font-size:clamp(27.6px,2.88vw,40.8px)}
+body[data-site-page="main"] .contact-details small{font-family:'Segoe UI','Malgun Gothic',sans-serif!important;font-weight:400;font-size:16px;line-height:1.65;letter-spacing:0;text-shadow:none;-webkit-text-stroke:0;color:#555}
+body[data-site-page="main"] .brand-item:has(img[src$="brand-toss.avif"]){background:#fff;border-radius:0}
+body[data-site-page="main"] .brand-item:has(img[src$="brand-toss.avif"]) span{color:#111}
+body[data-site-page="main"] .brand-item img[src*="brand-"]{width:145px;height:56px;object-fit:contain;filter:none;mix-blend-mode:normal}
+body[data-site-page="portfolio"] main{max-width:none}
+body[data-site-page="portfolio"] #portfolio{width:calc(100vw - 32px);max-width:none;position:relative;left:50%;transform:translateX(-50%)}
+body[data-site-page="portfolio"] .our-works-heading{font-family:SeoulAlrimHeavy,sans-serif;font-size:124pt;font-weight:900;line-height:1.1;letter-spacing:10px;text-align:center;margin:0 0 70px}
+body[data-site-page="portfolio"] .filters{display:flex;justify-content:space-between;width:min(1120px,85%);margin:0 auto 70px;gap:40px}
+body[data-site-page="portfolio"] .portfolio-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:28px 36px}
+@media(max-width:900px){body[data-site-page="portfolio"] .our-works-heading{font-size:clamp(44px,10vw,124pt);letter-spacing:6px;margin-bottom:44px}body[data-site-page="portfolio"] .filters{width:95%;gap:12px;margin-bottom:40px}body[data-site-page="portfolio"] .portfolio-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}}
+@media(max-width:520px){body[data-site-page="portfolio"] .portfolio-grid{grid-template-columns:1fr}body[data-site-page="portfolio"] .filters{gap:4px}body[data-site-page="portfolio"] .filter{padding:10px 12px}}
+body[data-site-page="main"] .brand-item img[src$="brand-toss.avif"],body[data-site-page="main"] .brand-item img[src$="brand-hyundai.jfif"]{width:174px;height:72px;max-width:100%;object-fit:contain}
+body[data-site-page="main"] .statement-content{max-width:none}
+body[data-site-page="main"] .statement-content h2{font-size:clamp(63.84px,8.4vw,127.68px)}
+body[data-site-page="main"] .statement-follow{font-size:clamp(38.64px,4.032vw,57.12px)}
+body[data-site-page="main"] .brand-item:has(img[src$="brand-toss.avif"]),body[data-site-page="main"] .brand-item:has(img[src$="brand-hyundai.jfif"]){width:225px}
+body[data-site-page="main"] .brand-item img[src$="brand-toss.avif"],body[data-site-page="main"] .brand-item img[src$="brand-hyundai.jfif"]{width:210px;height:90px;max-width:100%;object-fit:contain}
+/* The screenshot controls remain outside the visible poster viewport. */
+.clean-player.daejeon-poster>img{position:absolute;left:0;top:0;width:100%;height:117.22%;object-fit:fill}
+
+body[data-site-page="main"] .brand-logo-window{position:relative;display:block;width:190px;height:90px;overflow:hidden;flex:none;background:white}
+body[data-site-page="main"] .brand-logo-window img.official-brand{position:absolute;max-width:none;width:300px;height:auto;left:50%;top:50%;transform:translate(-50%,-50%);image-rendering:auto;filter:none}
+body[data-site-page="main"] .logo-musinsa{width:190px;height:72px;background:#000}
+body[data-site-page="main"] .logo-musinsa img.official-brand{width:300px}
+body[data-site-page="main"] .logo-hyundai{width:210px;height:110px}
+body[data-site-page="main"] .logo-hyundai img.official-brand{width:270px}
+body[data-site-page="main"] .brand-item:has(.brand-logo-window){width:225px;background:white}
+/* Restore continuous page scrolling without scene snapping. */
+html:has(body[data-site-page]){scroll-snap-type:none!important;scroll-padding-top:0!important}
+body[data-site-page] .snap-panel,body[data-site-page] .paired-screen,body[data-site-page] .hero-screen,body[data-site-page] .unified-footer{scroll-snap-align:none!important;scroll-snap-stop:normal!important}
+body[data-site-page="main"] .logo-hyundai img.official-brand{width:189px}
+
+/* Keep the requested scene boundaries directly under the fixed header. */
+body[data-site-page="main"] .partner,body[data-site-page="main"] .statement-panel{min-height:calc(100svh - 81px);margin-block:0}
+body[data-site-page="ai-video"] #about>.section-head{min-height:calc(100svh - 81px);margin-block:0;background:#fff}
+body[data-site-page="ai-video"] .hero-screen{overflow:hidden}
+@media(max-width:520px){body[data-site-page="main"] .partner,body[data-site-page="main"] .statement-panel,body[data-site-page="ai-video"] #about>.section-head{min-height:calc(100svh - 104px)}}
+
+/* Contact: breathing room above the event banner when the page jumps to the estimate content. */
+body[data-site-page="contact"] #inquiry>.page-grid{padding-top:28px}
+.contact-social-actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap;max-width:100%}
+.contact-social-actions .contact-social-icon{display:block;flex:0 0 64px;width:64px;height:64px;line-height:0;border:0;padding:0;background:transparent;border-radius:15px;overflow:hidden}
+.contact-social-actions .contact-social-icon img{display:block;width:64px;height:64px;object-fit:cover}
+.contact-social-actions .contact-social-icon:focus-visible{outline:3px solid #1859ff;outline-offset:4px}
+@media(max-width:520px){.contact-social-actions{gap:12px}.contact-social-actions .section-action{flex-basis:100%}}
+
+/* Portfolio cards on touch: the tapped card shows exactly the desktop hover reveal (.card-active).
+   Touch browsers keep :hover/:focus stuck after a tap, so those states are neutralised there. */
+body[data-site-page="portfolio"] .portfolio-card.card-active img{transform:scale(1.055);filter:brightness(.42)}
+body[data-site-page="portfolio"] .portfolio-card.card-active .card-shade{background:rgba(0,0,0,.2)}
+body[data-site-page="portfolio"] .portfolio-card.card-active .card-copy{transform:translateY(0);opacity:1}
+@media (hover:none){
+ body[data-site-page="portfolio"] .portfolio-card:not(.card-active):is(:hover,:focus-visible,:focus) img{transform:none;filter:none}
+ body[data-site-page="portfolio"] .portfolio-card:not(.card-active):is(:hover,:focus-visible,:focus) .card-shade{background:linear-gradient(0deg,rgba(0,0,0,.83) 0%,rgba(0,0,0,.12) 65%,rgba(0,0,0,.04) 100%)}
+ body[data-site-page="portfolio"] .portfolio-card:not(.card-active):is(:hover,:focus-visible,:focus) .card-copy{transform:translateY(8px);opacity:0}
+}
+
+/* AI VIDEO: the lime buttons fade in only after every line of the hero copy has appeared. */
+body[data-site-page="ai-video"] .showreel-actions{transition:opacity .6s ease,transform .6s cubic-bezier(.22,1,.36,1)}
+body[data-site-page="ai-video"] .showreel-actions:not(.actions-shown){opacity:0;transform:translateY(12px);pointer-events:none;animation:actions-failsafe .6s ease 12s forwards}
+@keyframes actions-failsafe{to{opacity:1;transform:none;pointer-events:auto}}
+
+/* Phone layout only: desktop rules above stay untouched. */
+@media(max-width:750px){
+ /* Shared first screen on all four pages: same title position, title size, subtitle and button row.
+    Title size fits the longest title ("당신의 상상이 영상이 되다") on one line. */
+ /* Seoul Medium (TTF) renders with broken strokes at small sizes on some screens,
+    so phone body copy and buttons use Seoul Alrim (OTF) like the AI VIDEO page. */
+ :root{--m-text:SeoulAlrimLocal,'Malgun Gothic',sans-serif;--hero-title-top:28svh;--m-hero-title:calc((100vw - 40px)/11.6);--m-hero-button:48px}
+ body[data-site-page="main"] .hero-content p,body[data-site-page="main"] .hero-box,body[data-site-page="main"] .partner p,body[data-site-page="main"] .statement-follow,body[data-site-page="main"] .service p,body[data-site-page="main"] .section-action,body[data-site-page="main"] .portfolio-card h3,body[data-site-page="main"] .detail-block p,body[data-site-page="portfolio"] .hero-copy p,body[data-site-page="portfolio"] .hero-copy .cta,body[data-site-page="contact"] #inquiry>.hero>p,body[data-site-page="contact"] .audience a{font-family:var(--m-text)!important;font-weight:500!important;font-synthesis:none}
+
+ /* Shared first screen on all four pages: title at the same height, same title size,
+    then subtitle and a 48px button row. Title size fits the longest title on one line. */
+ body[data-site-page="main"] .text-hero .hero-content h1,body[data-site-page="ai-video"] .hero-screen>.intro-content>h1,body[data-site-page="portfolio"] .hero-copy h1,body[data-site-page="contact"] #inquiry>.hero h1{font-family:SeoulAlrimHeavy,sans-serif!important;font-weight:900!important;font-size:var(--m-hero-title)!important;line-height:1.2!important;letter-spacing:.02em!important;white-space:nowrap!important;text-align:center;margin:0 0 14px!important}
+ body[data-site-page="main"] .text-hero .hero-content p,body[data-site-page="ai-video"] .hero-screen>.intro-content>.sub,body[data-site-page="portfolio"] .hero-copy p,body[data-site-page="contact"] #inquiry>.hero>p{font-size:15px!important;line-height:1.75!important;letter-spacing:-.01em!important;text-align:center;word-break:keep-all;margin:0 auto 32px!important;max-width:300px;transform:none!important}
+ body[data-site-page="main"] .text-hero .hero-line{display:block}
+ body[data-site-page="ai-video"] .hero-screen>.intro-content>h2{font-size:14px!important;letter-spacing:.12em!important;margin-bottom:10px!important}
+ body[data-site-page="main"] .hero-actions,body[data-site-page="ai-video"] .showreel-actions,body[data-site-page="contact"] .audience{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;justify-content:center;gap:8px!important;width:100%;max-width:320px;margin:0 auto!important}
+ body[data-site-page="main"] .hero-actions>*,body[data-site-page="ai-video"] .showreel-actions>.btn,body[data-site-page="contact"] .audience>a{flex:1 1 0!important;width:auto!important;min-width:0!important;height:var(--m-hero-button)!important;min-height:0!important;padding:0 8px!important;margin:0!important;font-size:15px!important;line-height:1!important;letter-spacing:-.01em!important;white-space:nowrap!important;display:flex!important;align-items:center;justify-content:center;gap:6px}
+ body[data-site-page="contact"] .audience a span{font-size:inherit!important}
+ body[data-site-page="portfolio"] main>.hero .hero-copy{height:auto!important}
+ body[data-site-page="portfolio"] .hero-copy .cta{position:static!important;transform:none!important;width:100%!important;max-width:320px!important;height:var(--m-hero-button)!important;font-size:15px!important;margin:0 auto!important}
+ body[data-site-page="main"] .service h3{letter-spacing:.01em!important}
+
+ /* Main */
+ /* Main: the first three scenes move one screen at a time; from "생각? 상상?" down the page scrolls
+    freely (site-enhancements.js adds .main-snap-off once the services start). */
+ html:has(body[data-site-page="main"]){scroll-snap-type:y mandatory!important;scroll-padding-top:104px!important}
+ html.main-snap-off:has(body[data-site-page="main"]){scroll-snap-type:none!important}
+ body[data-site-page="main"] main>.snap-panel{scroll-snap-align:none!important;scroll-snap-stop:normal!important}
+ body[data-site-page="main"] main>.text-hero,body[data-site-page="main"] main>.partner,body[data-site-page="main"] main>.statement-panel{scroll-snap-align:start!important;scroll-snap-stop:always!important}
+ body[data-site-page="main"] main>.services-ab{scroll-snap-align:start!important}
+ body[data-site-page="main"] .unified-footer{scroll-snap-align:none!important}
+ /* Each snapped scene is exactly one visible screen (below the 104px header), so centred copy is truly centred. */
+ body[data-site-page="main"] main>.text-hero,body[data-site-page="main"] main>.statement-panel{height:calc(100svh - 104px)!important;min-height:0!important;box-sizing:border-box}
+ body[data-site-page="main"] main>.partner{height:auto!important;min-height:calc(100svh - 104px)!important;box-sizing:border-box}
+ /* Portfolio scene: heading 35% closer to the header (74px → 48px). */
+ body[data-site-page="main"] .portfolio-section{justify-content:flex-start!important;padding-top:48px!important}
+
+ /* First banner on all four pages: the browser itself does not pan vertically from a touch that starts on
+    the banner (applied by the compositor, so it holds even while images and videos are still loading);
+    scene-scroll.js turns that swipe into the jump to the next content. */
+ body[data-site-page="main"] main>.text-hero,body[data-site-page="ai-video"] main .hero,body[data-site-page="portfolio"] main>.hero,body[data-site-page="contact"] #inquiry>.hero{touch-action:pan-x pinch-zoom}
+ /* Footer on phones: no link row, half the height. */
+ body footer.unified-footer{gap:6px!important;padding:12px 0 14px!important;font-size:10.5px!important;line-height:1.55!important}
+ body .unified-footer .footer-links{display:none!important}
+ body .unified-footer p{margin:0!important}
+
+ /* Partner scene starts 30% closer to the header (114px → 80px) instead of being centred. */
+ body[data-site-page="main"] .partner{justify-content:flex-start!important;padding-top:80px!important}
+ body[data-site-page="main"] .partner h2{white-space:normal;font-size:clamp(28px,8.6vw,36px);line-height:1.42;word-break:keep-all;padding:0 8px;margin-bottom:56px}
+ /* Shrink the whole partner marquee evenly so logos keep their proportions. */
+ body[data-site-page="main"] .brand-marquees{zoom:.45;margin-bottom:8px}
+ body[data-site-page="main"] .brand-marquees .brand-item>span:not(.naver-logo-display){font-size:26px!important}
+ body[data-site-page="main"] .partner p{font-size:19px;line-height:1.7;word-break:keep-all;padding:0 12px}
+ body[data-site-page="main"] .partner p br.a-br,body[data-site-page="main"] .partner p br.m-br{display:inline}
+ body[data-site-page="main"] .motion-toggle{font-size:12px!important;color:#777!important;border:0!important;padding:14px 8px!important;margin-bottom:20px!important;background:none!important;text-decoration:none;text-underline-offset:3px}
+ body[data-site-page="main"] .motion-toggle:hover,body[data-site-page="main"] .motion-toggle:focus-visible{text-decoration:underline;color:#080808!important;background:none!important}
+ /* Statement: 15% smaller than the first phone pass. */
+ body[data-site-page="main"] .statement-content h2{font-size:clamp(37px,11vw,48px)}
+ body[data-site-page="main"] .statement-follow{font-size:19px}
+ /* Portfolio and contact headings: small Alrim eyebrow sitting tight on the title. */
+ body[data-site-page="main"] .stacked-section-head{gap:0!important}
+ body[data-site-page="main"] .section-eyebrow{font-family:var(--m-text)!important;font-weight:500!important;font-size:13px!important;letter-spacing:.14em!important;line-height:1.3!important;margin:0 0 6px!important}
+ body[data-site-page="main"] .portfolio-section .section-head h2{word-break:keep-all;margin:0 0 20px!important;line-height:1.25!important}
+ body[data-site-page="main"] .section-action{width:auto!important;max-width:none;height:44px!important;padding:0 20px!important;font-size:15px!important;align-self:flex-start!important;margin:0!important}
+ body[data-site-page="main"] .portfolio-section .card-meta{font-size:10px!important;margin:12px 0 6px!important}
+ body[data-site-page="main"] .portfolio-section .card-meta span{font-size:10px!important}
+ body[data-site-page="main"] .portfolio-section .portfolio-card h3{font-size:15px!important;line-height:1.4!important}
+ body[data-site-page="main"] .contact-section .contact-brand-heading{font-size:24px!important;line-height:1.35!important;word-break:keep-all;margin:0 0 20px!important;gap:6px 10px!important}
+ body[data-site-page="main"] .contact-wordmark>strong{font-size:40px!important}
+ body[data-site-page="main"] .contact-wordmark>span{font-size:16px!important;letter-spacing:4px!important}
+ body[data-site-page="main"] .contact-social-actions{gap:10px!important}
+ body[data-site-page="main"] .contact-social-actions .section-action{flex-basis:auto!important}
+ body[data-site-page="main"] .contact-social-actions .contact-social-icon,body[data-site-page="main"] .contact-social-actions .contact-social-icon img{width:44px!important;height:44px!important;flex-basis:44px!important;border-radius:11px}
+ body[data-site-page="main"] .contact-details{gap:0!important;margin-top:28px}
+ body[data-site-page="main"] .contact-section .detail-block{padding:16px 0!important}
+ body[data-site-page="main"] .contact-section .detail-label{font-family:var(--m-text)!important;font-weight:500!important;font-size:13px!important;letter-spacing:.14em!important}
+ body[data-site-page="main"] .contact-section .detail-block h3{font-size:19px!important;margin:6px 0 8px!important}
+ body[data-site-page="main"] .contact-section .detail-block p{font-size:16px!important;margin:0 0 4px!important;white-space:normal!important}
+ body[data-site-page="main"] .contact-section .detail-block small{font-size:13px!important}
+
+ /* AI VIDEO */
+ body[data-site-page="ai-video"] #process .step b{font-size:34px!important}
+ body[data-site-page="ai-video"] #process .step h3{font-size:30px!important}
+ body[data-site-page="ai-video"] #process .step p{font-size:16px!important}
+ body[data-site-page="ai-video"] #process .step{min-height:0!important;padding-top:28px!important;padding-bottom:28px!important}
+ body[data-site-page="ai-video"] #process>.section-head .eyebrow{font-size:14px!important}
+ body[data-site-page="ai-video"] #process>.section-head h2{font-size:28px!important;line-height:1.35!important}
+ body[data-site-page="ai-video"] .contact{padding:24px 20px!important;gap:16px!important}
+ body[data-site-page="ai-video"] .contact h2{font-family:SeoulAlrimHeavy,sans-serif!important;font-weight:900!important;font-size:25px!important;line-height:1.4!important;word-break:keep-all}
+ body[data-site-page="ai-video"] .contact p{font-size:14px!important}
+ body[data-site-page="ai-video"] #consult{width:auto!important;height:40px!important;min-height:0!important;font-size:14px!important;padding:0 16px!important;white-space:nowrap}
+ /* Intro copy below the first screen: exactly its two lines, sized to fit. */
+ body[data-site-page="ai-video"] #about>.section-head p{font-size:min(15px,calc((100vw - 40px)/24.5))!important;line-height:1.8!important;white-space:nowrap!important;word-break:keep-all}
+ body[data-site-page="ai-video"] #about>.section-head p br{display:inline!important}
+
+ /* PORTFOLIO: one main-sized button, right-aligned under the copy. */
+ body[data-site-page="portfolio"] .hero-copy .cta{width:156px!important;max-width:none!important;margin:0 auto!important}
+ body[data-site-page="portfolio"] .our-works-heading{letter-spacing:4px}
+
+ /* CONTACT: review banner left-aligned and 20% larger; estimate heading on one line;
+    step labels 30% smaller than that heading. */
+ body[data-site-page="contact"] .review-event{width:90%!important;margin-left:0!important;margin-right:auto!important}
+ body[data-site-page="contact"] .intro h2{white-space:nowrap!important;font-size:min(29px,calc((100vw - 40px)/13.6))!important}
+ body[data-site-page="contact"] .step h3{font-size:calc(min(29px,calc((100vw - 40px)/13.6)) * .7)!important}
+ body[data-site-page="contact"] .step .number{width:24px!important;height:24px!important;font-size:12px!important}
+}
+
+/* The sheet's "접기" button is phone-only; PC shows the estimate as a normal side panel. */
+body[data-site-page="contact"] .quote-rail .sheet-close{display:none}
+/* Contact estimate: a small bar that follows at the bottom and opens into a sheet. */
+@media(max-width:800px){
+ body[data-site-page="contact"] .unified-top{bottom:104px}
+ body[data-site-page="contact"].quote-open .unified-top{display:none}
+ body[data-site-page="contact"]{padding-bottom:84px}
+ body[data-site-page="contact"] .quote-rail{position:fixed;left:0;right:0;bottom:0;z-index:950;margin:0!important;padding:0!important;border:0!important;background:#fff;border-radius:16px 16px 0 0;box-shadow:0 -6px 24px #0000001f;cursor:pointer;transition:box-shadow .25s ease}
+ body[data-site-page="contact"] .quote-rail::before{content:"";display:block;width:40px;height:4px;border-radius:2px;background:#c8c8c8;margin:8px auto 0}
+ body[data-site-page="contact"] .quote-rail .quote{position:static;margin:0!important;padding:6px 20px calc(12px + env(safe-area-inset-bottom))!important;border-radius:0;box-shadow:none;background:transparent;transform:none!important}
+ body[data-site-page="contact"] .quote-rail .quote h2::after{content:"견적서 자세히 보기 ▲";display:block;margin-top:2px;font-size:12px;font-weight:400;color:#777;letter-spacing:0}
+ /* Collapsed: title on the left, total on the right. */
+ body[data-site-page="contact"]:not(.quote-open) .quote-rail .quote{display:grid;grid-template-columns:1fr auto auto;align-items:center;column-gap:10px;max-height:none;overflow:visible}
+ body[data-site-page="contact"]:not(.quote-open) .quote-rail .quote>*:not(h2):not(.quote-total){display:none}
+ body[data-site-page="contact"]:not(.quote-open) .quote-rail .quote h2{font-size:18px;margin:0;line-height:1.3}
+ body[data-site-page="contact"]:not(.quote-open) .quote-rail .quote-total{margin:0;font-size:18px;white-space:nowrap}
+ body[data-site-page="contact"]:not(.quote-open) .quote-rail .amount-number{font-size:24px}
+ body[data-site-page="contact"]:not(.quote-open) .quote-rail .amount-unit{font-size:15px}
+ /* Collapsed bar stays one row: the "담기" button sits right of the total. */
+ body[data-site-page="contact"]:not(.quote-open) .quote-rail .quote>.breakdown:has([data-add-video]){display:block;grid-column:3;grid-row:1;margin:0;padding:0;border:0}
+ body[data-site-page="contact"]:not(.quote-open) .quote-rail .breakdown>*:not([data-add-video]){display:none}
+ body[data-site-page="contact"]:not(.quote-open) .quote-rail .breakdown>[data-add-video]{width:auto;height:44px;min-height:0;margin:0;padding:0 16px;font-size:15px;gap:6px;white-space:nowrap}
+ /* Open: the full estimate and form as a bottom sheet. */
+ body[data-site-page="contact"].quote-open{overflow:hidden}
+ body[data-site-page="contact"].quote-open .quote-rail{cursor:auto;box-shadow:0 0 0 100vmax #00000066}
+ body[data-site-page="contact"].quote-open .quote-rail .quote{display:block;max-height:78dvh;overflow:auto;overscroll-behavior:contain;padding-top:10px!important}
+ body[data-site-page="contact"].quote-open .quote-rail .quote h2{cursor:pointer}
+ body[data-site-page="contact"].quote-open .quote-rail .quote h2::after{content:none}
+ /* Open sheet: a clear "접기" button at the top right, and a wider handle you can swipe down. */
+ body[data-site-page="contact"].quote-open .quote-rail::before{position:absolute;top:10px;left:50%;width:52px;height:5px;margin:0 0 0 -26px;background:#bdbdbd}
+ /* Keep a fixed strip at the top for the handle and "접기" so scrolled content never slides under the button. */
+ body[data-site-page="contact"].quote-open .quote-rail{padding-top:66px!important}
+ body[data-site-page="contact"].quote-open .quote-rail .quote{max-height:calc(78dvh - 56px)}
+ body[data-site-page="contact"].quote-open .quote-rail .sheet-close{position:absolute;top:16px;right:16px;z-index:2;display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 16px;border:1px solid #080808;border-radius:20px;background:#fff;color:#080808;font:700 15px UnifiedSeoul,Arial,sans-serif;cursor:pointer}
+ body[data-site-page="contact"].quote-open .quote-rail .sheet-close:active{background:#e0ff4f}
+ body[data-site-page="contact"].quote-open .quote-rail .sheet-close svg{width:16px;height:16px}
+ /* Open sheet: compact type and controls so most of the estimate fits on one screen. */
+ body[data-site-page="contact"].quote-open .quote .eyebrow{font-size:10px;margin-bottom:4px}
+ body[data-site-page="contact"].quote-open .quote h2{font-size:22px;line-height:1.3}
+ body[data-site-page="contact"].quote-open .quote .quote-subtitle{font-size:12px;margin-top:4px}
+ body[data-site-page="contact"].quote-open .quote .quote-total{font-size:24px;padding-top:4px}
+ body[data-site-page="contact"].quote-open .quote .amount-number{font-size:24px}
+ body[data-site-page="contact"].quote-open .quote .amount-unit{font-size:15px}
+ body[data-site-page="contact"].quote-open .quote .vat{margin-bottom:8px}
+ body[data-site-page="contact"].quote-open .quote .breakdown p{padding:6px 0;font-size:12px}
+ body[data-site-page="contact"].quote-open .quote .breakdown button{min-height:0;height:40px;font-size:14px}
+ body[data-site-page="contact"].quote-open .quote form h3{margin:14px 0 10px;font-size:18px}
+ body[data-site-page="contact"].quote-open .quote label.field{font-size:14px}
+ body[data-site-page="contact"].quote-open .quote label.field input,body[data-site-page="contact"].quote-open .quote label.field textarea,body[data-site-page="contact"].quote-open .quote label.field select{height:36px;padding:6px 0;font-size:14px}
+ body[data-site-page="contact"].quote-open .quote .agreement{margin:10px 0 6px}
+ body[data-site-page="contact"].quote-open .quote .submit{height:46px;min-height:0;padding:0 16px;font-size:15px;margin-top:6px}
+ body[data-site-page="contact"].quote-open .quote .form-note{margin-top:8px}
+}
+
+/* Partner marquee: KAKAO, HYUNDAI, toss and MUSINSA use the same 190px cell and 145x56 logo box as every other brand. */
+body[data-site-page="main"] .brand-item:has(.brand-logo-window){width:190px}
+body[data-site-page="main"] .brand-logo-window,body[data-site-page="main"] .logo-hyundai,body[data-site-page="main"] .logo-musinsa{width:145px;height:56px}
+body[data-site-page="main"] .logo-kakao img.official-brand{width:220px}
+body[data-site-page="main"] .logo-hyundai img.official-brand{width:140px}
+body[data-site-page="main"] .logo-toss img.official-brand{width:220px}
+body[data-site-page="main"] .logo-musinsa img.official-brand{width:200px}
+
+/* TOP button: white at rest, black while hovered or pressed. */
+.unified-top{background:#fff!important;color:#000!important;border:1px solid #000;box-shadow:0 2px 10px #0002;transition:opacity .25s ease,transform .25s ease,background-color .2s ease,color .2s ease}
+.unified-top:hover,.unified-top:active{background:#000!important;color:#fff!important}
+
+/* Phones: the project video opens edge to edge at the full screen width. */
+@media(max-width:600px){
+ #video-dialog{width:100vw;max-width:100vw;margin-inline:0;padding:42px 0 0;border-radius:0}
+ #video-dialog video{width:100%}
+}

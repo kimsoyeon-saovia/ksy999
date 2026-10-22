@@ -1,0 +1,9 @@
+
+.paired-screen .benefit{grid-template-columns:minmax(0,1fr) minmax(0,921px);gap:40px;align-items:center}
+.paired-screen .benefit:nth-child(2){grid-template-columns:minmax(0,921px) minmax(0,1fr)}
+.paired-screen .benefit .benefit-copy{grid-column:1;grid-row:1}
+.paired-screen .benefit .media-slot{grid-column:2;grid-row:1;justify-self:end}
+.paired-screen .benefit:nth-child(2) .benefit-copy{grid-column:2;grid-row:1}
+.paired-screen .benefit:nth-child(2) .media-slot{grid-column:1;grid-row:1;justify-self:start}
+@media(min-width:751px) and (max-width:1700px){.paired-screen .benefit,.paired-screen .benefit:nth-child(2){grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px}.paired-screen .media-preview{height:auto;aspect-ratio:921/490}}
+@media(max-width:750px){.paired-screen .benefit,.paired-screen .benefit:nth-child(2){grid-template-columns:minmax(0,1fr);gap:24px}.paired-screen .benefit .benefit-copy,.paired-screen .benefit .media-slot,.paired-screen .benefit:nth-child(2) .benefit-copy,.paired-screen .benefit:nth-child(2) .media-slot{grid-column:1;grid-row:auto;justify-self:stretch}}

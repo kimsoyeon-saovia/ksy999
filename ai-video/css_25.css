@@ -1,0 +1,1 @@
+#process .step:not(:last-child)::after{content:none;display:none}

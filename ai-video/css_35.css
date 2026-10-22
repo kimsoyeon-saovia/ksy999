@@ -1,0 +1,7 @@
+
+@property --hero-reveal{syntax:'<percentage>';inherits:false;initial-value:0%}
+.hero-screen h1,.hero-screen h2{color:#000!important;opacity:0;transform:none!important;animation:none!important;transition:none!important;--hero-reveal:0%;-webkit-mask-image:linear-gradient(to top,#000 0%,#000 calc(var(--hero-reveal) - 24%),transparent var(--hero-reveal));mask-image:linear-gradient(to top,#000 0%,#000 calc(var(--hero-reveal) - 24%),transparent var(--hero-reveal))}
+.hero-screen h1.hero-rise-playing,.hero-screen h2.hero-rise-playing{animation:hero-fixed-bottom-reveal 1.2s linear both!important}
+.hero-screen h1.hero-rise-complete,.hero-screen h2.hero-rise-complete{opacity:1!important;transform:none!important;animation:none!important;-webkit-mask-image:none;mask-image:none}
+@keyframes hero-fixed-bottom-reveal{0%{opacity:0;--hero-reveal:0%}12%{opacity:1}100%{opacity:1;--hero-reveal:125%}}
+@media(prefers-reduced-motion:reduce){.hero-screen h1,.hero-screen h2{opacity:1!important;transform:none!important;animation:none!important;-webkit-mask-image:none;mask-image:none}}

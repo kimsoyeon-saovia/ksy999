@@ -1,0 +1,5 @@
+
+.paired-screen #process{max-width:none;width:100%}
+#process .steps{width:100%;gap:88px}
+@media(max-width:1200px) and (min-width:751px){#process .steps{gap:48px}}
+@media(max-width:750px){#process .steps{gap:68px}}

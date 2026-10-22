@@ -1,0 +1,46 @@
+/* Project detail window: one shared palette (site lime accent, neutral ink) for every project. */
+:root{--info-ink:#111;--info-text:#3d3d3d;--info-line:#ececec;--info-accent:#c4e231;--info-tint:#f3fad8}
+dialog.project-dialog.has-info .original-panel[hidden]{display:none}
+.project-info{padding:22px 4px 0;color:var(--info-ink);font-family:SeoulAlrimLocal,'Malgun Gothic',sans-serif;text-align:center}
+.project-info .info-label{display:flex;align-items:center;justify-content:center;gap:14px;margin:0 0 8px;font-size:14px;font-weight:700;letter-spacing:.02em;color:var(--info-ink)}
+.project-info .info-label::before,.project-info .info-label::after{content:"";width:36px;height:2px;border-radius:1px;background:var(--info-accent)}
+.project-info .info-title{margin:0;font-family:SeoulAlrimHeavy,sans-serif;font-weight:900;font-size:clamp(24px,2.4vw,30px);line-height:1.3;letter-spacing:-.02em;word-break:keep-all}
+.project-info .info-sub{margin:6px 0 0;font-size:16px;color:var(--info-text)}
+.project-info .info-block{margin-top:18px;padding-top:16px;border-top:1px solid var(--info-line)}
+.project-info .info-overview{margin:0;font-size:16px;line-height:1.75;color:var(--info-text);word-break:keep-all}
+.project-info .info-uses{display:grid;grid-template-columns:repeat(var(--uses),minmax(0,1fr));gap:12px;margin-top:4px}
+.project-info .info-uses figure{margin:0;border-radius:10px;overflow:hidden;background:var(--info-tint);display:flex;flex-direction:column}
+.project-info .info-uses img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover}
+.project-info .info-uses figcaption{flex:1;display:flex;align-items:center;justify-content:center;padding:10px 6px;font-size:14px;font-weight:700;line-height:1.4;word-break:keep-all}
+/* The close button gets its own strip above the video so it never covers it. On desktop the whole
+   window narrows (see project-details.js) until everything fits without scrolling. */
+dialog.project-dialog.has-info .detail-close-bar{height:50px}
+dialog.project-dialog.has-info .clean-player{margin-inline:auto}
+@media(min-width:601px){
+ dialog.project-dialog.has-info{width:var(--fit-w,min(720px,calc(100vw - 24px)))!important}
+ /* Very short windows: compact text section once narrowing alone is not enough. */
+ dialog.project-dialog.has-info.is-compact .project-info{padding-top:12px}
+ dialog.project-dialog.has-info.is-compact .info-block{margin-top:10px;padding-top:9px}
+ dialog.project-dialog.has-info.is-compact .info-title{font-size:22px}
+ dialog.project-dialog.has-info.is-compact .info-overview{font-size:14px;line-height:1.6}
+ dialog.project-dialog.has-info.is-compact .info-uses img{aspect-ratio:2/1}
+ dialog.project-dialog.has-info.is-compact .info-uses figcaption{padding:5px 6px;font-size:12px}
+}
+
+/* Phones: a bottom sheet that uses the full width, larger readable text, two photos per row. */
+@media(max-width:600px){
+ dialog.project-dialog.has-info{width:100vw!important;max-width:100vw!important;max-height:92dvh!important;margin:auto 0 0!important;border-radius:20px 20px 0 0!important;padding:0 16px calc(20px + env(safe-area-inset-bottom))!important}
+ dialog.project-dialog.has-info .detail-close-bar{height:46px;margin:0 -16px;padding:0 6px;border-bottom:1px solid var(--info-line)}
+ dialog.project-dialog.has-info .detail-close-bar::before{content:"";position:absolute;left:50%;top:8px;width:40px;height:4px;border-radius:2px;background:#d4d4d4;transform:translateX(-50%)}
+ dialog.project-dialog.has-info .clean-player{margin-top:12px}
+ .project-info{padding:14px 0 0}
+ .project-info .info-label{font-size:12px;gap:10px;margin-bottom:5px}
+ .project-info .info-label::before,.project-info .info-label::after{width:22px}
+ .project-info .info-title{font-size:20px}
+ .project-info .info-sub{font-size:13px}
+ .project-info .info-block{margin-top:12px;padding-top:10px}
+ .project-info .info-overview{font-size:13.5px;line-height:1.65}
+ .project-info .info-overview br{display:none}
+ .project-info .info-uses{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .project-info .info-uses figcaption{font-size:12px;padding:6px 4px}
+}

@@ -1,0 +1,9 @@
+
+#about>.section-head h2.split-heading{overflow:hidden}
+.split-heading>span{display:block}
+.motion-ready #about>.section-head h2.split-heading.scroll-reveal{opacity:1;transform:none;transition:none}
+.motion-ready .split-heading>span{opacity:0;transition:transform 1.25s cubic-bezier(.16,1,.3,1),opacity 1s ease}
+.motion-ready .split-heading>.heading-from-left{transform:translateX(-100%)}
+.motion-ready .split-heading>.heading-from-right{transform:translateX(100%)}
+.motion-ready .split-heading.is-visible>span{opacity:1;transform:translateX(0)}
+@media(prefers-reduced-motion:reduce){.motion-ready .split-heading>span{opacity:1;transform:none;transition:none}}

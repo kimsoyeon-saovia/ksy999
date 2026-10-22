@@ -1,0 +1,184 @@
+/* 장바구니 · 주문/결제 페이지 */
+body{background:#fff;color:#080808;font-family:UnifiedSeoul,Arial,sans-serif}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:inherit}
+/* 헤더 높이만큼은 site-header.css가 body에 이미 띄워 두므로 여기서는 숨 쉴 여백만 준다 */
+.shop{width:92%;max-width:1280px;margin:0 auto;padding:40px 0 120px;min-height:80vh}
+
+/* 상단: 제목 + 단계 */
+.shop-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding-bottom:28px;border-bottom:2px solid #080808}
+.shop-head h1{margin:0;font-size:52px;font-weight:800;letter-spacing:-.02em;line-height:1}
+.steps{display:flex;align-items:center;gap:14px;margin:0;padding:0;list-style:none;font-size:16px;color:#9a9a9a}
+.steps li{display:flex;align-items:center;gap:8px}
+.steps li+li::before{content:"›";margin-right:6px;color:#c4c4c4;font-size:20px}
+.steps b{font-family:Arial,sans-serif;font-size:13px;font-weight:700}
+.steps .now{color:#080808;font-weight:800}
+.steps .now b{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;background:#e0ff4f}
+
+.shop-body{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:56px;align-items:start;margin-top:32px}
+/* 주문/결제: 오른쪽 금액 박스를 작게 */
+[data-view="checkout"] .shop-body{grid-template-columns:minmax(0,1fr) 320px}
+[data-view="checkout"] .summary{padding:22px 22px 20px;border-width:1px}
+[data-view="checkout"] .summary h2{margin:0 0 14px;font-size:18px}
+[data-view="checkout"] .summary dl{gap:8px;font-size:15px}
+[data-view="checkout"] .summary .total{margin-top:6px;padding-top:12px}
+[data-view="checkout"] .summary .total dd{font-size:24px}
+[data-view="checkout"] .summary .note{margin:10px 0 14px;font-size:12px}
+[data-view="checkout"] .summary .cta,[data-view="checkout"] .summary .sub-cta{height:50px;font-size:15px}
+
+/* 장바구니 목록 */
+.list-tools{display:flex;align-items:center;justify-content:space-between;padding:0 0 16px;border-bottom:1px solid #ddd;font-size:15px}
+.check{display:inline-flex;align-items:center;gap:10px;cursor:pointer}
+.check input{width:20px;height:20px;margin:0;accent-color:#080808;cursor:pointer}
+.tool-btns{display:flex;gap:8px}
+.ghost{padding:8px 14px;border:1px solid #c9c9c9;background:#fff;font-size:14px}
+.ghost:hover{border-color:#080808}
+.row{display:grid;grid-template-columns:28px 120px minmax(0,1fr) 128px 130px 36px;align-items:center;gap:20px;padding:26px 0;border-bottom:1px solid #e5e5e5}
+.thumb{display:flex;flex-direction:column;justify-content:space-between;aspect-ratio:1;padding:14px;background:#080808;color:#fff}
+.thumb strong{font-family:Arial,sans-serif;font-size:28px;font-weight:800;color:#e0ff4f;line-height:1}
+.thumb span{font-size:13px;color:#cfcfcf}
+.info h2{margin:0 0 8px;font-size:21px;font-weight:800}
+.info p{margin:0;font-size:15px;color:#555;line-height:1.6}
+.info .unit{color:#888;font-size:14px}
+.stepper{display:inline-flex;border:1px solid #080808;height:40px}
+.stepper button{width:38px;border:0;background:#fff;font-size:20px}
+.stepper button:hover:not(:disabled){background:#e0ff4f}
+.stepper button:disabled{color:#c8c8c8;cursor:default}
+.stepper output{display:flex;align-items:center;justify-content:center;min-width:46px;border-left:1px solid #080808;border-right:1px solid #080808;font-size:16px}
+.line-total{text-align:right;font-size:21px;font-weight:800}
+.remove{width:36px;height:36px;border:0;background:none;font-size:24px;color:#999}
+.remove:hover{color:#e5402f}
+.list-foot{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-top:22px;font-size:14px;color:#777}
+.text-link{border:0;background:none;padding:0;font-size:15px;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+
+/* 빈 장바구니 */
+.empty{display:flex;flex-direction:column;align-items:center;gap:12px;padding:110px 0 120px;text-align:center}
+.empty svg{width:72px;height:72px;stroke:#c4c4c4;margin-bottom:8px}
+.empty h2{margin:0;font-size:28px;font-weight:800}
+.empty p{margin:0 0 22px;color:#666}
+
+/* 오른쪽 요약 */
+.summary{position:sticky;top:110px;padding:32px 28px;border:2px solid #080808;background:#fff}
+.summary h2{margin:0 0 22px;font-size:22px;font-weight:800}
+.summary dl{margin:0;display:grid;gap:12px;font-size:16px}
+.summary dl div{display:flex;justify-content:space-between}
+.summary dt{color:#555}.summary dd{margin:0}
+.summary .total{margin-top:10px;padding-top:18px;border-top:1px solid #ddd;align-items:baseline}
+.summary .total dt{color:#080808;font-weight:800}
+.summary .total dd{font-size:32px;font-weight:800}
+.summary .note{margin:14px 0 22px;font-size:13px;color:#888;line-height:1.6}
+.cta{display:flex;align-items:center;justify-content:space-between;width:100%;height:62px;padding:0 24px;border:0;background:#e0ff4f;color:#080808;font-size:19px;text-decoration:none;transition:background .2s,color .2s}
+.cta:hover:not(:disabled){background:#080808;color:#fff}
+.cta::after{content:"→";font-size:24px}
+.cta:disabled{background:#eee;color:#aaa;cursor:not-allowed}
+.sub-cta{display:flex;align-items:center;justify-content:center;width:100%;height:56px;margin-top:10px;padding:0 20px;border:1px solid #080808;background:#fff;text-align:center;text-decoration:none;font-size:16px;color:#080808}
+.sub-cta:hover{background:#080808;color:#fff}
+/* 오른쪽 요약 박스의 주문하기·결제하기 버튼은 아래 버튼과 같은 크기로 */
+.summary .cta{height:56px;padding:0 20px;font-size:16px;border:1px solid #e0ff4f}
+.summary .cta::after{font-size:19px}
+.summary .cta:disabled{border-color:#eee}
+.cta.plain{justify-content:center}.cta.plain::after{content:none}
+.done-actions .cta,.done-actions .sub-cta{height:56px;font-size:16px}
+
+/* 결제 전 상담 신청 */
+.consult{margin-top:56px;padding:40px;border:2px solid #080808;scroll-margin-top:110px}
+.consult:focus{outline:0}
+.consult-info{margin:0 0 30px;padding:20px 24px;background:#f6ffd0;font-size:15px;line-height:1.7}
+.consult-info p{margin:0 0 6px}
+.consult-info ul{margin:0;padding-left:18px;color:#333}
+.f select{width:100%;height:46px;padding:0 4px;border:0;border-bottom:1px solid #bbb;border-radius:0;background:none;font:inherit;font-size:17px}
+.f select:focus{outline:0;border-bottom:2px solid #080808}
+.consult .check.error{color:#e5402f}
+.consult-submit{max-width:380px;height:56px;margin-top:10px;font-size:16px}
+.consult-done{padding:20px 0;text-align:center}
+.consult-done .badge{display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;margin-bottom:18px;border-radius:50%;background:#e0ff4f;font-size:30px}
+.consult-done h2{margin:0 0 12px;font-size:28px;font-weight:800}
+.consult-done p{margin:0 0 14px;color:#555;line-height:1.7}
+
+/* 주문/결제 */
+.block{padding:0 0 40px;margin-bottom:40px;border-bottom:1px solid #e5e5e5}
+.block:last-child{border-bottom:0;margin-bottom:0;padding-bottom:0}
+.block-title{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 22px}
+.block-title h2{margin:0;font-size:24px;font-weight:800}
+.block-title small{font-size:14px;color:#777}
+.login-hint{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:24px;padding:16px 20px;background:#f4f4f4;font-size:15px}
+.login-hint button{flex:0 0 auto;padding:10px 18px;border:0;background:#080808;color:#fff;font-size:14px;white-space:nowrap}
+.login-hint button:hover{background:#1647ff}
+.login-hint.member{background:#f6ffd0}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:22px 28px}
+.fields .wide{grid-column:1/-1}
+.f label{display:block;margin-bottom:8px;font-size:14px;color:#555}
+.f label b{color:#1647ff;font-weight:500}
+.f input,.f textarea{width:100%;padding:12px 0;border:0;border-bottom:1px solid #bbb;border-radius:0;background:none;font-size:17px}
+.f textarea{min-height:84px;resize:vertical;line-height:1.6}
+.f input:focus,.f textarea:focus{outline:0;border-bottom:2px solid #080808;padding-bottom:11px}
+.f .msg{display:none;margin:6px 0 0;font-size:13px;color:#e5402f}
+.f.error input,.f.error textarea{border-bottom-color:#e5402f}
+.f.error .msg{display:block}
+.order-items{margin:0;padding:0;list-style:none}
+.order-items li{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:16px;align-items:center;padding:14px 0;border-bottom:1px solid #eee}
+.order-items li:last-child{border-bottom:0}
+.order-items .thumb{padding:8px}.order-items .thumb strong{font-size:15px}.order-items .thumb span{display:none}
+.order-items p{margin:0;font-size:15px;color:#555}.order-items h3{margin:0 0 4px;font-size:17px}
+.order-items strong.price{font-size:18px}
+.methods{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:0;padding:0;border:0}
+.methods legend{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.methods label{position:relative;display:flex;align-items:center;justify-content:center;height:62px;border:1px solid #c9c9c9;font-size:16px;cursor:pointer;transition:border-color .15s,background .15s}
+.methods input{position:absolute;opacity:0;pointer-events:none}
+.methods label:hover{border-color:#080808}
+.methods label:has(input:checked){border:2px solid #080808;background:#e0ff4f;font-weight:800}
+.methods label:has(input:focus-visible){outline:2px solid #1647ff;outline-offset:2px}
+.pay-note{margin:14px 0 0;font-size:13px;color:#888}
+.agrees{display:grid;gap:14px;font-size:15px}
+.agrees .all{padding-bottom:14px;border-bottom:1px solid #e5e5e5;font-weight:800;font-size:17px}
+.agrees .check.error{color:#e5402f}
+.agree-msg{min-height:20px;margin:10px 0 0;font-size:13px;color:#e5402f}
+
+/* 결제 진행 / 완료 */
+.paying{position:fixed;inset:0;z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;background:rgba(255,255,255,.94);font-size:20px}
+.paying i{width:54px;height:54px;border:5px solid #eee;border-top-color:#080808;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.done{max-width:720px;margin:60px auto 0;text-align:center}
+.done .badge{display:inline-flex;align-items:center;justify-content:center;width:84px;height:84px;margin-bottom:26px;border-radius:50%;background:#e0ff4f;font-size:40px}
+.done h2{margin:0 0 10px;font-size:40px;font-weight:800}
+.done>p{margin:0 0 36px;color:#555;font-size:17px;line-height:1.7}
+.receipt{margin:0 0 30px;padding:28px 32px;border:2px solid #080808;text-align:left}
+.receipt div{display:flex;justify-content:space-between;gap:16px;padding:9px 0;font-size:16px}
+.receipt dt{color:#666}.receipt dd{margin:0;text-align:right}
+.receipt .total{margin-top:8px;padding-top:18px;border-top:1px solid #ddd}
+.receipt .total dd{font-size:28px;font-weight:800}
+.demo-note{margin:0 0 30px;font-size:13px;color:#999}
+.done-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.done-actions .sub-cta{margin:0}
+
+@media(max-width:1000px){
+ .shop-body,[data-view="checkout"] .shop-body{grid-template-columns:1fr;gap:36px}
+ .summary{position:static}
+}
+@media(max-width:750px){
+ .shop{padding:24px 0 80px}
+ .shop-body{margin-top:24px}
+ /* 장바구니(휴대폰): 금액 박스 없이 버튼만 */
+ [data-view="cart"] .summary{padding:0;border:0}
+ [data-view="cart"] .summary>:not(.cta):not(.sub-cta){display:none}
+ [data-view="checkout"] .summary{padding:16px}
+ [data-view="checkout"] .summary h2{margin-bottom:10px;font-size:17px}
+ [data-view="checkout"] .summary dl{font-size:14px;gap:6px}
+ [data-view="checkout"] .summary .total dd{font-size:22px}
+ [data-view="checkout"] .summary .note{margin:8px 0 12px;font-size:11px}
+ [data-view="checkout"] .summary .cta,[data-view="checkout"] .summary .sub-cta{height:46px;font-size:15px}
+ [data-view="checkout"] .summary .sub-cta{margin-top:8px}
+ .shop-head{flex-direction:column;align-items:flex-start;gap:18px;padding-bottom:20px}
+ .shop-head h1{font-size:34px}
+ .steps{font-size:13px;gap:8px}.steps li+li::before{margin-right:2px}
+ .row{grid-template-columns:24px 76px minmax(0,1fr) 30px;grid-template-areas:"c t i x" "c t s s" ". . p p";gap:10px 14px;padding:20px 0}
+ .row .check{grid-area:c;align-self:start;margin-top:4px}.row .thumb{grid-area:t;padding:9px}.row .thumb strong{font-size:18px}.row .thumb span{font-size:11px}
+ .row .info{grid-area:i}.row .stepper{grid-area:s;justify-self:start}.row .line-total{grid-area:p}.row .remove{grid-area:x;align-self:start}
+ .info h2{font-size:17px}.info p{font-size:13px}
+ .fields{grid-template-columns:1fr}
+ .methods{grid-template-columns:repeat(2,1fr)}
+ .done h2{font-size:28px}.receipt{padding:20px}
+ .done-actions{grid-template-columns:1fr}
+ .consult{margin-top:40px;padding:24px 18px}.consult-info{padding:16px 18px;font-size:14px}.consult-submit{max-width:none}
+}

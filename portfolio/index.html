@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STUDIO 상상 | Portfolio</title>
+<link rel="stylesheet" href="../reset.css?v=20261021f"><style>
+:root{--lime:#e0ff4f;--ink:#101114;--muted:#70737d;--line:#dfe2e8}
+body{background:#fff;color:var(--ink);font-family:Arial,"Noto Sans KR","Malgun Gothic",sans-serif}
+a{color:inherit;text-decoration:none}
+.site-header{height:86px;max-width:1440px;margin:auto;padding:0 4.2%;display:flex;align-items:center;justify-content:space-between}
+.brand{font-size:13px;letter-spacing:.22em;font-weight:800;display:flex;align-items:center;gap:10px}
+.brand strong{font-size:31px;letter-spacing:-.08em;font-weight:950}
+nav{display:flex;gap:34px;align-items:center;font-size:13px;font-weight:700}
+nav a{padding:12px 17px;border-radius:7px;transition:.22s}
+nav a:hover,nav a.active{background:var(--lime);color:#111}
+main{max-width:1440px;margin:auto;padding:16px 2.2% 0}
+.hero{display:flex;flex-direction:column;align-items:center;text-align:center;gap:28px;padding:22px 2% 42px}
+.hero-copy{width:100%;display:flex;flex-direction:column;align-items:center}
+.hero-copy h1{font-size:clamp(34px,4.2vw,58px);line-height:1.12;letter-spacing:-.065em;margin:0 0 20px;font-weight:950}
+.hero-copy p{font-size:clamp(16px,1.5vw,20px);line-height:1.65;margin:0 0 28px;color:#292b30;letter-spacing:-.04em}
+.cta{display:inline-flex;align-items:center;gap:18px;background:var(--lime);color:#111;padding:16px 25px;border-radius:8px;font-size:18px;font-weight:900;transition:background .22s,color .22s,transform .2s,box-shadow .2s}
+.cta:hover,.cta:focus-visible{background:#111;color:#fff;transform:translateY(-3px);box-shadow:0 9px 24px #0002;outline:none}
+.cta span{font-size:25px}
+.hero-visual{width:min(100%,1040px);border-radius:9px;overflow:hidden;box-shadow:0 5px 18px #1112;background:#0a111a}
+.hero-visual img{display:block;width:100%;height:auto;aspect-ratio:auto;object-fit:contain;image-rendering:auto}
+.portfolio{scroll-margin-top:18px}
+.section-heading{text-align:center;margin:8px auto 27px}
+.section-heading h2{font-size:clamp(26px,3vw,38px);letter-spacing:-.06em;margin:0 0 10px;font-weight:950}
+.section-heading p{margin:0;color:var(--muted);font-size:15px}
+.filters{display:grid;grid-template-columns:repeat(4,1fr);margin:0 2% 26px;border-bottom:1px solid var(--line)}
+.filter{position:relative;border:0;background:transparent;padding:15px 8px 19px;font:800 24px inherit;font-size:24px;font-weight:900;cursor:pointer;transition:background .2s,color .2s}
+.filter:not(:last-child):after{content:"";position:absolute;right:0;top:23%;height:52%;width:1px;background:#c8cde0}
+.filter:before{content:"";position:absolute;bottom:0;left:30%;right:30%;height:5px;background:transparent;transition:.2s}
+.filter:hover,.filter:focus-visible{background:#111;color:#fff;outline:none}
+.filter.active:before{background:var(--lime)}
+.filter.active:hover:before{background:#fff}
+.portfolio-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 14px;padding:0 0 42px}
+.portfolio-card{position:relative;isolation:isolate;overflow:hidden;border-radius:9px;aspect-ratio:1.78/1;background:#17191e;cursor:pointer;outline:none;box-shadow:0 2px 5px #0001}
+.portfolio-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform .55s cubic-bezier(.2,.7,.2,1),filter .35s}
+.card-shade{position:absolute;inset:0;background:linear-gradient(0deg,rgba(0,0,0,.83) 0%,rgba(0,0,0,.12) 65%,rgba(0,0,0,.04) 100%);transition:background .35s}
+.card-copy{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;color:#fff;transform:translateY(8px);opacity:0;transition:transform .35s,opacity .35s}
+.card-copy h3{font-size:clamp(17px,1.8vw,23px);line-height:1.3;letter-spacing:-.05em;margin:0 0 8px;font-weight:950;text-shadow:0 2px 5px #0009}
+.portfolio-card:hover img,.portfolio-card:focus-visible img{transform:scale(1.055);filter:brightness(.42)}
+.portfolio-card:hover .card-shade,.portfolio-card:focus-visible .card-shade{background:rgba(0,0,0,.2)}
+.portfolio-card:hover .card-copy,.portfolio-card:focus-visible .card-copy{transform:translateY(0);opacity:1}
+footer{border-top:1px solid var(--line);padding:24px 2% 32px;display:flex;justify-content:space-between;gap:24px;color:#606b89;font-size:12px;line-height:1.9}
+.footer-links{display:flex;gap:22px;flex-wrap:wrap}
+.footer-contact{color:#444957}
+@media(max-width:760px){
+ .site-header{height:auto;padding:20px 5%;align-items:flex-start;gap:18px;flex-direction:column}
+ nav{width:100%;gap:5px;justify-content:space-between;flex-wrap:wrap}
+ nav a{padding:9px 10px;font-size:11px}
+ .brand strong{font-size:27px}
+ main{padding:8px 4% 0}
+ .hero{gap:24px;padding:12px 0 32px}
+ .hero-copy h1{font-size:clamp(34px,9vw,48px)}
+ .hero-copy p{font-size:16px}
+ .cta{font-size:16px;padding:14px 19px}
+ .section-heading{margin-bottom:20px}
+ .section-heading p{font-size:13px}
+ .filters{margin:0 0 18px}
+ .filter{font-size:17px;padding:14px 4px 16px}
+ .portfolio-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding-bottom:28px}
+ .portfolio-card{aspect-ratio:1.15/1}
+ .card-copy{left:12px;right:10px;bottom:11px}
+ .card-copy h3{font-size:15px}
+ footer{flex-direction:column;padding:20px 0 28px}
+}
+@media(max-width:420px){.portfolio-grid{grid-template-columns:1fr}.portfolio-card{aspect-ratio:1.65/1}.filter{font-size:15px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important}}
+/* 첫 화면 소개 / 스크롤 다음 편집 이미지 */
+main{padding-top:0}
+.hero{min-height:calc(100svh - 86px);justify-content:center;padding:48px 2% 64px;gap:0}
+.hero-copy h1{font-size:clamp(38px,5.2vw,76px);line-height:1.2;margin-bottom:28px;word-break:keep-all}
+.hero-copy p{font-size:clamp(17px,1.8vw,24px);line-height:1.65;margin-bottom:36px;word-break:keep-all}
+.cta{border-radius:999px}
+.editing-section{padding:48px 2% 72px;scroll-margin-top:24px}
+.hero-visual{width:min(100%,1200px);margin:0 auto}
+.filters{display:flex;align-items:center;justify-content:center;gap:clamp(12px,5vw,80px);border:0;margin:0 2% 36px}
+.filter{flex:0 0 auto;border:0;border-radius:999px;padding:12px 32px;font-family:inherit;font-size:24px;font-weight:800;line-height:1.4;background:transparent;color:var(--ink);transition:background .2s,color .2s}
+.filter::before,.filter::after,.filter:not(:last-child)::after{content:none;display:none}
+.filter:hover,.filter:focus-visible,.filter.active{background:var(--lime);color:var(--ink)}
+.filter:focus-visible{outline:2px solid var(--ink);outline-offset:4px}
+@media(max-width:760px){
+ .site-header{height:126px;padding:16px 5%;gap:10px;justify-content:center}
+ nav{flex-wrap:nowrap;gap:0}
+ nav a{padding:9px 6px;font-size:10px}
+ main{padding-top:0}
+ .hero{min-height:calc(100svh - 126px);padding:32px 0 44px}
+ .hero-copy h1{font-size:clamp(32px,8vw,52px);margin-bottom:22px}
+ .hero-copy p{font-size:16px;margin-bottom:28px}
+ .editing-section{padding:28px 0 44px}
+ .filters{gap:8px;margin:0 0 26px;justify-content:space-evenly}
+ .filter{font-size:17px;padding:10px 18px}
+}
+@media(max-width:360px){.filter{font-size:15px;padding:9px 14px}}
+@media(max-height:600px) and (min-width:761px){
+ .hero{padding:24px 0}
+ .hero-copy h1{font-size:42px;margin-bottom:16px}
+ .hero-copy p{font-size:17px;margin-bottom:20px}
+ .cta{padding:12px 22px;font-size:16px}
+}
+/* 제작 문의 버튼 및 분류 메뉴 모서리 조정 */
+.cta{background:var(--lime);border-radius:7px}
+.filter{border-radius:9px}
+/* 파일명 오버레이를 모든 화면에서 이미지 정중앙에 표시 */
+.portfolio-card .card-copy{inset:0;align-items:center;justify-content:center;text-align:center;padding:20px}
+.portfolio-card .card-copy h3{margin:0;word-break:keep-all;overflow-wrap:anywhere}
+.portfolio-card[hidden]{display:none}
+
+/* 통일된 강조 색상과 프로젝트 상세창 */
+.cta,.cta:hover,.cta:focus-visible{background:var(--lime);color:var(--ink)}
+.project-dialog{border:0;border-radius:18px;padding:54px 40px 36px;width:min(860px,calc(100% - 32px));max-height:calc(100dvh - 40px);overflow:auto;overscroll-behavior:contain;color:var(--ink);background:#fff;box-shadow:0 24px 100px #0004}
+.project-dialog::backdrop{background:rgba(8,12,18,.74)}
+.project-close{position:absolute;top:12px;right:14px;border:0;border-radius:7px;background:var(--lime);color:var(--ink);padding:8px 12px;font:700 14px inherit;cursor:pointer}
+.project-close:focus-visible{outline:2px solid #111;outline-offset:3px}
+.project-image{display:block;width:100%;height:auto;max-height:48dvh;object-fit:contain;border-radius:9px}
+.project-label{display:flex;align-items:center;justify-content:center;gap:16px;font-size:14px;font-weight:800;margin:26px 0 12px}
+.project-label::before,.project-label::after{content:'';height:2px;width:40px;background:var(--lime)}
+.project-dialog h2{text-align:center;font-size:clamp(23px,3vw,36px);line-height:1.4;letter-spacing:-.05em;word-break:keep-all;margin:0 0 24px}
+.project-overview{border-top:1px solid var(--line);text-align:center}
+.project-overview p{font-size:clamp(16px,1.8vw,19px);line-height:1.85;word-break:keep-all;margin:0}
+@media(max-width:600px){.project-dialog{padding:54px 20px 28px;border-radius:12px;max-height:calc(100dvh - 24px)}.project-label{margin-top:22px}}
+
+
+.project-close{background:transparent;color:#999ba3;width:44px;height:44px;padding:10px;top:8px;right:8px;display:flex;align-items:center;justify-content:center}
+.project-close:hover{background:transparent;color:#333}
+.project-dialog{padding:50px 30px 30px}
+.project-image{max-height:34dvh}
+.project-dialog h2{margin-bottom:18px;font-size:clamp(23px,2.5vw,34px)}
+.project-label{margin:20px 0 12px}
+.project-uses{border-top:1px solid var(--line);margin-top:20px}
+.use-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.use-card{margin:0;border-radius:9px;overflow:hidden;background:var(--lime)}
+.use-image{position:relative;aspect-ratio:178/116;overflow:hidden;background:#eee}
+.use-image img{position:absolute;max-width:none;height:auto;display:block}
+.use-card figcaption{text-align:center;padding:11px 4px;font-size:14px;line-height:1.4;font-weight:700;word-break:keep-all}
+@media(max-width:600px){.project-dialog{padding:50px 20px 24px}.use-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.use-card figcaption{font-size:13px}.project-image{max-height:32dvh}}
+
+/* 첨부 원본 전체를 잘림이나 재구성 없이 표시 */
+dialog.project-dialog{padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;width:min(100vw,calc(100dvh * var(--original-ratio,1.454)));max-width:100vw;max-height:100dvh;overflow:visible;margin:auto}
+.original-project{display:block;width:100%;height:auto;max-height:100dvh;object-fit:contain}
+dialog.project-dialog .project-close{position:absolute;left:73.4%;top:12.6%;width:3%;height:3.5%;min-width:0;padding:0;border:0;border-radius:0;background:transparent;color:transparent;cursor:pointer}
+dialog.project-dialog .project-close:hover{background:transparent}
+dialog.project-dialog .project-close:focus-visible{outline:2px solid #777;outline-offset:1px}
+
+/* 원본 속 흰 상세창만 표시: 내부 이미지·문구·여백 유지 */
+dialog.project-dialog{width:min(818px,calc(100vw - 24px),calc((100dvh - 24px) * 818 / 865));max-height:none;overflow:hidden;border-radius:18px}
+.original-panel{position:relative;width:100%;aspect-ratio:818/865;overflow:hidden}
+.original-panel .original-project{position:absolute;display:block;max-width:none;max-height:none;height:auto;left:calc(-347 / 818 * 100%);top:calc(-119 / 865 * 100%);object-fit:initial}
+dialog.project-dialog .project-close{left:93.2%;top:1.1%;width:5.5%;height:4.5%;padding:0;background:transparent}
+@media(max-width:600px){dialog.project-dialog{border-radius:9px}}
+
+dialog.project-dialog.image-only{width:min(1100px,calc(100vw - 32px));background:#fff;padding:44px 16px 16px;border-radius:12px}
+.image-only .original-panel{aspect-ratio:auto;overflow:visible}
+.image-only .original-panel .original-project{position:static;width:100%;max-height:calc(100dvh - 100px);height:auto;object-fit:contain}
+dialog.project-dialog.image-only .project-close{left:auto;right:6px;top:3px;width:40px;height:38px;color:#888}
+.image-only .project-close::before,.image-only .project-close::after{content:'';position:absolute;left:19px;top:8px;width:1.5px;height:23px;background:#999;transform:rotate(45deg)}
+.image-only .project-close::after{transform:rotate(-45deg)}
+dialog.project-dialog:not(.image-only){width:min(var(--panel-width,818px),calc(100vw - 24px),calc((100dvh - 24px) * var(--panel-ratio,.9457)))}
+
+.clean-player{position:absolute;overflow:hidden;border-radius:10px;background:#111}
+.clean-player>img{display:block;width:100%;height:100%;object-fit:cover}
+.center-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:12%;aspect-ratio:1;display:grid;place-items:center;border:2px solid #fff;border-radius:50%;background:#0005;color:#fff;box-shadow:0 2px 10px #0002;pointer-events:none}
+.center-play svg{width:60%;height:60%}
+.image-only .clean-player{display:none}
+
+.video-trigger{position:absolute;inset:0;width:100%;height:100%;padding:0;border:0;background:transparent;cursor:pointer;border-radius:10px}
+.video-trigger:focus-visible{outline:3px solid var(--lime);outline-offset:-4px}
+.video-trigger[hidden]{display:none}
+#video-dialog{width:min(1120px,calc(100vw - 32px));max-width:none;max-height:calc(100dvh - 24px);padding:42px 12px 12px;border:0;border-radius:12px;background:#111;overflow:hidden}
+#video-dialog::backdrop{background:#000d}
+#video-dialog video{display:block;width:100%;max-height:calc(100dvh - 100px);background:#000}
+.video-close{position:absolute;right:8px;top:3px;width:38px;height:36px;border:0;background:transparent;color:#fff;font-size:30px;cursor:pointer}
+
+dialog.project-dialog.standalone-detail:not(.image-only){width:min(850px,calc(100vw - 24px),calc((100dvh - 24px) * var(--panel-ratio)));background:#fff}
+dialog.standalone-detail .project-close{left:auto;right:4%;top:1.8%;width:5%;height:4%;z-index:2}
+dialog.draw-close .project-close{right:1%;top:.5%;width:32px;height:32px}
+dialog.draw-close .project-close::before,dialog.draw-close .project-close::after{content:'';position:absolute;left:15px;top:5px;width:1.5px;height:22px;background:#999;transform:rotate(45deg)}
+dialog.draw-close .project-close::after{transform:rotate(-45deg)}
+
+/* 모든 상세창의 표시 너비 통일, 새 원본의 테두리는 표시 영역에서 제외 */
+dialog.project-dialog:not(.image-only),dialog.project-dialog.standalone-detail:not(.image-only){width:min(818px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;border:0;background:#fff;border-radius:16px;scrollbar-width:thin}
+
+/* Shared video-image size and an always accessible real close control. */
+dialog.project-dialog:not(.image-only),dialog.project-dialog.standalone-detail:not(.image-only){width:min(818px,calc(100vw - 24px));padding:0 24px 20px;overflow-y:auto}
+.detail-close-bar{position:sticky;top:0;height:46px;display:flex;justify-content:flex-end;align-items:center;background:#fff;z-index:20}
+dialog.project-dialog .detail-close-bar .project-close{position:static;display:grid;place-items:center;width:44px;height:44px;min-width:44px;padding:10px;border:0;border-radius:6px;color:#85858d;background:#fff;cursor:pointer;pointer-events:auto;z-index:21}
+dialog.project-dialog .detail-close-bar .project-close:hover{color:#111;background:#f2f2f2}
+dialog.project-dialog .detail-close-bar .project-close::before,dialog.project-dialog .detail-close-bar .project-close::after{display:none;content:none}
+.detail-close-bar .project-close svg{display:block;width:24px;height:24px;pointer-events:none}
+dialog.project-dialog .clean-player{position:relative;inset:auto;width:100%;height:auto;aspect-ratio:16/9;flex:none;margin:0;border-radius:9px}
+dialog.project-dialog .original-panel{width:100%;margin:0;position:relative;overflow:hidden}
+@media(max-width:600px){dialog.project-dialog:not(.image-only),dialog.project-dialog.standalone-detail:not(.image-only){padding:0 12px 12px}}
+dialog.project-dialog.image-only .clean-player{display:none}dialog.project-dialog.image-only{padding:0 16px 16px;background:#fff}dialog.project-dialog.image-only .original-panel{aspect-ratio:auto!important}
+</style>
+<link rel="stylesheet" href="../site-header.css?v=20261021f"></head>
+<body data-site-page="portfolio"><script src="../site-header.js?v=20261022b"></script><script src="../scene-scroll.js?v=20261021f"></script>
+<header class="site-header">
+  <a class="brand" href="#" aria-label="STUDIO 상상 홈">STUDIO <strong>상상</strong></a>
+  <nav aria-label="메인 메뉴">
+    <a href="#about">ABOUT US</a><a href="#ai-video">AI VIDEO</a><a class="active" href="#portfolio">PORTFOLIO</a><a href="#contact">CONTACT</a>
+  </nav>
+</header>
+<main>
+  <section class="hero" id="about">
+    <video class="portfolio-banner-video" src="videos/portfolio-main-banner.mp4" autoplay muted playsinline preload="auto" aria-label="포트폴리오 메인 배너 영상"></video>
+    <div class="hero-copy">
+      <h1>말보다 확실한 결과물</h1>
+      <p>STUDIO 상상을 직접 경험해보세요.</p>
+      <a class="cta" href="#contact">포트폴리오 제작<span>→</span></a>
+    </div>
+  </section>
+
+  <section class="portfolio" id="portfolio">
+    <h2 class="our-works-heading">OUR WORKS</h2>
+    <div class="filters" role="group" aria-label="포트폴리오 분류">
+      <button class="filter active" type="button" data-filter="전체" aria-pressed="true">전체</button>
+      <button class="filter" type="button" data-filter="개인" aria-pressed="false">개인</button>
+      <button class="filter" type="button" data-filter="기업" aria-pressed="false">기업</button>
+      <button class="filter" type="button" data-filter="지역" aria-pressed="false">지역</button>
+    </div>
+    <div class="portfolio-grid" id="portfolioGrid">
+<article class="portfolio-card" data-project-index="17" role="button" aria-haspopup="dialog" aria-controls="project-dialog" data-category="지역" tabindex="0" aria-label="달콤한 대전여행" title="달콤한 대전여행"><img src="posters/daejeon.webp" alt="달콤한 대전여행" loading="lazy"><div class="card-shade"></div><div class="card-copy"><h3>달콤한 대전여행</h3></div></article>
+      <article class="portfolio-card" data-project-index="0" role="button" aria-haspopup="dialog" aria-controls="project-dialog" data-category="개인" tabindex="0" aria-label="게온담, 바다의 깊은 맛을 담다">
+        <img src="optimized-images/35fdb40330f99c79.webp" alt="게온담, 바다의 깊은 맛을 담다" loading="lazy">
+        <div class="card-shade"></div>
+        <div class="card-copy"><h3>게온담, 바다의 깊은 맛을 담다</h3></div>
+      </article>
+      <article class="portfolio-card" data-project-index="1" role="button" aria-haspopup="dialog" aria-controls="project-dialog" data-category="개인" tabindex="0" aria-label="너에게 기울던 오후">
+        <img src="optimized-images/35fc4b7bef769845.webp" alt="너에게 기울던 오후" loading="lazy">
+        <div class="card-shade"></div>
+        <div class="card-copy"><h3>너에게 기울던 오후</h3></div>
+      </article>
+      <article class="portfolio-card" data-project-index="2" role="button" aria-haspopup="dialog" aria-controls="project-dialog" data-category="기업" tabindex="0" aria-label="벨루네브, 향기를 영상으로 담다">
+        <img src="optimized-images/617885f8181e3038.webp" alt="벨루네브, 향기를 영상으로 담다" loading="lazy">
+        <div class="card-shade"></div>
+        <div class="card-copy"><h3>벨루네브, 향기를 영상으로 담다</h3></div>
+      </article>
+      <article class="portfolio-card" data-project-index="3" role="button" aria-haspopup="dialog" aria-controls="project-dialog" data-category="기업" tabindex="0" aria-label="케르빅, 다음 기록을 향한 질주">
+        <img src="optimized-images/fdd26e51a53542ea.webp" alt="케르빅, 다음 기록을 향한 질주" loading="lazy">
+        <div class="card-shade"></div>
+        <div class="card-copy"><h3>케르빅, 다음 기록을 향한 질주</h3></div>
+      </article>
+      
+      
+<article class="portfolio-card" data-project-index="6" role="button" aria-haspopup="dialog" aria-controls="project-dialog" data-category="기업" tabindex="0" aria-label="Ai 안경 홍보"><img src="optimized-images/30c38dd6ed5e95ea.webp" alt="Ai 안경 홍보" loading="lazy"><div class="card-shade"></div><div class="card-copy"><h3>Ai 안경 홍보</h3></div></article>
+<article class="portfolio-card" data-project-index="7" role="button" aria-haspopup="dialog" aria-controls="project-dialog" data-category="개인" tabindex="0" aria-label="가족사진, 소중한 추억을 영상으로"><img src="optimized-images/724869fa6028d4f3.webp" alt="가족사진, 소중한 추억을 영상으로" loading="lazy"><div class="card-shade"></div><div class="card-copy"><h3>가족사진, 소중한 추억을 영상으로</h3></div></article>
+<article class="portfolio-card" data-project-index="8" role="button" aria-haspopup="dialog" aria-controls="project-dialog" data-category="개인" tabindex="0" aria-label="나만의 창작 이야기"><img src="optimized-images/b179a91b592619fb.webp" alt="나만의 창작 이야기" loading="lazy"><div class="card-shade"></div><div class="card-copy"><h3>나만의 창작 이야기</h3></div></article>
+<article class="portfolio-card" data-project-index="9" role="button" aria-haspopup="dialog" aria-controls="project-dialog" data-category="지역" tabindex="0" aria-label="횡성 한우 지역 홍보"><img src="optimized-images/2c19651e7adfa609.webp" alt="횡성 한우 지역 홍보" loading="lazy"><div class="card-shade"></div><div class="card-copy"><h3>횡성 한우 지역 홍보</h3></div></article>
+<article class="portfolio-card" data-project-index="10" role="button" aria-haspopup="dialog" aria-controls="project-dialog" data-category="개인" tabindex="0" aria-label="마법 같은 날들을 선물해 주신 부모님께"><img src="optimized-images/172d4290c992f19a.webp" alt="마법 같은 날들을 선물해 주신 부모님께" loading="lazy"><div class="card-shade"></div><div class="card-copy"><h3>마법 같은 날들을 선물해 주신 부모님께</h3></div></article>
+<article class="portfolio-card" data-project-index="11" role="button" aria-haspopup="dialog" aria-controls="project-dialog" data-category="개인" tabindex="0" aria-label="우리 집 강아지가 아이돌이 되었다"><img src="optimized-images/e812aea44a4503e3.webp" alt="우리 집 강아지가 아이돌이 되었다" loading="lazy"><div class="card-shade"></div><div class="card-copy"><h3>우리 집 강아지가 아이돌이 되었다</h3></div></article>
+<article class="portfolio-card" data-project-index="12" role="button" aria-haspopup="dialog" aria-controls="project-dialog" data-category="지역" tabindex="0" aria-label="우리가 알던 경주와 다른 경주를 만나다"><img src="optimized-images/7861f074b89cc67d.webp" alt="우리가 알던 경주와 다른 경주를 만나다" loading="lazy"><div class="card-shade"></div><div class="card-copy"><h3>우리가 알던 경주와 다른 경주를 만나다</h3></div></article>
+<article class="portfolio-card" data-project-index="13" role="button" aria-haspopup="dialog" aria-controls="project-dialog" data-category="기업" tabindex="0" aria-label="우리들의 구독"><img src="optimized-images/94e7a6a0067253e3.webp" alt="우리들의 구독" loading="lazy"><div class="card-shade"></div><div class="card-copy"><h3>우리들의 구독</h3></div></article>
+<article class="portfolio-card" data-project-index="14" role="button" aria-haspopup="dialog" aria-controls="project-dialog" data-category="지역" tabindex="0" aria-label="책을 읽읍시다"><img src="optimized-images/5d0f7d0d9aca4993.webp" alt="책을 읽읍시다" loading="lazy"><div class="card-shade"></div><div class="card-copy"><h3>책을 읽읍시다</h3></div></article>
+<article class="portfolio-card" data-project-index="15" role="button" aria-haspopup="dialog" aria-controls="project-dialog" data-category="지역" tabindex="0" aria-label="배움으로 가까워지는 디지털세상"><img src="optimized-images/7c47a875caf38893.webp" alt="배움으로 가까워지는 디지털세상" loading="lazy"><div class="card-shade"></div><div class="card-copy"><h3>배움으로 가까워지는 디지털세상</h3></div></article>
+<article class="portfolio-card" data-project-index="16" role="button" aria-haspopup="dialog" aria-controls="project-dialog" data-category="기업" tabindex="0" aria-label="작아진 옷 이어지는 이야기"><img src="optimized-images/5d3cda966bc9a4a4.webp" alt="작아진 옷 이어지는 이야기" loading="lazy"><div class="card-shade"></div><div class="card-copy"><h3>작아진 옷 이어지는 이야기</h3></div></article>
+    
+    </div>
+  </section>
+  <footer id="contact">
+    <div>
+      <div class="footer-links"><a href="#about">ABOUT US</a><a href="#ai-video">AI VIDEO</a><a href="#portfolio">PORTFOLIO</a><a href="#contact">CONTACT</a></div>
+      <p>© 2026 STUDIO SANGSANG. All rights reserved.</p>
+    </div>
+    <div class="footer-contact">제작 상담　 평일 10:00 ~ 19:00 (주말, 공휴일 휴무)<br>대표번호 : 0507-8765-4321<br>E-mail : main@sangsangstudio.com</div>
+    <div class="footer-contact">대표 : 이상상<br>주소 : 서울 강서구 화곡로 149 (화곡동)</div>
+  </footer>
+</main>
+<dialog class="project-dialog" id="project-dialog" aria-label="프로젝트 상세 이미지">
+<div class="original-panel"><img class="original-project" alt=""><div class="clean-player"><img alt=""><span class="center-play" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M10 5L27 16 10 27Z" fill="currentColor"/></svg></span></div></div>
+<button type="button" class="project-close" aria-label="프로젝트 상세 닫기" autofocus></button>
+</dialog>
+<script>
+const filterButtons = [...document.querySelectorAll('.filter')];
+const cards = [...document.querySelectorAll('.portfolio-card')];
+filterButtons.forEach(button => {
+  button.addEventListener('click', () => {
+    const selected = button.dataset.filter;
+    filterButtons.forEach(item => {
+      const active = item === button;
+      item.classList.toggle('active', active);
+      item.setAttribute('aria-pressed', String(active));
+    });
+    cards.forEach(card => {
+      card.hidden = selected !== '전체' && card.dataset.category !== selected;
+    });
+  });
+});
+
+const useProjects=[{"src":"optimized-images/837a69adc760f25b.webp","width":1512,"height":1040,"y":790,"labels":["식품·제품 광고","브랜드 홍보 영상","온라인몰 상세페이지","SNS·숏폼 콘텐츠"]},{"src":"optimized-images/dda8d5622231e222.webp","width":1513,"height":1040,"y":790,"labels":["웹드라마 예고편","SNS 숏폼 티저","플랫폼 대표 썸네일","캐릭터·OST 홍보"]},{"src":"optimized-images/487f39788d717850.webp","width":1512,"height":1040,"y":800,"labels":["향수·뷰티 광고","브랜드 홍보 영상","신제품 론칭","SNS·숏폼 콘텐츠"]},{"src":"optimized-images/45bbd3f05b8f3852.webp","width":1512,"height":1040,"y":800,"labels":["스포츠·제품 광고","브랜드 캠페인","신제품 론칭","SNS·숏폼 콘텐츠"]},{"src":"optimized-images/30a182c58166a36b.webp","width":1512,"height":1040,"y":800,"labels":["지역 관광 홍보","지역 축제 안내","특산물·상권 홍보","SNS·숏폼 콘텐츠"]},{"src":"optimized-images/f481e7be1dfcfd21.webp","width":1512,"height":1040,"y":800,"labels":["지역 관광 홍보","지역 축제 안내","문화·명소 소개","SNS·숏폼 콘텐츠"]}];
+useProjects.push(...[{"src":"optimized-images/854fff77f8c307dc.webp","width":1512,"height":1040,"crop":[347,118,818,866]},{"src":"optimized-images/b2750a0943736869.webp","width":1512,"height":1040,"crop":[350,117,816,869]},{"src":"optimized-images/5a47af98df094b81.webp","width":1512,"height":1040,"crop":[343,113,818,870]},{"src":"optimized-images/75b32769ee7607c2.webp","width":1513,"height":1040,"crop":[347,117,820,867]}]);
+useProjects.push(...[{"src":"optimized-images/c5422a9130f26f14.webp","width":2400,"height":2736,"crop":[0,0,2400,2736],"player":[136.95652173913044,122.28843861740167,2122.826086956522,1193.5351609058403],"standalone":true,"hasClose":false},{"src":"optimized-images/3214dfc47248e08f.webp","width":2400,"height":2792,"crop":[0,0,2400,2792],"player":[138.36650652024707,121.82075471698113,2121.619766643789,1249.4858490566037],"standalone":true,"hasClose":false},{"src":"optimized-images/d2a7e83b7eebb35d.webp","width":1211,"height":1299,"crop":[0,0,1211,1299],"player":[59,75,1092,482.99999999999994],"standalone":true,"hasClose":true},{"src":"optimized-images/f024f5db0e6ed16b.webp","width":1189,"height":1323,"crop":[0,0,1189,1323],"player":[63,57,1064,547],"standalone":true,"hasClose":false},{"src":"optimized-images/b7f513d1d0571ad6.webp","width":1223,"height":1286,"crop":[0,0,1223,1286],"player":[89,75,1046,486],"standalone":true,"hasClose":true}]);
+const borderlessCrops=[[0.029211956521739132,0.021454112038140644,0.9415760869565217,0.9570917759237187],[0.029512697323266987,0.02122641509433962,0.940974605353466,0.9575471698113207],[0.028075970272502065,0.020015396458814474,0.9438480594549958,0.9607390300230947],[0.03280067283431455,0.021164021164021163,0.9335576114381834,0.9576719576719577],[0.0482420278004906,0.019440124416796267,0.9035159443990188,0.9564541213063764]];
+useProjects.slice(10,15).forEach((project,i)=>{const r=borderlessCrops[i];project.crop=r.map((v,j)=>v*(j%2===0?project.width:project.height));});
+useProjects.push(...[{"src":"optimized-images/660e34ef520895c3.webp","width":1223,"height":1286,"crop":[25,30,1171,1228],"player":[70,71,1082,504],"standalone":true,"hasClose":false},{"src":"optimized-images/07d1e5a4e95dfa15.webp","width":1205,"height":1305,"crop":[47,61,1111,1218],"player":[59,77,1087,540],"standalone":true,"hasClose":false}]);
+useProjects[17]={"src":"projects/daejeon.webp","width":1513,"height":1039,"crop":[347,120,819,864],"player":[398,177,718,325]};
+const descriptions=["윤기 나는 간장게장과 정갈한 상차림을 통해 식품 브랜드의 깊은 맛과 정성을 전하는 광고 영상 프로젝트입니다.","한 시절의 설렘과 우정을 담은 감성 웹드라마 예고편 프로젝트입니다. 따뜻한 오후의 빛과 두 주인공의 시선으로 풋풋한 첫사랑의 순간을 그렸습니다.","로즈핑크와 샴페인 골드의 우아한 무드를 바탕으로 향수 브랜드의 매력을 전하는 광고 영상 프로젝트입니다.","역동적인 러닝 장면과 제품 클로즈업을 통해 스포츠 브랜드의 에너지와 도전 정신을 전하는 광고 영상 프로젝트입니다.","친근한 빵 캐릭터와 대전의 명소를 생생하게 담아 도시의 매력과 여행의 즐거움을 전하는 지역 홍보 영상 프로젝트입니다.","83타워를 모티브로 한 캐릭터 팔삼이와 함께 대구의 명소와 이야기를 친근하게 전하는 지역 홍보 영상 프로젝트입니다."];
+const projectDialog=document.getElementById('project-dialog');
+const projectImage=projectDialog.querySelector('.original-project');
+let returnCard=null;
+let previousOverflow='';
+let previousScroll=0;
+function openProject(card,index){
+  if(projectDialog.open)return;
+  returnCard=card;
+  previousScroll=window.scrollY;
+  previousOverflow=document.documentElement.style.overflow;
+  const project=useProjects[index];
+  projectDialog.classList.toggle('standalone-detail',!!project?.standalone);
+  projectDialog.classList.toggle('draw-close',!!project?.standalone&&!project.hasClose);
+  projectDialog.classList.toggle('image-only',!project);
+  if(!project){
+    projectImage.src=card.querySelector('img').src;
+    projectImage.alt=card.querySelector('h3').textContent;
+    projectImage.style.width='100%';projectImage.style.left='0';projectImage.style.top='0';projectDialog.querySelector('.original-panel').style.aspectRatio='auto';
+    document.documentElement.style.overflow='hidden';
+    projectDialog.showModal();projectDialog.scrollTop=0;return;
+  }
+  projectImage.src=project.src;
+  projectImage.alt=card.querySelector('h3').textContent+' — 프로젝트명, 프로젝트 개요 및 주요 활용 사례 원본';
+  const [x,y,w,h]=project.crop||[347,119,818,865];
+  projectDialog.style.setProperty('--panel-ratio',w/h);
+  projectDialog.style.setProperty('--panel-width',w+'px');
+  projectDialog.querySelector('.original-panel').style.aspectRatio=w+'/'+h;
+  projectImage.style.width=(project.width/w*100)+'%';
+  projectImage.style.left=(-x/w*100)+'%';
+  projectImage.style.top=(-y/h*100)+'%';
+  const playerRects=[[398,176,716,328],[399,178,715,326],[397,176,718,326],[398,177,717,325],[398,177,717,325],[398,178,717,326],[398,175,717,295],[397,153,720,315],[398,169,712,325],[398,174,719,298]];
+  const [px,py,pw,ph]=project.player||playerRects[index];
+  const player=projectDialog.querySelector('.clean-player');
+  Object.assign(player.style,{left:((px-x)/w*100)+'%',top:((py-y)/h*100)+'%',width:(pw/w*100)+'%',height:(ph/h*100)+'%'});
+  player.querySelector('img').src=card.querySelector('img').src;
+  player.querySelector('img').alt=card.querySelector('h3').textContent;
+
+  document.documentElement.style.overflow='hidden';
+  projectDialog.showModal();
+  projectDialog.scrollTop=0;
+}
+cards.forEach((card,index)=>{
+  card.addEventListener('click',()=>openProject(card,Number(card.dataset.projectIndex)));
+  card.addEventListener('keydown',event=>{
+    if(event.key==='Enter'||event.key===' '){event.preventDefault();openProject(card,Number(card.dataset.projectIndex));}
+  });
+});
+projectDialog.querySelector('.project-close').addEventListener('click',()=>projectDialog.close());
+projectDialog.addEventListener('close',()=>{
+  document.documentElement.style.overflow=previousOverflow;
+  returnCard?.focus({preventScroll:true});
+  window.scrollTo({top:previousScroll,behavior:'instant'});
+});
+</script>
+<dialog id="video-dialog" aria-label="프로젝트 영상 재생"><button type="button" class="video-close" aria-label="영상 닫기">×</button><video controls playsinline preload="metadata"></video></dialog>
+<script>
+const videoDialog=document.getElementById('video-dialog');
+const video=videoDialog.querySelector('video');
+const videoFiles=['videos/geondam.mp4','videos/afternoon.mp4','videos/veluneve.mp4','videos/kerviq.mp4',null,null,'videos/ai-glasses.mp4','videos/family.mp4','videos/cat-story.mp4','videos/hoengseong.mp4'];
+videoFiles.push('videos/parents.mp4','videos/idol-dog.mp4','videos/gyeongju.mp4','videos/subscription.mp4','videos/reading.mp4');
+videoFiles[15]='videos/digital-learning.mp4';videoFiles[16]='videos/clothes-story.mp4';
+videoFiles[17]='videos/daejeon.mp4';
+const cleanPlayer=projectDialog.querySelector('.clean-player');
+const playButton=document.createElement('button');
+playButton.type='button';playButton.className='video-trigger';playButton.setAttribute('aria-label','프로젝트 영상 재생');
+cleanPlayer.append(playButton);
+playButton.addEventListener('click',()=>{
+ const index=Number(returnCard.dataset.projectIndex);
+ if(!videoFiles[index])return;
+ video.src=videoFiles[index];video.poster=cleanPlayer.querySelector('img').src;
+ videoDialog.showModal();video.play().catch(()=>{});
+});
+videoDialog.querySelector('.video-close').addEventListener('click',()=>videoDialog.close());
+videoDialog.addEventListener('close',()=>{video.pause();video.removeAttribute('src');video.load();playButton.focus({preventScroll:true});});
+const originalOpenProject=openProject;
+openProject=function(card,index){originalOpenProject(card,index);playButton.hidden=!videoFiles[index];};
+</script>
+<script>
+// Use one real, visible close button instead of transparent image hotspots.
+const detailClose=projectDialog.querySelector('.project-close');
+detailClose.replaceChildren();
+detailClose.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5L19 19M19 5L5 19" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>';
+const closeBar=document.createElement('div');closeBar.className='detail-close-bar';closeBar.append(detailClose);
+const detailPanel=projectDialog.querySelector('.original-panel');
+projectDialog.prepend(closeBar);
+closeBar.after(cleanPlayer);
+const beforeLayoutOpen=openProject;
+openProject=function(card,index){
+ beforeLayoutOpen(card,index);
+ const project=useProjects[index];if(!project)return;
+ const rects=[[398,176,716,328],[399,178,715,326],[397,176,718,326],[398,177,717,325],[398,177,717,325],[398,178,717,326],[398,175,717,295],[397,153,720,315],[398,169,712,325],[398,174,719,298]];
+ const [x,y,w,h]=project.crop||[347,119,818,865];
+ const [,py,,ph]=project.player||rects[index];
+ const top=py+ph;
+ const remaining=y+h-top;
+ detailPanel.style.aspectRatio=w+'/'+remaining;
+ projectImage.style.top=(-top/remaining*100)+'%';
+ projectImage.style.left=(-x/w*100)+'%';
+ projectImage.style.width=(project.width/w*100)+'%';
+ cleanPlayer.removeAttribute('style');
+ projectDialog.scrollTop=0;
+};
+</script>
+
+<style>
+.clean-player.daejeon-project>img{position:static;width:100%;height:100%;max-width:100%;object-fit:contain}
+.clean-player.daejeon-project .video-trigger,.clean-player.daejeon-project .video-trigger:hover{background:transparent!important}
+</style>
+<script>
+const beforeDaejeonOpen=openProject;
+openProject=function(card,index){beforeDaejeonOpen(card,index);cleanPlayer.classList.toggle('daejeon-project',index===17);if(index===17){cleanPlayer.querySelector('img').src='posters/daejeon-play.webp';cleanPlayer.querySelector('img').alt='달콤한 대전여행';}};
+</script>
+<link rel="stylesheet" href="project-details.css?v=20261021f"><script src="project-details.js?v=20261021f"></script>
+</body>
+</html>

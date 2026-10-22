@@ -1,0 +1,19 @@
+
+/* Separate title, supporting copy and actions with generous breathing room. */
+.hero-screen{gap:0;padding-block:40px}
+.hero-screen>.intro-content>h2{margin-bottom:24px}
+.hero-screen>.intro-content>h1{margin-bottom:56px}
+.hero-screen>.intro-content>.sub{margin:0}
+.hero-screen>.intro-content>div[style]{margin-top:56px;max-width:852px;gap:64px!important}
+#about>.section-head h2.split-heading{margin-bottom:56px}
+@media(max-width:900px){
+.hero-screen>.intro-content>h1{margin-bottom:36px}
+.hero-screen>.intro-content>div[style]{margin-top:36px;gap:24px!important}
+#about>.section-head h2.split-heading{margin-bottom:40px}
+}
+@media(max-width:650px){
+.hero-screen{padding-block:32px}
+.hero-screen>.intro-content>h2{margin-bottom:20px}
+.hero-screen>.intro-content>h1{margin-bottom:32px}
+.hero-screen>.intro-content>div[style]{margin-top:32px;gap:20px!important}
+}

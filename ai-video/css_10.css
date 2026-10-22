@@ -1,0 +1,2 @@
+
+@media(min-width:1101px){.benefit{grid-template-columns:minmax(0,1fr) 520px}.benefit:nth-child(2){grid-template-columns:520px minmax(0,1fr)}}

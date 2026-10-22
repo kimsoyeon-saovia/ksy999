@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>이벤트 배너 · 빛 효과 7가지</title>
+<style>
+@font-face{font-family:Seoul;src:url('assets/SeoulAlrim-Medium.otf');font-weight:400 500;font-display:swap}
+@font-face{font-family:Seoul;src:url('assets/SeoulAlrim-ExtraBold.otf');font-weight:800;font-display:swap}
+*{box-sizing:border-box}body{margin:0;background:#f7f8fb;color:#10121a;font:16px/1.5 Seoul,sans-serif}
+header{max-width:1600px;margin:auto;padding:48px 36px 28px}header small{color:#0a47f4;font-size:13px;letter-spacing:.12em}h1{font-size:36px;letter-spacing:-.04em;margin:10px 0 8px}header p{margin:0;color:#626774}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:24px}button{font:inherit;cursor:pointer;border:1px solid #dce0e8;background:#fff;border-radius:9px;padding:10px 16px;color:inherit}button:hover{border-color:#0a47f4}button:focus-visible{outline:3px solid #0a47f4;outline-offset:3px}.toolbar button[aria-pressed=true]{background:#10121a;color:#fff;border-color:#10121a}
+main{max-width:1600px;margin:auto;padding:0 36px 60px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px}.card{background:#fff;border:1px solid #e3e6ec;border-radius:18px;padding:24px;min-width:0}.card.chosen{outline:3px solid #0a47f4;outline-offset:1px}.card-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}.number{background:#0a47f4;color:#fff;border-radius:9px;width:40px;height:40px;display:grid;place-items:center;font-weight:800;flex:none}h2{font-size:22px;margin:0;font-weight:800}.spec{margin-left:auto;background:#f1f3f7;padding:5px 10px;border-radius:6px;font-size:13px;white-space:nowrap}.description{color:#6a6f7a;margin:0 0 18px;font-size:14px}.stage{padding:20px 12px 26px}.select{width:100%;padding:10px;background:#f6f7fa}.chosen .select{color:#fff;background:#0a47f4;border-color:#0a47f4}#choice{min-height:24px;margin-top:12px;color:#0a47f4;font-weight:800}
+@property --a{syntax:"<angle>";inherits:true;initial-value:0deg}
+.frame{--w:3px;--blur:5px;--a:0deg;position:relative;isolation:isolate;padding:var(--w);border-radius:12px;background:#fff;--rim:conic-gradient(from var(--a),#e0ff4f,#0a47f4,#e0ff4f);animation:orbit 5s linear infinite}
+.rim,.glow{position:absolute;inset:0;border-radius:inherit;pointer-events:none;padding:var(--w);background:var(--rim);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;z-index:2}.glow{filter:blur(var(--blur));opacity:.65;z-index:-1}.art{position:relative;background:#fff;overflow:hidden;border-radius:calc(12px - var(--w));z-index:1}.art svg{display:block;width:100%;height:auto}.headline{animation:hop 3.2s ease-in-out infinite}
+@keyframes orbit{to{--a:360deg}}@keyframes hop{0%,8%,48%,100%{transform:translateY(0)}19%{transform:translateY(-22px)}29%{transform:translateY(5px)}38%{transform:translateY(-10px)}}
+/* 흰색 중심광을 더한 두 번째 시안 */
+.v1{--w:2px;--blur:4px;animation-duration:5s;--rim:conic-gradient(from var(--a),#0a47f4 0deg,#0a47f4 200deg,#e0ff4f 265deg,#fff 285deg,#fff 290deg,#e0ff4f 305deg,#0a47f4 330deg,#0a47f4 360deg)}.v1 .glow{opacity:.85}
+.v2{--w:4px;--blur:6px;animation-duration:2.3s;--rim:conic-gradient(from var(--a),#e0ff4f 0deg,#e0ff4f 110deg,#0a47f4 119deg,#0a47f4 126deg,#fff 130deg,#fff 134deg,#e0ff4f 138deg,#e0ff4f 290deg,#0a47f4 299deg,#0a47f4 306deg,#fff 310deg,#fff 314deg,#e0ff4f 318deg,#e0ff4f 360deg)}
+.v3{--w:7px;--blur:10px;animation-duration:5s;--rim:conic-gradient(from var(--a),#e0ff4f 0deg,#e0ff4f 90deg,#fff 130deg,#0a47f4 170deg,#0a47f4 270deg,#fff 310deg,#e0ff4f 350deg,#e0ff4f 360deg)}.v3 .glow{opacity:.9}
+.v4{--w:7px;animation:none;background:#fff}.v4 .rim{padding:2px;--rim:conic-gradient(from var(--a),#e0ff4f 0deg,#e0ff4f 200deg,#0a47f4 260deg,#fff 290deg,#e0ff4f 320deg,#e0ff4f 360deg);animation:orbit 4s linear infinite}.v4 .glow{inset:4px;padding:2px;filter:none;opacity:1;z-index:2;--rim:conic-gradient(from var(--a),#0a47f4 0deg,#0a47f4 200deg,#e0ff4f 260deg,#fff 290deg,#0a47f4 320deg,#0a47f4 360deg);animation:orbit 4s linear infinite reverse}
+.v5{--w:10px;--blur:8px;animation-duration:4s;--rim:conic-gradient(from var(--a),#e0ff4f 0deg,#e0ff4f 55deg,#fff 75deg,#0a47f4 95deg,#0a47f4 180deg,#e0ff4f 230deg,#e0ff4f 295deg,#fff 315deg,#0a47f4 335deg,#e0ff4f 360deg)}.v5 .glow{opacity:.7}
+.v6{--w:5px;animation:none;background:#e0ff4f;box-shadow:0 0 12px #e0ff4f55}.v6 .rim,.v6 .glow{display:none}.track{position:absolute;inset:0;width:100%;height:100%;z-index:2;overflow:visible;pointer-events:none}.track rect{fill:none;stroke:#0a47f4;stroke-width:4px;vector-effect:non-scaling-stroke;stroke-dasharray:12 88;stroke-linecap:round;animation:dash 3.6s linear infinite}.track .trail{stroke-width:9px;stroke-dasharray:20 80;opacity:.55;filter:blur(3px)}.track .head{stroke:#fff;stroke-width:3px;stroke-dasharray:2 98;filter:drop-shadow(0 0 3px #fff)}@keyframes dash{to{stroke-dashoffset:-100}}
+.v7{--w:14px;--blur:16px;animation:orbit 9s linear infinite,neon 4.5s ease-in-out infinite;--rim:conic-gradient(from var(--a),#e0ff4f 0deg,#e0ff4f 75deg,#fff 120deg,#0a47f4 165deg,#0a47f4 255deg,#fff 300deg,#e0ff4f 345deg,#e0ff4f 360deg)}.v7 .glow{animation:breathe 4.5s ease-in-out infinite}@keyframes neon{0%,100%{box-shadow:0 0 8px #e0ff4f22,0 0 8px #0a47f422}50%{box-shadow:-5px 0 24px #e0ff4f77,5px 0 24px #0a47f466}}@keyframes breathe{0%,100%{opacity:.35}50%{opacity:1}}
+body.paused *,body.paused *::before,body.paused *::after{animation-play-state:paused!important}body.no-bounce .headline{animation:none!important}body.wide main{grid-template-columns:1fr;max-width:1000px}
+@media(max-width:850px){header{padding:28px 18px 22px}h1{font-size:28px}main{grid-template-columns:1fr;padding:0 18px 40px;gap:18px}.card{padding:18px}.stage{padding:18px 7px 24px}h2{font-size:19px}.spec{font-size:12px}}
+</style>
+</head>
+<body>
+<header><small>SANGSANG STUDIO · BORDER STUDY</small><h1>이벤트 배너, 하얀 빛을 더한 7가지</h1><p>노랑·파랑 사이에 하얀 중심광과 번지는 잔광을 넣었어. 마음에 드는 번호를 골라줘!</p><div class="toolbar"><button id="pause" aria-pressed="false">전체 일시정지</button><button id="bounce" aria-pressed="false">글자 움직임 끄기</button><button id="wide" aria-pressed="false">크게 보기</button></div><div id="choice" role="status" aria-live="polite"></div></header>
+<main id="samples"></main>
+<script>
+const options=[
+ ['가는 별빛','2px','얇은 파란 선 위로 노랑 꼬리와 하얀 중심광이 흐름'],
+ ['하얗게 빛나는 두 줄기','4px','노란 바탕 · 흰빛이 먼저, 짧은 파란 꼬리가 뒤따름 · 속도 조금 빠르게'],
+ ['유리 같은 컬러 리본','7px','노랑 → 하양 → 파랑이 넓고 부드럽게 이어짐'],
+ ['교차하는 이중 광선','2px × 2','두 줄의 흰 중심광이 서로 반대 방향으로 이동'],
+ ['선명한 플래시 리본','10px','도톰한 컬러 사이에 짧고 선명한 흰빛이 지나감'],
+ ['꼬리를 남기는 별빛','5px','하얀 빛 하나가 파란 꼬리를 달고 테두리를 따라 이동'],
+ ['넓게 번지는 오로라','14px','노랑·하양·파랑이 천천히 흐르며 바깥으로 빛이 번짐']
+];
+function artwork(n){return `<svg viewBox="0 0 1920 1080" width="1920" height="1080" role="img" aria-label="리뷰 쓰고 10% 돌려받자! 네이버 리뷰, 블로그, SNS 후기 작성 시 결제 금액의 10%를 돌려드립니다. 이벤트 기간과 자세한 내용은 카카오톡 채널을 통해 안내드립니다."><defs><clipPath id="still-${n}"><path clip-rule="evenodd" d="M0 0H1920V1080H0Z M530 180H1885V680H475V610L530 570Z"/></clipPath><clipPath id="headline-${n}"><path d="M530 180H1885V680H475V610L530 570Z"/></clipPath></defs><image href="assets/review-event.webp" width="1920" height="1080" clip-path="url(#still-${n})"/><g class="headline"><g clip-path="url(#headline-${n})"><image href="assets/review-event.webp" width="1920" height="1080"/></g></g></svg>`}
+document.querySelector('#samples').innerHTML=options.map(([name,width,description],i)=>{const n=i+1;return `<article class="card" id="sample-${n}"><div class="card-head"><span class="number">0${n}</span><h2>${name}</h2><span class="spec">${width}</span></div><p class="description">${description}</p><div class="stage"><div class="frame v${n}"><span class="rim" aria-hidden="true"></span><span class="glow" aria-hidden="true"></span><div class="art">${artwork(n)}</div>${n===6?'<svg class="track" viewBox="0 0 1000 562.5" preserveAspectRatio="none" aria-hidden="true"><rect x="3" y="3" width="994" height="556.5" rx="12" pathLength="100" class="trail"/><rect x="3" y="3" width="994" height="556.5" rx="12" pathLength="100"/><rect x="3" y="3" width="994" height="556.5" rx="12" pathLength="100" class="head"/></svg>':''}</div></div><button class="select" data-pick="${n}" aria-pressed="false">${n}번 선택</button></article>`}).join('');
+for(const [id,cls,on,off] of [['pause','paused','전체 일시정지','다시 재생'],['bounce','no-bounce','글자 움직임 끄기','글자 움직임 켜기'],['wide','wide','크게 보기','나란히 보기']])document.getElementById(id).addEventListener('click',e=>{const active=document.body.classList.toggle(cls);e.currentTarget.setAttribute('aria-pressed',active);e.currentTarget.textContent=active?off:on});
+document.querySelector('#samples').addEventListener('click',e=>{const button=e.target.closest('[data-pick]');if(!button)return;const n=Number(button.dataset.pick);document.querySelectorAll('.card').forEach(card=>card.classList.toggle('chosen',card.id==='sample-'+n));document.querySelectorAll('[data-pick]').forEach(b=>{const picked=b===button;b.setAttribute('aria-pressed',picked);b.textContent=b.dataset.pick+'번 '+(picked?'선택됨 ✓':'선택')});document.querySelector('#choice').textContent=n+'번 · '+options[n-1][0]+' 선택됨';});
+</script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+/* 회원 관리 (장바구니 페이지 스타일 위에 덧붙임) */
+.my-stats{display:flex;gap:10px;margin:0;padding:0;list-style:none}
+.my-stats li{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:96px;height:64px;border:1px solid #080808;font-size:13px;color:#555}
+.my-stats li:first-child{background:#e0ff4f;border-color:#e0ff4f}
+.my-stats b{font-size:22px;font-weight:800;color:#080808;line-height:1.1}
+.my-none{padding:28px 0;color:#777;font-size:15px}
+.ad-notice{margin:18px 0 22px;padding:12px 16px;background:#f4f4f4;font-size:14px;color:#555}
+.ad-tools{gap:12px;flex-wrap:wrap}
+.ad-search{flex:1;min-width:240px;max-width:460px;padding:10px 0;border:0;border-bottom:1px solid #bbb;font:400 16px UnifiedSeoul,Arial,sans-serif;background:none;border-radius:0}
+.ad-search:focus{outline:0;border-bottom:2px solid #080808;padding-bottom:9px}
+.ad-tools .tool-btns{display:flex;gap:8px;align-items:center}
+.ad-sort{height:38px;padding:0 10px;border:1px solid #c9c9c9;background:#fff;font:400 14px UnifiedSeoul,Arial,sans-serif}
+.ad-tools .ghost:disabled{opacity:.4;cursor:default}
+.ad-flash{min-height:20px;margin:12px 0 0;font-size:14px;color:#1647ff}
+.ad-table-wrap{overflow-x:auto;margin-top:8px}
+.ad-table{width:100%;border-collapse:collapse;font-size:14px}
+.ad-table th{padding:12px 10px;border-bottom:2px solid #080808;text-align:left;font-weight:800;white-space:nowrap}
+.ad-table td{padding:14px 10px;border-bottom:1px solid #e5e5e5;vertical-align:top}
+.ad-table tbody tr:hover{background:#fafafa}
+.ad-table strong{font-family:Arial,sans-serif}
+.ad-on{display:inline-block;margin-left:6px;padding:2px 6px;background:#e0ff4f;font-size:11px;font-weight:800;vertical-align:1px}
+.ad-addr{min-width:160px;max-width:240px;line-height:1.5;word-break:keep-all;overflow-wrap:anywhere}
+.ad-none{color:#aaa}
+.ad-num{text-align:center}
+.ad-actions{white-space:nowrap}
+.ad-actions .ghost{padding:6px 10px;margin:0 4px 4px 0;font-size:13px}
+.ad-actions .ad-del:hover{border-color:#e5402f;color:#e5402f}
+.ad-gate{width:240px}
+.ad-notice .text-link{margin-left:6px;font-size:14px}
+.ad-count{margin:14px 0 0;font-size:14px;color:#777}
+.ad-dialog{width:min(480px,92vw);padding:0;border:0;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.ad-dialog::backdrop{background:rgba(8,8,8,.55)}
+.ad-form{display:grid;gap:14px;padding:32px}
+.ad-form h2{margin:0 0 6px;font-size:22px;font-weight:800}.ad-form h2 small{margin-left:6px;font:400 15px Arial,sans-serif;color:#888}
+.ad-form label{display:grid;gap:4px;font-size:13px;color:#555}
+.ad-form input{padding:8px 0;border:0;border-bottom:1px solid #bbb;font:400 16px UnifiedSeoul,Arial,sans-serif;color:#080808;background:none;border-radius:0}
+.ad-form input:focus{outline:0;border-bottom:2px solid #080808;padding-bottom:7px}
+.ad-err{min-height:18px;margin:0;font-size:13px;color:#e5402f}
+.ad-form-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ad-form-btns .sub-cta,.ad-form-btns .cta{height:50px;margin:0;justify-content:center}
+@media(max-width:750px){
+ .my-stats{width:100%}.my-stats li{flex:1;min-width:0;height:58px}
+ .ad-table thead{display:none}
+ .ad-table,.ad-table tbody,.ad-table tr,.ad-table td{display:block;width:100%}
+ .ad-table tr{padding:12px 0;border-bottom:1px solid #ddd}
+ .ad-table td{display:flex;justify-content:space-between;gap:16px;padding:5px 0;border:0;text-align:right}
+ .ad-table td::before{content:attr(data-label);flex:0 0 auto;color:#888;text-align:left}
+ .ad-addr{max-width:none}.ad-num{text-align:right}
+ .ad-actions{justify-content:flex-start!important;padding-top:10px!important;flex-wrap:wrap;white-space:normal}
+}

@@ -1,0 +1,7 @@
+
+.motion-ready .benefit-copy.scroll-reveal{transform:none;transition:opacity .95s ease;transition-delay:0ms}
+.motion-ready .benefit-copy.scroll-reveal.is-visible{transform:none}
+#process>.section-head{opacity:1;transform:none;transition:none}
+#process>.section-head h2{text-align:center}
+.typing-character{opacity:0}.typing-character.typed{opacity:1}
+@media(prefers-reduced-motion:reduce){.typing-character{opacity:1}}

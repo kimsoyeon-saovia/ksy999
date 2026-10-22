@@ -1,0 +1,2 @@
+
+(()=>{const items=[...document.querySelectorAll('#process .step b,#process .step h3,#process .step p')];const original=items.map(el=>el.style.fontSize);function enlarge(){items.forEach((el,i)=>el.style.fontSize=original[i]);const sizes=items.map(el=>parseFloat(getComputedStyle(el).fontSize)*(el.matches('.step p')?1.32:1.2));items.forEach((el,i)=>el.style.fontSize=sizes[i]+'px')}enlarge();document.fonts.ready.then(enlarge);addEventListener('resize',enlarge)})();

@@ -1,0 +1,5 @@
+
+@keyframes process-pop{0%{opacity:0;transform:scale(.65)}70%{opacity:1;transform:scale(1.04)}100%{opacity:1;transform:scale(1)}}
+.motion-ready #process>.section-head h2{opacity:0;transform:scale(.65);transform-origin:center}
+.motion-ready #process>.section-head.is-visible h2{animation:process-pop .9s cubic-bezier(.2,.8,.3,1) both}
+@media(prefers-reduced-motion:reduce){.motion-ready #process>.section-head h2,.motion-ready #process>.section-head.is-visible h2{animation:none;opacity:1;transform:none}}
