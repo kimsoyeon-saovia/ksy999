@@ -2,7 +2,7 @@
 .hero{text-align:center}.hero-screen>.intro-content>h1,.hero-screen>.intro-content>h2,.hero-screen>.intro-content>.sub{text-align:center}
 .hero-screen>.intro-content>div[style]>.btn{border:0;cursor:pointer;transition:background-color .22s,color .22s,box-shadow .22s}
 .hero-screen>.intro-content>div[style]>.btn:hover,.hero-screen>.intro-content>div[style]>.btn:focus-visible{background:#000;color:#fff}
-#consult{transition:background-color .22s,color .22s}#consult:hover,#consult:focus-visible{background:#1647ff;color:#fff}
+#consult{transition:background-color .22s,color .22s}#consult:hover,#consult:focus-visible{background:#1647ff!important;color:#fff!important;border-color:#1647ff!important}
 .btn:focus-visible{outline:3px solid #1647ff;outline-offset:5px}
 @keyframes title-rise{from{opacity:0;transform:translateY(65px)}to{opacity:1;transform:translateY(0)}}
 @keyframes spring-pop{0%{opacity:0;transform:translateY(24px) scale(.72)}55%{opacity:1;transform:translateY(-6px) scale(1.055)}75%{transform:translateY(2px) scale(.98)}100%{opacity:1;transform:translateY(0) scale(1)}}
