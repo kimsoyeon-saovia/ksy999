@@ -165,6 +165,7 @@ function checkoutSubmit(e){
  document.body.append(paying);
  setTimeout(()=>{
   try{const orders=read(ORDERS,[]);localStorage.setItem(ORDERS,JSON.stringify([...(Array.isArray(orders)?orders:[]),order]))}catch{}
+  if(!order.memberId)window.SangsangDB?.saveGuestOrder(order).catch(()=>{});
   const ids=new Set(list.map(i=>i.id));saveItems(items().filter(i=>!ids.has(i.id)));
   try{sessionStorage.removeItem(PICK)}catch{}
   paying.remove();history.replaceState(null,'',`?order=${encodeURIComponent(no)}`);renderDone(order);scrollTo({top:0});

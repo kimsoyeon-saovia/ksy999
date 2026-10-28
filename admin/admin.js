@@ -10,7 +10,22 @@ const fmtPhone=v=>{const d=v.replace(/\D/g,'').slice(0,11);return d.length<4?d:d
 const addrText=a=>a?.addr1?`(${a.zip||''}) ${a.addr1}${a.addr2?' '+a.addr2:''}`:'';
 const head=stats=>`<div class="shop-head"><h1>회원 관리</h1>${stats||''}</div>`;
 const openLogin=()=>document.querySelector('sangsang-header')?.shadowRoot?.querySelector('[data-member]')?.click();
-let DB=null,members=[],query='',sort='new',flash='';
+let DB=null,members=[],guests=[],query='',sort='new',flash='';
+const money=n=>Number(n||0).toLocaleString('ko-KR')+'원';
+const thisMonth=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`};
+const inMonth=o=>String(o.date||'').startsWith(thisMonth());
+// 장바구니에는 화질 · 길이 id만 저장되므로 견적 설정에서 이름과 가격을 찾는다
+const C=()=>window.INQUIRY_CONFIG;
+const cartLabel=i=>{const c=C();const q=c?.qualities.find(x=>x.id===i.quality),d=c?.durations.find(x=>x.id===i.duration);return `${q?.name||i.quality} · ${d?.name||i.duration}`};
+const cartQty=list=>(list||[]).reduce((n,i)=>n+(Number(i.quantity)||1),0);
+const monthOrders=m=>(m.orders||[]).filter(inMonth);
+const sum=list=>list.reduce((n,o)=>n+(Number(o.total)||0),0);
+// 회원 · 비회원 주문을 모두 모아 화질 · 길이 조합별로 많이 팔린 순서
+function bestSellers(){
+ const all=[...members.flatMap(m=>m.orders||[]),...guests],count={};
+ for(const o of all)for(const i of o.items||[]){const k=`${i.quality} · ${i.duration}`;const c=count[k]||(count[k]={name:k,qty:0,sales:0});c.qty+=Number(i.quantity)||1;c.sales+=Number(i.price)||0}
+ return Object.values(count).sort((a,b)=>b.qty-a.qty||b.sales-a.sales).slice(0,5);
+}
 
 function message(title,text,login){
  shop.innerHTML=head()+`<div class="empty"><h2>${title}</h2><p>${text}</p>${login?'<div class="ad-gate"><button type="button" class="cta plain" data-login>관리자 로그인</button></div>':''}</div>`;
@@ -27,7 +42,12 @@ function render(){
  const found=filtered(),all=members;
  const now=new Date(),month=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
  const me=DB.current()?.id;
- shop.innerHTML=head(`<ul class="my-stats ad-stats"><li><b>${all.length}</b>전체 회원</li><li><b>${all.filter(m=>String(m.joined||'').startsWith(month)).length}</b>이번 달 가입</li></ul>`)+`
+ const mOrders=[...all.flatMap(monthOrders),...guests.filter(inMonth)],best=bestSellers();
+ shop.innerHTML=head(`<ul class="my-stats ad-stats"><li><b>${all.length}</b>전체 회원</li><li><b>${all.filter(m=>String(m.joined||'').startsWith(month)).length}</b>이번 달 가입</li><li><b>${mOrders.length}</b>이번 달 주문</li><li><b>${guests.length}</b>비회원 주문</li></ul>`)+`
+<section class="ad-insight" aria-label="주문 현황">
+ <div class="ad-box"><h2>이번 달 매출 <small>회원 + 비회원 · 부가세 포함</small></h2><p class="ad-big">${money(sum(mOrders))}</p></div>
+ <div class="ad-box"><h2>잘 팔리는 영상 <small>전체 주문 기준 TOP 5</small></h2>${best.length?`<ol class="ad-best">${best.map((b,i)=>`<li><b>${i+1}</b><span>${esc(b.name)}</span><em>${b.qty}개 · ${money(b.sales)}</em></li>`).join('')}</ol>`:'<p class="ad-none">아직 주문이 없습니다.</p>'}</div>
+</section>
 <p class="ad-notice">관리자 화면 · 회원 정보는 <b>Firebase 데이터베이스</b>에 저장되어 있어 어느 기기에서 가입한 회원이든 모두 보입니다. <button type="button" class="text-link" data-refresh>새로고침</button></p>
 <div class="list-tools ad-tools">
  <input class="ad-search" type="search" placeholder="아이디 · 이름 · 휴대폰 · 이메일 · 주소 검색" value="${esc(query)}" aria-label="회원 검색">
@@ -36,16 +56,22 @@ function render(){
 </div>
 <p class="ad-flash" role="status">${esc(flash)}</p>
 ${all.length?(found.length?`<div class="ad-table-wrap"><table class="ad-table">
-<thead><tr><th>아이디</th><th>이름</th><th>휴대폰</th><th>이메일</th><th>주소</th><th>가입일</th><th>관리</th></tr></thead>
+<thead><tr><th>아이디</th><th>이름</th><th>휴대폰</th><th>이메일</th><th>주소</th><th>가입일</th><th>이번 달 주문</th><th>장바구니</th><th>관리</th></tr></thead>
 <tbody>${found.map(m=>`<tr>
  <td data-label="아이디"><strong>${esc(m.id)}</strong>${me===m.id?'<span class="ad-on">나</span>':''}</td>
  <td data-label="이름">${esc(m.name)}</td><td data-label="휴대폰">${esc(m.phone||'-')}</td><td data-label="이메일">${esc(m.email||'-')}</td>
  <td data-label="주소" class="ad-addr">${esc(addrText(m.address))||'<span class="ad-none">없음</span>'}</td>
  <td data-label="가입일">${date(m.joined)}</td>
- <td class="ad-actions"><button type="button" class="ghost" data-edit="${esc(m.id)}">수정</button>${me===m.id?'':`<button type="button" class="ghost ad-del" data-del="${esc(m.id)}">삭제</button>`}</td>
+ <td data-label="이번 달 주문">${monthOrders(m).length?`<b>${monthOrders(m).length}건</b><br><small>${money(sum(monthOrders(m)))}</small>`:'<span class="ad-none">없음</span>'}</td>
+ <td data-label="장바구니">${cartQty(m.cart)?`${cartQty(m.cart)}개`:'<span class="ad-none">비어 있음</span>'}</td>
+ <td class="ad-actions"><button type="button" class="ghost" data-detail="${esc(m.id)}">내역</button><button type="button" class="ghost" data-edit="${esc(m.id)}">수정</button>${me===m.id?'':`<button type="button" class="ghost ad-del" data-del="${esc(m.id)}">삭제</button>`}</td>
 </tr>`).join('')}</tbody></table></div>
 <p class="ad-count">${countText(found.length,all.length)}</p>`:`<div class="my-none">'${esc(query)}'에 맞는 회원이 없습니다.</div>`)
 :`<div class="empty"><h2>아직 가입한 회원이 없습니다</h2><p>헤더의 MEMBER 메뉴에서 회원가입하면 여기에 나타납니다.</p></div>`}
+<section class="ad-guests"><div class="block-title"><h2>비회원 주문 <small>${guests.length}건 · 최근 주문부터</small></h2></div>
+${guests.length?`<div class="ad-table-wrap"><table class="ad-table"><thead><tr><th>주문번호</th><th>주문일</th><th>주문자</th><th>연락처</th><th>주문 영상</th><th>결제 수단</th><th>금액</th></tr></thead><tbody>
+${[...guests].sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(o=>`<tr><td data-label="주문번호"><strong>${esc(o.no)}</strong></td><td data-label="주문일">${date(o.date)}</td><td data-label="주문자">${esc(o.buyer?.name)}</td><td data-label="연락처">${esc(o.buyer?.phone)}</td><td data-label="주문 영상">${(o.items||[]).map(i=>`${esc(i.quality)} · ${esc(i.duration)} × ${i.quantity}`).join('<br>')}</td><td data-label="결제 수단">${esc(o.method)}</td><td data-label="금액">${money(o.total)}</td></tr>`).join('')}
+</tbody></table></div>`:'<div class="my-none">아직 비회원 주문이 없습니다.</div>'}</section>
 <dialog class="ad-dialog"></dialog>`;
  flash='';
 }
@@ -56,6 +82,9 @@ async function load(){
  if(!DB.current()){message('관리자 로그인이 필요합니다','관리자로 등록된 아이디로 로그인하면 회원 목록이 보입니다.',true);return}
  if(!await DB.isAdmin()){message('관리자 권한이 없습니다',`${esc(DB.current().id)} 계정은 관리자로 등록되어 있지 않습니다.`,false);return}
  try{members=await DB.listMembers()}catch(err){message('회원 목록을 불러오지 못했습니다',esc(DB.errorText(err)),false);return}
+ // 회원별 장바구니 · 주문과 비회원 주문 (못 불러와도 회원 목록은 보여 준다)
+ await Promise.all(members.map(async m=>{if(!m.uid)return;try{Object.assign(m,await DB.memberActivity(m.uid))}catch{}}));
+ try{guests=await DB.listGuestOrders()}catch{guests=[]}
  render();
 }
 
@@ -88,6 +117,20 @@ function openEdit(id){
  dlg.showModal();f.name.focus();
 }
 
+// 회원 한 명의 장바구니와 주문 · 결제 내역
+function openDetail(id){
+ const m=members.find(x=>x.id===id);if(!m)return;
+ const dlg=shop.querySelector('.ad-dialog'),orders=[...(m.orders||[])].sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+ dlg.innerHTML=`<div class="ad-form ad-detail"><h2>${esc(m.name)} 님 내역 <small>${esc(id)}</small></h2>
+ <h3>지금 장바구니 <small>${cartQty(m.cart)}개</small></h3>
+ ${(m.cart||[]).length?`<ul class="ad-list">${m.cart.map(i=>`<li><span>${esc(cartLabel(i))}</span><em>× ${Number(i.quantity)||1}</em></li>`).join('')}</ul>`:'<p class="ad-none">비어 있습니다.</p>'}
+ <h3>주문 · 결제 내역 <small>이번 달 ${monthOrders(m).length}건 · 전체 ${orders.length}건</small></h3>
+ ${orders.length?`<ul class="ad-list">${orders.map(o=>`<li><span><b>${esc(o.no)}</b> ${date(o.date)} · ${esc(o.method)}<br><small>${(o.items||[]).map(i=>`${esc(i.quality)} · ${esc(i.duration)} × ${i.quantity}`).join(', ')}</small></span><em>${money(o.total)}</em></li>`).join('')}</ul>`:'<p class="ad-none">주문 내역이 없습니다.</p>'}
+ <div class="ad-form-btns"><button type="button" class="cta plain" data-close>닫기</button></div></div>`;
+ dlg.querySelector('[data-close]').addEventListener('click',()=>dlg.close());
+ dlg.showModal();
+}
+
 shop.addEventListener('input',e=>{
  if(e.target.matches('.ad-search')){query=e.target.value;const pos=e.target.selectionStart;render();const s=shop.querySelector('.ad-search');s.focus();s.setSelectionRange(pos,pos)}
 });
@@ -97,6 +140,7 @@ shop.addEventListener('click',async e=>{
  if(b.hasAttribute('data-login')){openLogin();return}
  if(b.hasAttribute('data-refresh')){load();return}
  if(b.dataset.edit){openEdit(b.dataset.edit);return}
+ if(b.dataset.detail){openDetail(b.dataset.detail);return}
  if(b.dataset.del){
   const id=b.dataset.del,m=members.find(x=>x.id===id);if(!m)return;
   if(!confirm(`${id} (${m.name}) 회원을 삭제할까요?\n회원 정보가 데이터베이스에서 지워지고, 이 아이디로는 더 로그인할 수 없습니다.`))return;

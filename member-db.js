@@ -181,6 +181,15 @@ window.SangsangDB={
  current(){const id=idOf(auth?.currentUser);return id?{id}:null},
  async isAdmin(){await ready;const u=auth.currentUser;if(!u)return false;try{return (await db.doc(`admins/${u.uid}`).get()).exists}catch{return false}},
  async listMembers(){await ready;return (await db.collection('members').get()).docs.map(d=>({id:d.id,...d.data()}))},
+ // 비회원 주문도 관리자가 볼 수 있도록 guestOrders에 남긴다 (읽기는 관리자만)
+ async saveGuestOrder(order){await ready;if(!order?.no||order.memberId)return;await db.doc(`guestOrders/${order.no}`).set(plain(order))},
+ async listGuestOrders(){await ready;return (await db.collection('guestOrders').get()).docs.map(d=>d.data())},
+ // 관리자: 회원 한 명의 장바구니와 주문 내역
+ async memberActivity(uid){
+  await ready;const ref=db.doc(`userdata/${uid}`);
+  const [snap,os]=await Promise.all([ref.get(),ref.collection('orders').get()]);
+  return {cart:snap.data()?.cart?.items||[],orders:os.docs.map(d=>d.data())};
+ },
  async updateMember(id,data){
   await ready;await db.doc(`members/${id}`).update(data);
   if(idOf(auth.currentUser)===id){const s=await db.doc(`members/${id}`).get();cache({id,...s.data()});window.dispatchEvent(new Event('sangsang-member-change'))}

@@ -48,3 +48,21 @@
  .ad-addr{max-width:none}.ad-num{text-align:right}
  .ad-actions{justify-content:flex-start!important;padding-top:10px!important;flex-wrap:wrap;white-space:normal}
 }
+/* 주문 현황 · 인기 영상 · 비회원 주문 · 회원 내역 */
+.ad-insight{display:grid;grid-template-columns:1fr 2fr;gap:16px;margin:22px 0 6px}
+.ad-box{padding:20px 22px;border:1px solid #080808;background:#fff}
+.ad-box h2{margin:0 0 12px;font-size:17px;font-weight:800}.ad-box h2 small,.ad-guests h2 small,.ad-detail h3 small{margin-left:6px;font-size:13px;font-weight:400;color:#888}
+.ad-big{margin:0;font-size:30px;font-weight:800}
+.ad-best{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.ad-best li{display:grid;grid-template-columns:28px 1fr auto;align-items:center;gap:10px;font-size:15px}
+.ad-best li b{display:inline-flex;justify-content:center;align-items:center;width:24px;height:24px;background:#080808;color:#fff;font:700 13px Arial,sans-serif}
+.ad-best li:first-child b{background:#e0ff4f;color:#080808}
+.ad-best em{font-style:normal;color:#555;font-size:14px}
+.ad-guests{margin-top:44px}
+.ad-dialog:has(.ad-detail){width:min(620px,94vw)}
+.ad-detail h3{margin:10px 0 0;font-size:16px;font-weight:800}
+.ad-list{margin:0;padding:0;list-style:none;max-height:240px;overflow:auto;border-top:1px solid #e5e5e5}
+.ad-list li{display:flex;justify-content:space-between;gap:14px;padding:10px 0;border-bottom:1px solid #e5e5e5;font-size:14px}
+.ad-list small{color:#777}.ad-list em{font-style:normal;font-weight:800;white-space:nowrap}
+.ad-detail .ad-form-btns{grid-template-columns:1fr}
+@media(max-width:750px){.ad-insight{grid-template-columns:1fr}.my-stats{flex-wrap:wrap}.my-stats li{flex:1 1 40%}}
