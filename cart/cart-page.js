@@ -1,9 +1,10 @@
 // 장바구니 페이지(cart/index.html) + 주문/결제 페이지(cart/checkout.html)
-// 장바구니 내용은 CONTACT 개인 견적의 '담기' 목록(sangsang-studio-draft-v1)과 같은 값이다.
+// 장바구니 내용은 CONTACT 개인 견적에서 '담기'한 영상 목록(sangsang-cart-v1)이다. 견적서와는 따로 저장된다.
+// 예전에 담은 영상과 이번에 담은 영상을 함께 보여 주고, 담은 날짜별로 묶어 최근 순서로 정렬한다.
 // 장바구니 · 주문은 localStorage에 쓰고, 로그인한 회원이면 member-db.js가 Firebase 계정에도 저장한다. 실제 결제는 일어나지 않는다.
 (()=>{
 const C=window.INQUIRY_CONFIG;
-const DRAFT='sangsang-studio-draft-v1',ORDERS='sangsang-orders',PICK='sangsang-checkout-ids';
+const DRAFT='sangsang-studio-draft-v1',CART='sangsang-cart-v1',ORDERS='sangsang-orders',PICK='sangsang-checkout-ids';
 const MEMBERS='sangsang-members-v2',SESSION='sangsang-member-session';
 const view=document.body.dataset.view,shop=document.querySelector('#shop');
 const ESTIMATE_URL='../contact/index.html';
@@ -16,12 +17,17 @@ const quality=item=>C.qualities.find(x=>x.id===item.quality);
 const duration=item=>C.durations.find(x=>x.id===item.duration);
 const unit=item=>((quality(item)?.points||0)+(duration(item)?.points||0))*C.pointValue;
 const qty=item=>Math.max(1,Math.min(999,Math.trunc(Number(item.quantity))||1));
-const items=()=>{const list=read(DRAFT,{})?.personal?.items;return Array.isArray(list)?list:[]};
+// 최근에 담은 영상이 위로 온다 (담은 시각이 없는 예전 데이터는 맨 아래)
+const items=()=>{const list=read(CART,{})?.items;return Array.isArray(list)?[...list].sort((a,b)=>String(b.addedAt||'').localeCompare(String(a.addedAt||''))):[]};
 function saveItems(list){
- const d=read(DRAFT,{})||{};d.personal={...(d.personal||{}),items:list};
- try{localStorage.setItem(DRAFT,JSON.stringify(d))}catch{}
+ const c=read(CART,{})||{};
+ try{localStorage.setItem(CART,JSON.stringify({...c,items:list}))}catch{}
  window.dispatchEvent(new Event('sangsang-cart-change'));
 }
+const DAYS=['일','월','화','수','목','금','토'];
+const pad=n=>String(n).padStart(2,'0');
+const dayOf=item=>{const d=new Date(item.addedAt);return isNaN(d)?'':`${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())} (${DAYS[d.getDay()]})`};
+const timeOf=item=>{const d=new Date(item.addedAt);return isNaN(d)?'':`${pad(d.getHours())}:${pad(d.getMinutes())}`};
 const member=()=>{const s=read(SESSION,null);if(!s?.id)return null;return {id:s.id,name:s.name,...(read(MEMBERS,{})[s.id]||{})}};
 const openLogin=()=>document.querySelector('sangsang-header')?.shadowRoot?.querySelector('[data-member]')?.click();
 
@@ -30,8 +36,9 @@ function head(title,step){
  return `<div class="shop-head"><h1>${title}</h1><ol class="steps">${names.map((n,i)=>`<li class="${i+1===step?'now':''}" ${i+1===step?'aria-current="step"':''}><b>${String(i+1).padStart(2,'0')}</b>${n}</li>`).join('')}</ol></div>`;
 }
 const thumb=item=>`<div class="thumb" aria-hidden="true"><strong>${esc(quality(item)?.name||'')}</strong><span>${esc(duration(item)?.name||'')}</span></div>`;
-const totals=list=>{const subtotal=list.reduce((n,i)=>n+unit(i)*qty(i),0),vat=Math.round(subtotal*.1);return {subtotal,vat,total:subtotal+vat}};
-const summaryRows=t=>`<dl><div><dt>상품 금액</dt><dd>${money(t.subtotal)}</dd></div><div><dt>부가세 (10%)</dt><dd>${money(t.vat)}</dd></div><div class="total"><dt>총 결제 예정 금액</dt><dd>${money(t.total)}</dd></div></dl>`;
+// 영상 가격은 부가세(10%)가 포함된 금액이다. 부가세 = 합계 ÷ 11, 공급가액 = 합계 - 부가세
+const totals=list=>{const total=list.reduce((n,i)=>n+unit(i)*qty(i),0),vat=Math.round(total/11);return {subtotal:total-vat,vat,total}};
+const summaryRows=t=>`<dl><div><dt>공급가액</dt><dd>${money(t.subtotal)}</dd></div><div><dt>부가세 (10%, 포함)</dt><dd>${money(t.vat)}</dd></div><div class="total"><dt>총 결제 예정 금액</dt><dd>${money(t.total)}</dd></div></dl>`;
 const emptyIcon='<svg viewBox="0 0 24 24" fill="none" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2"/><circle cx="9.5" cy="19" r="1.3"/><circle cx="17" cy="19" r="1.3"/></svg>';
 
 // ---------------- 장바구니 ----------------
@@ -47,8 +54,8 @@ function renderCart(){
  const picked=list.filter(i=>selected.has(i.id)),t=totals(picked),all=picked.length===list.length;
  shop.innerHTML=head('장바구니',1)+`<div class="shop-body"><section aria-label="담은 영상">
 <div class="list-tools"><label class="check"><input type="checkbox" data-all ${all?'checked':''}> 전체 선택 (${picked.length}/${list.length})</label><div class="tool-btns"><button type="button" class="ghost" data-remove-picked ${picked.length?'':'disabled'}>선택 삭제</button><button type="button" class="ghost" data-clear>전체 삭제</button></div></div>
-${list.map((item,i)=>{const n=qty(item);return `<article class="row"><label class="check"><input type="checkbox" data-pick="${esc(item.id)}" ${selected.has(item.id)?'checked':''} aria-label="개인 맞춤 영상 ${i+1} 선택"></label>${thumb(item)}<div class="info"><h2>개인 맞춤 영상 ${i+1}</h2><p>화질 ${esc(quality(item)?.name)} · 길이 ${esc(duration(item)?.name)}</p><p class="unit">개당 ${money(unit(item))}</p></div><div class="stepper" role="group" aria-label="개인 맞춤 영상 ${i+1} 수량"><button type="button" data-step="-1" data-id="${esc(item.id)}" aria-label="수량 줄이기" ${n<=1?'disabled':''}>−</button><output>${n}</output><button type="button" data-step="1" data-id="${esc(item.id)}" aria-label="수량 늘리기" ${n>=999?'disabled':''}>+</button></div><strong class="line-total">${money(unit(item)*n)}</strong><button type="button" class="remove" data-remove="${esc(item.id)}" aria-label="개인 맞춤 영상 ${i+1} 삭제">×</button></article>`}).join('')}
-<div class="list-foot"><span>담은 영상은 개인 견적서와 함께 저장됩니다.</span><a class="text-link" href="${ESTIMATE_URL}">+ 영상 더 담기</a></div>
+${list.map((item,i)=>{const n=qty(item),day=dayOf(item),newDay=i===0||day!==dayOf(list[i-1]);return `${newDay?`<h3 class="cart-day">${day?esc(day)+' 담은 영상':'이전에 담은 영상'}</h3>`:''}<article class="row"><label class="check"><input type="checkbox" data-pick="${esc(item.id)}" ${selected.has(item.id)?'checked':''} aria-label="개인 맞춤 영상 ${i+1} 선택"></label>${thumb(item)}<div class="info"><h2>개인 맞춤 영상 ${i+1}</h2><p>화질 ${esc(quality(item)?.name)} · 길이 ${esc(duration(item)?.name)}</p><p class="unit">개당 ${money(unit(item))}${timeOf(item)?` · <span class="added-at">${timeOf(item)} 담음</span>`:''}</p></div><div class="stepper" role="group" aria-label="개인 맞춤 영상 ${i+1} 수량"><button type="button" data-step="-1" data-id="${esc(item.id)}" aria-label="수량 줄이기" ${n<=1?'disabled':''}>−</button><output>${n}</output><button type="button" data-step="1" data-id="${esc(item.id)}" aria-label="수량 늘리기" ${n>=999?'disabled':''}>+</button></div><strong class="line-total">${money(unit(item)*n)}</strong><button type="button" class="remove" data-remove="${esc(item.id)}" aria-label="개인 맞춤 영상 ${i+1} 삭제">×</button></article>`}).join('')}
+<div class="list-foot"><span>담은 영상은 결제 전까지 장바구니에 보관됩니다.</span><a class="text-link" href="${ESTIMATE_URL}">+ 영상 더 담기</a></div>
 </section><aside class="summary" aria-label="결제 예정 금액"><h2>결제 예정 금액</h2>${summaryRows(t)}<p class="note">선택한 ${picked.length}개 항목 · 최종 금액은 상담 후 확정될 수 있습니다.</p><button type="button" class="cta" data-order ${picked.length?'':'disabled'}>주문하기</button><button type="button" class="sub-cta" data-consult aria-expanded="${consult.open}" aria-controls="consult">${consult.open?'상담 신청 닫기':'결제 전에 상담 먼저 받기'}</button></aside></div>${consult.open?consultHTML(picked):''}`;
 }
 
@@ -198,7 +205,7 @@ if(view==='cart'){
  // 결제 페이지에서 로그인하면 회원 정보로 다시 채운다
  window.addEventListener('sangsang-member-change',()=>{if(shop.querySelector('#checkout'))renderCheckout()});
 }
-window.addEventListener('storage',e=>{if(e.key===DRAFT&&view==='cart')renderCart()});
+window.addEventListener('storage',e=>{if(e.key===CART&&view==='cart')renderCart()});
 // 로그인하면 회원 계정에 저장된 장바구니 · 주문을 불러와(member-db.js) 다시 그린다
 window.addEventListener('sangsang-data-sync',()=>{if(view==='cart'){selected=null;renderCart()}else if(shop.querySelector('#checkout'))renderCheckout()});
 })();

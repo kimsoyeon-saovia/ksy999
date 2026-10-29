@@ -1,10 +1,10 @@
 // CART 메뉴 + 장바구니 창
-// 장바구니 내용 = CONTACT 개인 견적에서 '담기'로 확정한 영상 목록(견적서와 같은 저장값)을 그대로 쓴다.
+// 장바구니 내용 = CONTACT 개인 견적에서 '담기'한 영상 목록. 견적서와는 따로 저장된다(sangsang-cart-v1).
 (()=>{
 const siteRoot=new URL('.',document.currentScript.src);
 const host=document.querySelector('sangsang-header');if(!host||!host.shadowRoot)return;
 const shadow=host.shadowRoot;const nav=shadow.querySelector('nav');if(!nav||shadow.querySelector('[data-cart]'))return;
-const DRAFT='sangsang-studio-draft-v1',SESSION='sangsang-member-session';
+const CART='sangsang-cart-v1',SESSION='sangsang-member-session';
 const PERSONAL_URL=new URL('contact/index.html',siteRoot);
 const CART_URL=new URL('cart/index.html',siteRoot),CHECKOUT_URL=new URL('cart/checkout.html',siteRoot);
 const money=n=>n.toLocaleString('ko-KR')+'원';
@@ -17,20 +17,11 @@ const unitPrice=item=>{if(!config)return 0;const q=config.qualities.find(x=>x.id
 const labelOf=item=>{if(!config)return '';return [config.qualities.find(x=>x.id===item.quality)?.name,config.durations.find(x=>x.id===item.duration)?.name].filter(Boolean).join(' · ')};
 const qty=item=>Math.max(1,Math.min(999,Math.trunc(Number(item.quantity))||1));
 
-const readDraft=()=>{try{return JSON.parse(localStorage.getItem(DRAFT)||'{}')||{}}catch{return {}}};
-const items=()=>{const p=readDraft().personal;return Array.isArray(p?.items)?p.items:[]};
-function writeItems(list){try{const d=readDraft();d.personal={...(d.personal||{}),items:list};localStorage.setItem(DRAFT,JSON.stringify(d))}catch{}}
-// CONTACT 페이지에서는 견적서 화면이 같은 목록을 메모리에 들고 있으므로, 견적서의 버튼을 대신 눌러 함께 바뀌게 한다
+const readCart=()=>{try{return JSON.parse(localStorage.getItem(CART)||'{}')||{}}catch{return {}}};
+const items=()=>{const c=readCart();return Array.isArray(c.items)?c.items:[]};
+function writeItems(list){try{localStorage.setItem(CART,JSON.stringify({...readCart(),items:list}))}catch{}}
 const inquiry=()=>document.body.dataset.sitePage==='contact'?document.querySelector('#inquiry'):null;
 const quoteButton=sel=>inquiry()?.querySelector(sel);
-// 휴대폰에서는 접힌 견적서를 처음 누르면 펼치기만 하고(site-enhancements.js) 잠긴(inert) 부분도 있으므로,
-// 잠깐 '펼친 상태'로 두고 눌러서 견적서 버튼이 그대로 동작하게 한다
-function press(btn){
- const body=document.body,wasOpen=body.classList.contains('quote-open'),locked=[];
- for(let el=btn;el;el=el.parentElement)if(el.inert){locked.push(el);el.inert=false}
- body.classList.add('quote-open');btn.click();if(!wasOpen)body.classList.remove('quote-open');
- locked.forEach(el=>{el.inert=true});
-}
 
 const style=document.createElement('style');
 style.textContent=`
@@ -100,7 +91,7 @@ function paint(list=items()){
  let me=null;try{me=JSON.parse(localStorage.getItem(SESSION))}catch{}
  $('.cart-head small').textContent=list.length?`${list.length}건`:'';
  $('.cart-head p').textContent=me?.name?`${me.name}님이 담은 영상`:'개인 맞춤 영상 견적';
- const editable=!onCorporate();
+ const editable=true;
  if(!list.length){
   $('.cart-list').innerHTML=`<div class="cart-empty"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2"/><circle cx="9.5" cy="19" r="1.3"/><circle cx="17" cy="19" r="1.3"/></svg><h3>장바구니가 비어 있습니다</h3><p>화질과 길이를 골라 영상을 담아 보세요.</p><a class="cart-go" href="${PERSONAL_URL}" data-to-estimate style="width:auto;min-width:220px">견적 내러 가기</a></div>`;
   $('.cart-foot').hidden=true;return;
@@ -108,7 +99,7 @@ function paint(list=items()){
  $('.cart-foot').hidden=false;
  $('.cart-list').innerHTML=list.map((item,i)=>{const n=qty(item),unit=unitPrice(item);return `<article class="cart-item"><div class="cart-item-top"><div><h3>개인 맞춤 영상 ${i+1}</h3><p>${esc(labelOf(item))} · 개당 ${money(unit)}</p></div>${editable?`<button type="button" class="cart-del" data-del="${esc(item.id)}">삭제</button>`:''}</div><div class="cart-item-bottom">${editable?`<div class="cart-step" role="group" aria-label="영상 ${i+1} 수량"><button type="button" data-step="-1" data-id="${esc(item.id)}" aria-label="수량 줄이기" ${n<=1?'disabled':''}>−</button><output>${n}</output><button type="button" data-step="1" data-id="${esc(item.id)}" aria-label="수량 늘리기" ${n>=999?'disabled':''}>+</button></div>`:`<p>수량 ${n}개</p>`}<strong>${money(unit*n)}</strong></div></article>`}).join('');
  const total=list.reduce((s,i)=>s+unitPrice(i)*qty(i),0);
- $('.cart-foot').innerHTML=`<div class="cart-total"><span>예상 합계</span><strong>${money(total)}</strong></div><p class="cart-vat">VAT 별도 · 상담 후 최종 확정</p><a class="cart-go" href="${CHECKOUT_URL}" data-order>주문하기</a><a class="cart-more" href="${CART_URL}">장바구니 전체 보기</a><p class="cart-note"><a href="${PERSONAL_URL}" data-to-estimate>영상 더 담기</a> · <a href="${PERSONAL_URL}#inquiry-form" data-checkout>결제 전에 상담 먼저 받기</a></p>${editable?'':'<p class="cart-note">수량 변경은 개인 견적 페이지에서 할 수 있습니다.</p>'}`;
+ $('.cart-foot').innerHTML=`<div class="cart-total"><span>예상 합계</span><strong>${money(total)}</strong></div><p class="cart-vat">VAT 포함 · 상담 후 최종 확정</p><a class="cart-go" href="${CHECKOUT_URL}" data-order>주문하기</a><a class="cart-more" href="${CART_URL}">장바구니 전체 보기</a><p class="cart-note"><a href="${PERSONAL_URL}" data-to-estimate>영상 더 담기</a> · <a href="${PERSONAL_URL}#inquiry-form" data-checkout>결제 전에 상담 먼저 받기</a></p>${editable?'':'<p class="cart-note">수량 변경은 개인 견적 페이지에서 할 수 있습니다.</p>'}`;
 }
 let lastFocus=null;
 // 견적서 하단 시트 등 페이지 요소보다 위에 보이도록 열려 있는 동안 헤더를 맨 위로 올린다
@@ -126,14 +117,12 @@ layer.addEventListener('click',e=>{
  if(e.target===layer){close();return}
  const b=e.target.closest('button,a');if(!b)return;
  if(b.dataset.del!==undefined){
-  const viaQuote=quoteButton(`[data-remove-video="${CSS.escape(b.dataset.del)}"]`);
-  if(viaQuote)press(viaQuote);else writeItems(items().filter(i=>i.id!==b.dataset.del));
+  writeItems(items().filter(i=>i.id!==b.dataset.del));
   setTimeout(()=>{refresh();paint()},0);return;
  }
  if(b.dataset.step){
   const id=b.dataset.id,step=Number(b.dataset.step);
-  const viaQuote=quoteButton(`[data-video-step="${step}"][data-id="${CSS.escape(id)}"]`);
-  if(viaQuote)press(viaQuote);else writeItems(items().map(i=>i.id===id?{...i,quantity:Math.max(1,Math.min(999,qty(i)+step))}:i));
+  writeItems(items().map(i=>i.id===id?{...i,quantity:Math.max(1,Math.min(999,qty(i)+step))}:i));
   setTimeout(()=>{refresh();paint()},0);return;
  }
  if(b.hasAttribute('data-checkout')||b.hasAttribute('data-to-estimate')){
@@ -154,7 +143,7 @@ document.addEventListener('click',e=>{
  const added=!!e.target.closest?.('[data-add-video]');
  setTimeout(()=>{const before=lastCount,now=refresh();if(added&&now>before){toast.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.classList.remove('show'),2600)}},0);
 });
-window.addEventListener('storage',e=>{if(e.key===DRAFT||e.key===SESSION)refresh()});
+window.addEventListener('storage',e=>{if(e.key===CART||e.key===SESSION)refresh()});
 window.addEventListener('pageshow',refresh);
 refresh();
 // 장바구니의 '상담 신청하기'로 넘어온 경우 견적서 입력 칸으로 이동

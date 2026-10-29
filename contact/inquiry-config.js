@@ -9,7 +9,7 @@ window.INQUIRY_CONFIG = {
     {id:'720p',name:'720p',points:500,description:'가볍게 공유하는 기본 화질'},
     {id:'1080p',name:'1080p',points:600,description:'선명하고 자연스러운 표준 화질'},
     {id:'2k',name:'2K (UHD)',points:650,description:'디테일까지 또렷한 고화질'},
-    {id:'4k',name:'4K',points:650,description:'큰 화면에서도 살아나는 최고 화질'}
+    {id:'4k',name:'4K',points:700,description:'큰 화면에서도 살아나는 최고 화질'}
   ],
   durations: [{id:'5',name:'5초',points:200},{id:'10',name:'10초',points:370},{id:'15',name:'15초',points:520},{id:'30',name:'30초',points:990},{id:'60',name:'1분',points:1890}],
   plans: [{id:'starter',name:'STARTER',price:50000,points:5000,bonus:1000},{id:'plus',name:'PLUS',price:100000,points:10000,bonus:3000}],

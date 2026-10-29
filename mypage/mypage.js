@@ -13,7 +13,8 @@ const openLogin=()=>document.querySelector('sangsang-header')?.shadowRoot?.query
 const me=()=>{const s=read(SESSION,null);if(!s?.id)return null;const m=read(MEMBERS,{})[s.id];return m?{id:s.id,...m}:null};
 const myOrders=m=>(read(ORDERS,[])||[]).filter(o=>o.memberId===m.id).sort((a,b)=>b.date.localeCompare(a.date));
 const myConsults=m=>(read(INQUIRIES,[])||[]).filter(r=>r.memberId===m.id||(m.phone&&r.fields?.contact===m.phone)).sort((a,b)=>b.savedAt.localeCompare(a.savedAt));
-const cartCount=()=>{const it=read(DRAFT,{})?.personal?.items;return Array.isArray(it)?it.reduce((n,i)=>n+(Number(i.quantity)||1),0):0};
+const CART='sangsang-cart-v1';
+const cartCount=()=>{const it=read(CART,{})?.items;return Array.isArray(it)?it.reduce((n,i)=>n+(Number(i.quantity)||1),0):0};
 const head=sub=>`<div class="shop-head"><h1>마이페이지</h1>${sub||''}</div>`;
 const icon='<svg viewBox="0 0 24 24" fill="none" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>';
 
@@ -69,20 +70,20 @@ shop.addEventListener('click',e=>{
  }
  if(b.dataset.again){
   const o=myOrders(me()).find(x=>x.no===b.dataset.again);if(!o||!C)return;
-  const d=read(DRAFT,{})||{};const p=d.personal||(d.personal={});const items=Array.isArray(p.items)?p.items:(p.items=[]);
-  let next=Number(p.nextVideoId)||items.reduce((n,i)=>Math.max(n,Number(i.id)||0),0);
+  const c=read(CART,{})||{};const items=Array.isArray(c.items)?c.items:[];
+  let next=Number(c.nextId)||items.reduce((n,i)=>Math.max(n,Number(i.id)||0),0);
+  const now=new Date().toISOString();
   for(const i of o.items||[]){
    const q=C.qualities.find(x=>x.name===i.quality),du=C.durations.find(x=>x.name===i.duration);if(!q||!du)continue;
-   const same=items.find(x=>x.quality===q.id&&x.duration===du.id);
-   if(same)same.quantity=(Number(same.quantity)||1)+i.quantity;else items.push({id:String(++next),quality:q.id,duration:du.id,quantity:i.quantity});
+   items.push({id:String(++next),quality:q.id,duration:du.id,quantity:i.quantity,addedAt:now});
   }
-  p.nextVideoId=next;write(DRAFT,d);window.dispatchEvent(new Event('sangsang-cart-change'));
+  write(CART,{items,nextId:next});window.dispatchEvent(new Event('sangsang-cart-change'));
   location.href='../cart/index.html';
  }
 });
 // 헤더의 MEMBER 창에서 로그인 · 로그아웃하면 바로 다시 그린다
 window.addEventListener('sangsang-member-change',()=>render());
 window.addEventListener('sangsang-data-sync',()=>render());
-window.addEventListener('storage',e=>{if([MEMBERS,SESSION,ORDERS,INQUIRIES,DRAFT].includes(e.key))render()});
+window.addEventListener('storage',e=>{if([MEMBERS,SESSION,ORDERS,INQUIRIES,CART].includes(e.key))render()});
 render();
 })();

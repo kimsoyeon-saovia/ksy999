@@ -61,10 +61,11 @@ const errCode=e=>String(e?.code||'').replace('auth/','');
 // ---------------- 장바구니 · 주문 · 상담 내역을 회원 계정(Firestore)에 저장 ----------------
 // 화면 스크립트(cart.js · cart-page.js · mypage.js · inquiry.js)는 지금처럼 localStorage를 읽고 쓴다.
 // 여기서 로그인한 회원의 값만 서버 userdata/{uid}와 맞춰, 다른 브라우저 · 기기에서 다시 로그인해도 그대로 보인다.
-//  userdata/{uid}              cart: { items, nextVideoId }
+//  userdata/{uid}              cart: { items, nextId }  (상품마다 담은 시각 addedAt)
 //  userdata/{uid}/orders/{no}  주문 1건
 //  userdata/{uid}/consults/{key} 결제 전 상담 신청 1건
-const DRAFT='sangsang-studio-draft-v1',ORDERS='sangsang-orders',INQUIRIES='sangsang-studio-inquiries-v1';
+// 장바구니(sangsang-cart-v1)는 개인 견적서(sangsang-studio-draft-v1)와 따로 저장한다.
+const CART='sangsang-cart-v1',ORDERS='sangsang-orders',INQUIRIES='sangsang-studio-inquiries-v1';
 const OWNER='sangsang-data-owner',PENDING='sangsang-cart-pending';
 const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
 let syncUid=null,syncId=null,applying=false,cartTimer=0;
@@ -72,7 +73,7 @@ const userDoc=()=>db.doc(`userdata/${syncUid}`);
 const consultKey=r=>String(r.savedAt||'').replace(/[^0-9A-Za-z]/g,'');
 const myOrders=id=>(read(ORDERS,[])||[]).filter(o=>o&&o.memberId===id&&o.no);
 const myConsults=id=>(read(INQUIRIES,[])||[]).filter(r=>r&&r.memberId===id&&r.savedAt);
-const cartOf=()=>{const p=read(DRAFT,{})?.personal||{};return {items:Array.isArray(p.items)?p.items:[],nextVideoId:Number(p.nextVideoId)||0}};
+const cartOf=()=>{const c=read(CART,{})||{};return {items:Array.isArray(c.items)?c.items:[],nextId:Number(c.nextId)||0}};
 // Firestore는 undefined 값을 받지 않으므로 JSON으로 한 번 정리해서 보낸다
 const plain=v=>JSON.parse(JSON.stringify(v));
 // 우리가 고친 값은 다시 서버로 보내지 않도록 applying 동안 쓴다
@@ -97,20 +98,17 @@ async function pull(uid,id){
  const ref=db.doc(`userdata/${uid}`);
  const [snap,os,cs]=await Promise.all([ref.get(),ref.collection('orders').get(),ref.collection('consults').get()]);
  const owner=read(OWNER,null),local=cartOf(),server=snap.data()?.cart;
- let items=Array.isArray(server?.items)?server.items:[],next=Number(server?.nextVideoId)||0,changed=false;
+ let items=Array.isArray(server?.items)?server.items:[],next=Number(server?.nextId??server?.nextVideoId)||0,changed=false;
  if(owner?.id===id&&read(PENDING,false)){
   // 같은 회원이 저장되기 전에 고친 장바구니는 이 브라우저 값을 쓴다
-  items=local.items;next=local.nextVideoId;changed=true;
+  items=local.items;next=local.nextId;changed=true;
  }else if(owner?.id!==id&&local.items.length){
-  // 로그인 전에 비회원으로 담은 영상은 회원 장바구니에 더한다
+  // 로그인 전에 비회원으로 담은 영상은 회원 장바구니에 더한다 (담은 시각이 달라 합치지 않는다)
   items=items.map(i=>({...i}));next=Math.max(next,...items.map(i=>Number(i.id)||0));
-  for(const it of local.items){
-   const same=items.find(x=>x.quality===it.quality&&x.duration===it.duration);
-   if(same)same.quantity=(Number(same.quantity)||1)+(Number(it.quantity)||1);else items.push({...it,id:String(++next)});
-  }
+  for(const it of local.items)items.push({...it,id:String(++next)});
   changed=true;
  }
- const d=read(DRAFT,{})||{};d.personal={...(d.personal||{}),items,nextVideoId:next};apply(DRAFT,d);
+ apply(CART,{items,nextId:next});
  const serverOrders=os.docs.map(x=>x.data()),serverConsults=cs.docs.map(x=>x.data());
  known.orders=new Set(serverOrders.map(o=>o.no));known.consults=new Set(cs.docs.map(x=>x.id));
  // 이 브라우저에만 있던 내 주문 · 상담(예전 시연 기록)은 계정으로 올리고, 계정에 있는 것은 이 브라우저에 채운다
@@ -128,7 +126,7 @@ async function pull(uid,id){
 function clearLocal(){
  syncUid=null;syncId=null;clearTimeout(cartTimer);
  const owner=read(OWNER,null);if(!owner)return;
- const d=read(DRAFT,{})||{};if(d.personal){d.personal={...d.personal,items:[],nextVideoId:0};apply(DRAFT,d)}
+ apply(CART,{items:[],nextId:0});
  apply(ORDERS,(read(ORDERS,[])||[]).filter(o=>o?.memberId!==owner.id));
  apply(INQUIRIES,(read(INQUIRIES,[])||[]).filter(r=>r?.memberId!==owner.id));
  try{localStorage.removeItem(OWNER);localStorage.removeItem(PENDING)}catch{}
@@ -140,7 +138,7 @@ Storage.prototype.setItem=function(k,v){
  nativeSet.call(this,k,v);
  if(applying||this!==window.localStorage)return;
  // 저장이 끝나기 전에 페이지를 옮겨도 다음 페이지에서 이어 보내도록 '보내는 중' 표시를 남긴다
- if(k===DRAFT&&read(OWNER,null)){nativeSet.call(this,PENDING,'true');if(syncUid)pushCart()}
+ if(k===CART&&read(OWNER,null)){nativeSet.call(this,PENDING,'true');if(syncUid)pushCart()}
  else if((k===ORDERS||k===INQUIRIES)&&syncUid)pushMissing();
 };
 async function removeUserData(uid){
@@ -187,8 +185,8 @@ window.SangsangDB={
  // 관리자: 회원 한 명의 장바구니와 주문 내역
  async memberActivity(uid){
   await ready;const ref=db.doc(`userdata/${uid}`);
-  const [snap,os]=await Promise.all([ref.get(),ref.collection('orders').get()]);
-  return {cart:snap.data()?.cart?.items||[],orders:os.docs.map(d=>d.data())};
+  const [snap,os,cs]=await Promise.all([ref.get(),ref.collection('orders').get(),ref.collection('consults').get().catch(()=>null)]);
+  return {cart:snap.data()?.cart?.items||[],orders:os.docs.map(d=>d.data()),consults:cs?cs.docs.map(d=>d.data()):[]};
  },
  async updateMember(id,data){
   await ready;await db.doc(`members/${id}`).update(data);

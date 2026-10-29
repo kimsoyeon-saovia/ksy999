@@ -182,3 +182,8 @@ a{color:inherit}
  .done-actions{grid-template-columns:1fr}
  .consult{margin-top:40px;padding:24px 18px}.consult-info{padding:16px 18px;font-size:14px}.consult-submit{max-width:none}
 }
+
+/* 장바구니: 담은 날짜별 묶음 */
+.cart-day{margin:28px 0 0;padding:0 0 10px;border-bottom:2px solid #080808;font-size:15px;font-weight:800;color:#080808}
+.cart-day:first-of-type{margin-top:8px}
+.added-at{color:#1647ff;font-weight:600}

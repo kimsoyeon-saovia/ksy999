@@ -1,4 +1,4 @@
-// 회원 관리(관리자 화면): 회원 목록 · 검색 · 정보 수정 · 삭제 · 엑셀(CSV) 저장
+// 회원 관리(관리자 화면): 회원 목록 · 검색 · 정보 수정 · 삭제 · 엑셀 저장(회원 · 주문 · 장바구니 · 상담 · 비회원 주문 · 판매 현황)
 // 회원 정보는 Firebase(member-db.js)에서 읽는다. 관리자로 등록된 계정으로 로그인해야 목록이 보인다.
 (()=>{
 const shop=document.querySelector('#shop');
@@ -52,7 +52,7 @@ function render(){
 <div class="list-tools ad-tools">
  <input class="ad-search" type="search" placeholder="아이디 · 이름 · 휴대폰 · 이메일 · 주소 검색" value="${esc(query)}" aria-label="회원 검색">
  <div class="tool-btns"><select class="ad-sort" aria-label="정렬"><option value="new"${sort==='new'?' selected':''}>최근 가입순</option><option value="name"${sort==='name'?' selected':''}>이름순</option></select>
- <button type="button" class="ghost" data-csv${all.length?'':' disabled'}>엑셀(CSV) 저장</button></div>
+ <button type="button" class="ghost" data-csv${all.length||guests.length?'':' disabled'}>엑셀 저장 (전체 데이터)</button></div>
 </div>
 <p class="ad-flash" role="status">${esc(flash)}</p>
 ${all.length?(found.length?`<div class="ad-table-wrap"><table class="ad-table">
@@ -123,12 +123,56 @@ function openDetail(id){
  const dlg=shop.querySelector('.ad-dialog'),orders=[...(m.orders||[])].sort((a,b)=>String(b.date).localeCompare(String(a.date)));
  dlg.innerHTML=`<div class="ad-form ad-detail"><h2>${esc(m.name)} 님 내역 <small>${esc(id)}</small></h2>
  <h3>지금 장바구니 <small>${cartQty(m.cart)}개</small></h3>
- ${(m.cart||[]).length?`<ul class="ad-list">${m.cart.map(i=>`<li><span>${esc(cartLabel(i))}</span><em>× ${Number(i.quantity)||1}</em></li>`).join('')}</ul>`:'<p class="ad-none">비어 있습니다.</p>'}
+ ${(m.cart||[]).length?`<ul class="ad-list">${[...m.cart].sort((a,b)=>String(b.addedAt||'').localeCompare(String(a.addedAt||''))).map(i=>`<li><span>${esc(cartLabel(i))}<br><small>${i.addedAt?dateTime(i.addedAt)+' 담음':'담은 날짜 기록 없음'}</small></span><em>× ${Number(i.quantity)||1}</em></li>`).join('')}</ul>`:'<p class="ad-none">비어 있습니다.</p>'}
  <h3>주문 · 결제 내역 <small>이번 달 ${monthOrders(m).length}건 · 전체 ${orders.length}건</small></h3>
  ${orders.length?`<ul class="ad-list">${orders.map(o=>`<li><span><b>${esc(o.no)}</b> ${date(o.date)} · ${esc(o.method)}<br><small>${(o.items||[]).map(i=>`${esc(i.quality)} · ${esc(i.duration)} × ${i.quantity}`).join(', ')}</small></span><em>${money(o.total)}</em></li>`).join('')}</ul>`:'<p class="ad-none">주문 내역이 없습니다.</p>'}
  <div class="ad-form-btns"><button type="button" class="cta plain" data-close>닫기</button></div></div>`;
  dlg.querySelector('[data-close]').addEventListener('click',()=>dlg.close());
  dlg.showModal();
+}
+
+// ---------------- 엑셀 저장: 파일 하나에 시트를 나눠 담는다 ----------------
+// 회원 목록 · 회원 주문 · 장바구니 · 상담 신청 · 비회원 주문 · 판매 현황
+const XLSX_SRC='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+let xlsxReady=null;
+function loadXLSX(){
+ if(window.XLSX)return Promise.resolve();
+ return xlsxReady||(xlsxReady=new Promise((ok,fail)=>{const s=document.createElement('script');s.src=XLSX_SRC;s.onload=ok;s.onerror=()=>{xlsxReady=null;fail()};document.head.append(s)}));
+}
+const dateTime=iso=>{const d=new Date(iso);return isNaN(d)?'':`${date(iso)} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`};
+const itemsText=o=>(o.items||[]).map(i=>`${i.quality} · ${i.duration} × ${i.quantity}`).join(', ');
+function sheets(){
+ const list=filtered(),byDate=(a,b)=>String(b.date||'').localeCompare(String(a.date||''));
+ const memberRows=list.map(m=>[m.id,m.name,m.phone,m.email,m.address?.zip,m.address?.addr1,m.address?.addr2,date(m.joined),(m.orders||[]).length,sum(m.orders||[]),cartQty(m.cart)]);
+ const orderRows=[],cartRows=[],consultRows=[];
+ for(const m of list){
+  for(const o of [...(m.orders||[])].sort(byDate))orderRows.push([o.no,dateTime(o.date),m.id,m.name,o.buyer?.phone,o.buyer?.email,itemsText(o),o.method,Number(o.subtotal)||0,Number(o.vat)||0,Number(o.total)||0,o.request]);
+  for(const i of [...(m.cart||[])].sort((a,b)=>String(b.addedAt||'').localeCompare(String(a.addedAt||''))))cartRows.push([m.id,m.name,dateTime(i.addedAt)||'기록 없음',cartLabel(i),Number(i.quantity)||1]);
+  for(const r of [...(m.consults||[])].sort((a,b)=>String(b.savedAt||'').localeCompare(String(a.savedAt||''))))consultRows.push([dateTime(r.savedAt),m.id,m.name,r.fields?.contact,r.fields?.time,(r.items||[]).map(i=>`${i.quality} · ${i.duration} × ${i.quantity}`).join(', '),r.fields?.request]);
+ }
+ const guestRows=[...guests].sort(byDate).map(o=>[o.no,dateTime(o.date),o.buyer?.name,o.buyer?.phone,o.buyer?.email,itemsText(o),o.method,Number(o.subtotal)||0,Number(o.vat)||0,Number(o.total)||0,o.request]);
+ // 판매 현황: 회원 · 비회원 전체 주문을 화질 · 길이 조합별로 합친다
+ const count={};
+ for(const o of [...list.flatMap(m=>m.orders||[]),...guests])for(const i of o.items||[]){const k=`${i.quality} · ${i.duration}`;const c=count[k]||(count[k]={qty:0,sales:0,orders:0});c.qty+=Number(i.quantity)||1;c.sales+=Number(i.price)||0;c.orders++}
+ const salesRows=Object.entries(count).sort((a,b)=>b[1].qty-a[1].qty||b[1].sales-a[1].sales).map(([k,c],i)=>[i+1,k,c.orders,c.qty,c.sales]);
+ return [
+  ['회원 목록',['아이디','이름','휴대폰','이메일','우편번호','주소','상세 주소','가입일','주문 수','주문 금액','장바구니 수량'],memberRows],
+  ['회원 주문',['주문번호','주문일시','아이디','이름','휴대폰','이메일','주문 영상','결제 수단','상품 금액','부가세','결제 금액','요청사항'],orderRows],
+  ['장바구니',['아이디','이름','담은 날짜','영상 (화질 · 길이)','수량'],cartRows],
+  ['상담 신청',['신청일시','아이디','이름','연락처','희망 시간','상담 영상','상담 내용'],consultRows],
+  ['비회원 주문',['주문번호','주문일시','이름','휴대폰','이메일','주문 영상','결제 수단','상품 금액','부가세','결제 금액','요청사항'],guestRows],
+  ['판매 현황',['순위','영상 (화질 · 길이)','주문 건수','판매 수량','판매 금액'],salesRows]
+ ];
+}
+async function saveExcel(){
+ await loadXLSX();
+ const book=XLSX.utils.book_new();
+ for(const [name,header,rows] of sheets()){
+  const ws=XLSX.utils.aoa_to_sheet([header,...rows.map(r=>r.map(v=>v??''))]);
+  ws['!cols']=header.map((h,c)=>({wch:Math.min(50,Math.max(String(h).length*2+2,...rows.map(r=>String(r[c]??'').length+2)))}));
+  XLSX.utils.book_append_sheet(book,ws,name);
+ }
+ XLSX.writeFile(book,`상상스튜디오_관리자데이터_${date(new Date().toISOString()).replace(/\./g,'')}.xlsx`);
 }
 
 shop.addEventListener('input',e=>{
@@ -149,11 +193,9 @@ shop.addEventListener('click',async e=>{
   members=members.filter(x=>x.id!==id);flash=`${id} 회원을 삭제했습니다.`;render();return;
  }
  if(b.hasAttribute('data-csv')){
-  const rows=[['아이디','이름','휴대폰','이메일','우편번호','주소','상세 주소','가입일'],...filtered().map(m=>[m.id,m.name,m.phone,m.email,m.address?.zip,m.address?.addr1,m.address?.addr2,date(m.joined)])];
-  const csv=rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\r\n');
-  // 엑셀에서 한글이 깨지지 않도록 BOM을 붙인다
-  const url=URL.createObjectURL(new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'}));
-  const a=document.createElement('a');a.href=url;a.download=`상상스튜디오_회원목록_${date(new Date().toISOString()).replace(/\./g,'')}.csv`;a.click();URL.revokeObjectURL(url);
+  b.disabled=true;
+  try{await saveExcel()}catch{alert('엑셀 파일을 만들지 못했습니다. 인터넷 연결을 확인해 주세요.')}
+  b.disabled=false;
  }
 });
 // 헤더의 MEMBER 창에서 로그인 · 로그아웃하면 다시 확인한다

@@ -6,8 +6,25 @@ const inquiryRevisions={personal:0,corporate:0};
 const states={personal:{quality:null,duration:null,items:[],nextVideoId:0,notice:'',plans:{},fields:{},faq:[],errors:{},submitting:false},corporate:{product:null,extras:[],fields:{},faq:[],errors:{},submitting:false}};
 const DRAFT_STORAGE_KEY='sangsang-studio-draft-v1',INQUIRY_STORAGE_KEY='sangsang-studio-inquiries-v1';
 const clone=value=>JSON.parse(JSON.stringify(value));
-function saveDrafts(){try{const draft=clone(states);Object.values(draft).forEach(state=>{state.errors={};state.notice='';state.submitting=false;});localStorage.setItem(DRAFT_STORAGE_KEY,JSON.stringify(draft));}catch{}}
-function restoreDrafts(){try{const draft=JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY)||'{}');['personal','corporate'].forEach(type=>{const saved=draft?.[type];if(saved&&typeof saved==='object')Object.assign(states[type],saved,{errors:{},notice:'',submitting:false});if(type==='personal')states.personal.plans={};});}catch{}}
+// 장바구니는 견적서와 따로 저장한다. 견적서에서 '담기'한 영상은 담은 시각과 함께 장바구니에 한 줄씩 더해지고,
+// 이번 방문 중 견적서에서 바꾼 수량 · 삭제는 그 줄에만 반영된다. 장바구니 내용이 견적서로 다시 불려 오지는 않는다.
+const CART_STORAGE_KEY='sangsang-cart-v1',cartLinks=new Set();
+function syncCart(){try{
+ const cart=JSON.parse(localStorage.getItem(CART_STORAGE_KEY)||'{}')||{};
+ let list=Array.isArray(cart.items)?cart.items:[],next=Number(cart.nextId)||list.reduce((n,c)=>Math.max(n,Number(c.id)||0),0);
+ const before=JSON.stringify(list),alive=new Set();
+ for(const item of states.personal.items){
+  const quantity=P.videoQuantity(item);
+  if(!item.cartId){item.cartId=String(++next);cartLinks.add(item.cartId);list.push({id:item.cartId,quality:item.quality,duration:item.duration,quantity,addedAt:new Date().toISOString()});}
+  else list=list.map(c=>c.id===item.cartId?{...c,quantity}:c);
+  alive.add(item.cartId);
+ }
+ list=list.filter(c=>!cartLinks.has(c.id)||alive.has(c.id));
+ cartLinks.forEach(id=>{if(!alive.has(id))cartLinks.delete(id);});
+ if(JSON.stringify(list)!==before){localStorage.setItem(CART_STORAGE_KEY,JSON.stringify({items:list,nextId:next}));window.dispatchEvent(new Event('sangsang-cart-change'));}
+}catch{}}
+function saveDrafts(){syncCart();try{const draft=clone(states);Object.values(draft).forEach(state=>{state.errors={};state.notice='';state.submitting=false;});localStorage.setItem(DRAFT_STORAGE_KEY,JSON.stringify(draft));}catch{}}
+function restoreDrafts(){try{const draft=JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY)||'{}');['personal','corporate'].forEach(type=>{const saved=draft?.[type];if(saved&&typeof saved==='object')Object.assign(states[type],saved,{errors:{},notice:'',submitting:false});if(type==='personal')Object.assign(states.personal,{plans:{},items:[],nextVideoId:0});});}catch{}}
 function archiveInquiry(type){try{const state=clone(states[type]);state.errors={};state.notice='';state.submitting=false;const record={savedAt:new Date().toISOString(),type,fields:state.fields,selection:state,estimate:type==='personal'?P.personal(state,C):P.corporate(state,C)};const saved=JSON.parse(localStorage.getItem(INQUIRY_STORAGE_KEY)||'[]');const records=Array.isArray(saved)?saved:[];records.push(record);localStorage.setItem(INQUIRY_STORAGE_KEY,JSON.stringify(records));}catch{}}
 const pageFromURL=()=>location.hash==='#corporate'?'corporate':location.hash==='#personal'?'personal':location.pathname.endsWith('corporate.html')?'corporate':'personal';
 let page=pageFromURL(),audienceSelection=null,returnFocus;
@@ -25,7 +42,7 @@ const faqs={personal:[
 ],corporate:[
  ['영상 제작 기간은 얼마나 걸리나요?','기획, 영상 길이와 제작 범위에 따라 달라집니다. 프로젝트 내용을 확인한 후 제작 일정과 납품일을 안내합니다. 긴급 납품 가능 여부도 상담 후 확정됩니다.'],
  ['아이디어만 있어도 제작을 의뢰할 수 있나요?','네. 전달하고 싶은 메시지와 사용 목적을 알려 주세요. 기획 방향과 필요한 자료부터 함께 정리합니다.'],
- ['견적 금액은 어떻게 결정되나요?','제작 상품의 시작 가격과 추가 옵션을 합산한 예상 금액입니다. 세부 제작 범위와 일정에 따라 상담 후 최종 확정하며 VAT는 별도입니다.'],
+ ['견적 금액은 어떻게 결정되나요?','제작 상품의 시작 가격과 추가 옵션을 합산한 예상 금액입니다. 세부 제작 범위와 일정에 따라 상담 후 최종 확정하며 부가세(10%)가 포함된 금액입니다.'],
  ['영상 수정은 가능한가요?','수정 범위와 횟수는 제작 전 협의합니다. 큰 기획 변경이나 추가 제작에는 별도 비용이 발생할 수 있습니다.'],
  ['완성된 영상은 어떤 형식으로 받나요?','사용 채널과 목적에 맞는 해상도, 비율 및 파일 형식을 상담 시 협의해 전달합니다.'],
  ['제작한 영상을 광고나 SNS에 사용할 수 있나요?','예정된 광고와 SNS 사용 채널을 알려 주세요. 소재의 권리와 이용 조건을 확인하고 사용 범위를 제작 전에 협의합니다.']
@@ -53,7 +70,7 @@ if(personal){
  if(s.quality&&s.duration)lines+='<button type="button" class="primary confirm-video" data-add-video>담기 <span aria-hidden="true">→</span></button>';
  if(s.notice)lines+=`<p class="video-notice" role="status">${esc(s.notice)}</p>`;
 }else{lines=`<p><span>${e.product?.name||'선택 상품 없음'}</span><span>${e.product?.price===null?'상담 후 안내':money(e.product?.price||0)}</span></p>${C.extras.filter(x=>s.extras.includes(x.id)).map(x=>`<p><span>${x.name}</span><span>${money(x.price)}</span></p>`).join('')}${!e.product&&s.extras.length?'<p>옵션을 미리 선택했습니다. 상품 선택 후 견적을 계산합니다.</p>':''}${e.total===null?`<p>추가 옵션 ${money(e.extra)} · 기본 제작비 별도 상담</p>`:''}`;}
-return `<p class="eyebrow">• LIVE ESTIMATE</p><h2>예상 견적</h2><p class="quote-subtitle">${subtitle}</p><div class="quote-total" aria-live="polite" aria-atomic="true">${e.total===null?'상담 후 안내':`<span class="amount-number">${e.total.toLocaleString('ko-KR')}</span><span class="amount-unit">원</span>`}</div><p class="vat">VAT 별도 · 상담 후 ${personal?'최종 ':''}확정</p><div class="breakdown">${lines}</div><form id="inquiry-form" novalidate><h3>${personal?'의뢰 정보':'프로젝트 정보'}</h3>${personal?field('name','이름',false,false,'name')+field('contact','연락처',true,false,'tel')+field('request','희망 제작물',true)+field('mood','희망 분위기'):field('company','회사명 또는 기관명',true,false,'organization')+field('manager','담당자명',true,false,'name')+field('contact','이메일 또는 전화번호',true)+field('description','프로젝트 내용',false,true)}<div class="agreement"><input id="agreement" name="agreement" type="checkbox" ${s.fields.agreement?'checked':''} required aria-describedby="error-agreement"><div><label for="agreement">개인정보 수집 및 이용에 동의합니다.</label> <button type="button" class="text-link" data-privacy>내용보기</button><span id="error-agreement" class="error">${esc(s.errors.agreement||'')}</span></div></div><button class="primary submit" type="submit" ${s.submitting?'disabled':''}>${s.submitting?'문의 처리 중…':'상담 내용 문의하기'} <span>→</span></button>${personal?`<a class="black submit direct-payment" href="../cart/index.html" style="text-decoration:none">장바구니 보기 · 결제 <span aria-hidden="true">→</span></a>`:''}<p class="form-note">상담 및 요구사항에 따라 최종 금액이 달라질 수 있습니다.</p><p class="error" role="status">${esc(s.errors.submit||'')}</p></form>`;}
+return `<p class="eyebrow">• LIVE ESTIMATE</p><h2>예상 견적</h2><p class="quote-subtitle">${subtitle}</p><div class="quote-total" aria-live="polite" aria-atomic="true">${e.total===null?'상담 후 안내':`<span class="amount-number">${e.total.toLocaleString('ko-KR')}</span><span class="amount-unit">원</span>`}</div><p class="vat">VAT 포함 · 상담 후 ${personal?'최종 ':''}확정</p><div class="breakdown">${lines}</div><form id="inquiry-form" novalidate><h3>${personal?'의뢰 정보':'프로젝트 정보'}</h3>${personal?field('name','이름',false,false,'name')+field('contact','연락처',true,false,'tel')+field('request','희망 제작물',true)+field('mood','희망 분위기'):field('company','회사명 또는 기관명',true,false,'organization')+field('manager','담당자명',true,false,'name')+field('contact','이메일 또는 전화번호',true)+field('description','프로젝트 내용',false,true)}<div class="agreement"><input id="agreement" name="agreement" type="checkbox" ${s.fields.agreement?'checked':''} required aria-describedby="error-agreement"><div><label for="agreement">개인정보 수집 및 이용에 동의합니다.</label> <button type="button" class="text-link" data-privacy>내용보기</button><span id="error-agreement" class="error">${esc(s.errors.agreement||'')}</span></div></div><button class="primary submit" type="submit" ${s.submitting?'disabled':''}>${s.submitting?'문의 처리 중…':'상담 내용 문의하기'} <span>→</span></button>${personal?`<a class="black submit direct-payment" href="../cart/index.html" style="text-decoration:none">장바구니 보기 · 결제 <span aria-hidden="true">→</span></a>`:''}<p class="form-note">상담 및 요구사항에 따라 최종 금액이 달라질 수 있습니다.</p><p class="error" role="status">${esc(s.errors.submit||'')}</p></form>`;}
 function renderQuote(){const q=document.querySelector('.quote');const scroll=q.scrollTop;q.innerHTML=quoteHTML();q.scrollTop=scroll;}
 function adjustVideoQuantity(id,step){
  const delta=Number(step);
@@ -375,7 +392,8 @@ function selectionPrompt(type,state){
 function resetInquiry(type,updateView=true){
  inquiryRevisions[type]++;
  const state=states[type];
- if(type==='personal')Object.assign(state,{quality:null,duration:null,items:[],nextVideoId:0,notice:'',plans:{}});
+ // 상담 신청 · 초기화로 견적서를 비워도 장바구니에 담긴 영상은 그대로 둔다
+ if(type==='personal'){cartLinks.clear();Object.assign(state,{quality:null,duration:null,items:[],nextVideoId:0,notice:'',plans:{}});}
  else Object.assign(state,{product:null,extras:[]});
  Object.assign(state,{fields:{},errors:{},submitting:false});
  saveDrafts();
@@ -386,9 +404,9 @@ function resetInquiry(type,updateView=true){
  returnFocus=root.querySelector('.quote .submit');
 }
 function paymentPreview(){
- const estimate=P.personal(states.personal,C),subtotal=Math.max(0,Math.round(estimate.total||0)),vat=Math.round(subtotal*.1),total=subtotal+vat;
+ const estimate=P.personal(states.personal,C),total=Math.max(0,Math.round(estimate.total||0)),vat=Math.round(total/11),subtotal=total-vat;
  const methods=['카카오페이','토스페이','네이버페이','신용카드','계좌이체','무통장입금'];
- modal('결제하기',`<p class="modal-lead">신청 내용을 확인하고 결제수단을 선택해 주세요.</p><div class="payment-receipt"><div><span>영상 제작 예상금액</span><strong>${money(subtotal)}</strong></div><div><span>부가세 (10%)</span><strong>${money(vat)}</strong></div><div class="payment-total"><span>총 결제 예정금액</span><strong>${money(total)}</strong></div></div><fieldset class="payment-methods"><legend>결제수단 선택</legend>${methods.map((name,index)=>`<label><input type="radio" name="demo-payment-method" value="${name}" ${index===0?'checked':''}><span>${name}</span></label>`).join('')}</fieldset><p class="payment-safety">🔒 안전한 결제 화면을 구성한 시안입니다.</p><p class="modal-note">현재는 화면 확인용으로 실제 결제나 출금이 이루어지지 않습니다.</p>`,[{label:`${money(total)} 결제하기`,run:()=>{
+ modal('결제하기',`<p class="modal-lead">신청 내용을 확인하고 결제수단을 선택해 주세요.</p><div class="payment-receipt"><div><span>공급가액</span><strong>${money(subtotal)}</strong></div><div><span>부가세 (10%, 포함)</span><strong>${money(vat)}</strong></div><div class="payment-total"><span>총 결제 예정금액</span><strong>${money(total)}</strong></div></div><fieldset class="payment-methods"><legend>결제수단 선택</legend>${methods.map((name,index)=>`<label><input type="radio" name="demo-payment-method" value="${name}" ${index===0?'checked':''}><span>${name}</span></label>`).join('')}</fieldset><p class="payment-safety">🔒 안전한 결제 화면을 구성한 시안입니다.</p><p class="modal-note">현재는 화면 확인용으로 실제 결제나 출금이 이루어지지 않습니다.</p>`,[{label:`${money(total)} 결제하기`,run:()=>{
    const method=document.querySelector('input[name="demo-payment-method"]:checked')?.value||methods[0];
    modal('결제 화면 확인 완료',`<p class="modal-lead"><strong>${esc(method)}</strong> 결제 흐름이 선택되었습니다.</p><div class="payment-receipt"><div class="payment-total"><span>결제 예정금액</span><strong>${money(total)}</strong></div></div><p class="modal-note">이 화면은 결제 디자인 시안이므로 실제 승인이나 출금은 발생하지 않았습니다.</p>`);
  }},{label:'돌아가기'}]);
@@ -430,8 +448,5 @@ restoreDrafts();
 document.addEventListener('click',saveDrafts);
 root.addEventListener('input',saveDrafts);
 root.addEventListener('change',saveDrafts);
-render();prepareHero();prepareBodyMotion();sizeProductButtons();updateAudience();updateTopButton();
-// 로그인 · 로그아웃으로 회원 장바구니(member-db.js)를 불러오면 견적서 목록만 다시 그린다
-window.addEventListener('sangsang-data-sync',()=>{try{const p=JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY)||'{}')?.personal||{};states.personal.items=Array.isArray(p.items)?p.items:[];states.personal.nextVideoId=Number(p.nextVideoId)||0;renderQuote();}catch{}});
-})();
+render();prepareHero();prepareBodyMotion();sizeProductButtons();updateAudience();updateTopButton();})();
 
