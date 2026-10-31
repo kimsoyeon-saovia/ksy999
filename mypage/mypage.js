@@ -18,17 +18,17 @@ const cartCount=()=>{const it=read(CART,{})?.items;return Array.isArray(it)?it.r
 const head=sub=>`<div class="shop-head"><h1>마이페이지</h1>${sub||''}</div>`;
 const icon='<svg viewBox="0 0 24 24" fill="none" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>';
 
-// 포인트 잔액 · 내역은 회원 계정(userdata/{uid}.points)에서 읽는다 (1P = C.pointValue원)
+// 포인트 잔액 · 내역은 회원 계정(userdata/{uid}.points)에서 읽는다 (1c = C.pointValue원)
 let pts=null,ptsFor=null;
 function loadPoints(m){
  if(!window.SangsangDB||ptsFor===m.id)return;ptsFor=m.id;
  window.SangsangDB.whenAuthKnown().then(()=>window.SangsangDB.points()).then(p=>{pts=p;render()}).catch(()=>{pts={balance:0,history:[],error:true};render()});
 }
-const point=n=>Number(n||0).toLocaleString('ko-KR')+'P';
+const point=n=>Number(n||0).toLocaleString('ko-KR')+'c';
 function pointsHTML(){
  if(!pts)return `<section class="block my-points"><div class="block-title"><h2>포인트</h2></div><div class="my-none">포인트를 불러오는 중입니다…</div></section>`;
  const plans=C?.plans||[];
- return `<section class="block my-points"><div class="block-title"><h2>포인트</h2><small>1P = ${C?.pointValue||10}원 · 결제할 때 사용</small></div>
+ return `<section class="block my-points"><div class="block-title"><h2>포인트</h2><small>1c = ${C?.pointValue||10}원 · 결제할 때 사용</small></div>
 <div class="pt-balance"><span>보유 포인트</span><strong>${point(pts.balance)}</strong><em>${money(pts.balance*(C?.pointValue||10))} 상당</em></div>
 <div class="pt-plans">${plans.map(p=>`<button type="button" class="pt-plan" data-charge="${esc(p.id)}"><b>${esc(p.name)}</b><span>${money(p.price)}</span><small>${point(p.points)} + 보너스 ${point(p.bonus||0)}</small></button>`).join('')}</div>
 <p class="note">충전 결제는 시연용입니다. 실제 결제는 일어나지 않고 포인트만 계정에 저장됩니다.</p>

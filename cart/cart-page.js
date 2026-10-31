@@ -130,7 +130,7 @@ function orderItems(){
 const draftFields=()=>read(DRAFT,{})?.personal?.fields||{};
 // 포인트 사용 (회원만): 잔액은 회원 계정에서 읽고, 결제 금액보다 많이 쓸 수 없다
 const PV=C.pointValue;
-const point=n=>Number(n||0).toLocaleString('ko-KR')+'P';
+const point=n=>Number(n||0).toLocaleString('ko-KR')+'c';
 let ptBal=null,ptFor=null,ptUse=0;
 function loadPoints(me){
  if(!me||!window.SangsangDB||ptFor===me.id)return;ptFor=me.id;
@@ -142,8 +142,8 @@ const payLabel=t=>{const left=t.total-ptUse*PV;return left?`${money(left)} 결�
 function pointsBlock(me,t){
  if(!me)return `<section class="block"><div class="block-title"><h2>포인트</h2></div><p class="pay-note">회원으로 로그인하면 충전한 포인트로 결제할 수 있습니다.</p></section>`;
  if(ptBal===null)return `<section class="block"><div class="block-title"><h2>포인트</h2></div><p class="pay-note">포인트를 불러오는 중입니다…</p></section>`;
- return `<section class="block"><div class="block-title"><h2>포인트</h2><small>보유 <b>${point(ptBal)}</b> · 1P = ${PV}원 · <a class="text-link" style="font-size:14px" href="../mypage/index.html">충전하기</a></small></div>
-<div class="pt-use"><label for="o-points">사용할 포인트</label><input id="o-points" name="usePoints" type="number" min="0" max="${maxUse(t)}" step="1" inputmode="numeric" value="${ptUse||''}" placeholder="0" ${maxUse(t)?'':'disabled'}><span>P</span><button type="button" class="ghost" data-use-all ${maxUse(t)?'':'disabled'}>전액 사용</button></div>
+ return `<section class="block"><div class="block-title"><h2>포인트</h2><small>보유 <b>${point(ptBal)}</b> · 1c = ${PV}원 · <a class="text-link" style="font-size:14px" href="../mypage/index.html">충전하기</a></small></div>
+<div class="pt-use"><label for="o-points">사용할 포인트</label><input id="o-points" name="usePoints" type="number" min="0" max="${maxUse(t)}" step="1" inputmode="numeric" value="${ptUse||''}" placeholder="0" ${maxUse(t)?'':'disabled'}><span>c</span><button type="button" class="ghost" data-use-all ${maxUse(t)?'':'disabled'}>전액 사용</button></div>
 <p class="pay-note">${maxUse(t)?`최대 ${point(maxUse(t))}까지 사용할 수 있습니다. 모자란 금액은 아래 결제 수단으로 결제합니다.`:'사용할 수 있는 포인트가 없습니다.'}</p></section>`;
 }
 // 포인트 입력이 바뀌면 금액 부분만 고친다 (입력칸은 다시 그리지 않음)
