@@ -42,3 +42,9 @@
 .pt-plan:disabled{opacity:.5;cursor:wait}
 .pt-history{margin-top:14px}.pt-history .plus{color:#1647ff;font-weight:700}.pt-history .minus{color:#e5402f;font-weight:700}
 @media(max-width:750px){.pt-plans{grid-template-columns:1fr}}
+/* 회원정보 수정 */
+.my-edit{display:grid;gap:10px;margin:0 0 12px}
+.my-edit-f{display:grid;gap:4px;font-size:13px;color:#555}
+.my-edit-f input{height:40px;padding:0 10px;border:1px solid #c9c9c9;font-size:15px;color:#080808}
+.my-edit-msg{min-height:18px;margin:0;font-size:13px;color:#e5402f}
+.my-edit .sub-cta{margin-top:0}

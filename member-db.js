@@ -212,6 +212,14 @@ window.SangsangDB={
   await ready;await db.doc(`members/${id}`).update(data);
   if(idOf(auth.currentUser)===id){const s=await db.doc(`members/${id}`).get();cache({id,...s.data()});window.dispatchEvent(new Event('sangsang-member-change'))}
  },
+ // 본인 정보 수정: 현재 비밀번호로 한 번 더 확인한 뒤 고친다 (새 비밀번호를 넣으면 비밀번호도 바꾼다)
+ async updateMyInfo(password,data,newPassword){
+  await ready;const u=auth.currentUser,id=idOf(u);if(!u||!id)throw {code:'permission-denied'};
+  await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,password));
+  await db.doc(`members/${id}`).update(data);
+  if(newPassword)await u.updatePassword(newPassword);
+  const s=await db.doc(`members/${id}`).get();cache({id,...s.data()});window.dispatchEvent(new Event('sangsang-member-change'));
+ },
  // 관리자 삭제: 회원 정보와 아이디를 지운다 (로그인 계정은 남지만 회원 정보가 없어 로그인되지 않음)
  async deleteMember(id){
   await ready;
@@ -229,7 +237,7 @@ window.SangsangDB={
   const c=errCode(e);
   if(c==='email-already-in-use')return '이미 사용 중인 아이디입니다.';
   if(c==='deleted')return '삭제된 계정입니다. 관리자에게 문의해 주세요.';
-  if(['invalid-credential','wrong-password','user-not-found','invalid-login-credentials'].includes(c))return '아이디 또는 비밀번호가 맞지 않습니다.';
+  if(['invalid-credential','wrong-password','user-not-found','invalid-login-credentials'].includes(c))return auth?.currentUser?'비밀번호가 맞지 않습니다.':'아이디 또는 비밀번호가 맞지 않습니다.';
   if(c==='too-many-requests')return '로그인 시도가 너무 많습니다. 잠시 후 다시 시도해 주세요.';
   if(c==='network-request-failed')return '인터넷 연결을 확인해 주세요.';
   if(c==='weak-password')return '비밀번호가 너무 쉽습니다. 영문 · 숫자를 섞어 8자 이상 입력해 주세요.';
