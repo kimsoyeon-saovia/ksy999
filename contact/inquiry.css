@@ -308,3 +308,5 @@ body{font-synthesis:none;font-kerning:normal;text-rendering:optimizeLegibility}
 .plan{transition:transform 200ms,background 200ms,border-color 200ms}
 @media(hover:hover) and (pointer:fine){.plan:hover{transform:scale(1.02)}}
 .plan.chosen{background:var(--lime);border-color:var(--lime)}
+.point-member{font-weight:700;color:#1647ff}
+@media(max-width:480px){.plan>strong{font-size:26px}.plan>p{font-size:15px;word-break:keep-all}.plan .plan-bonus{font-size:14px}.plan .plan-total{font-size:12.5px;word-break:keep-all;white-space:nowrap}.plan>button{font-size:13px}.point-reference{word-break:keep-all}}
