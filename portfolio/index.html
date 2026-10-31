@@ -195,8 +195,8 @@ dialog.project-dialog .original-panel{width:100%;margin:0;position:relative;over
 @media(max-width:600px){dialog.project-dialog:not(.image-only),dialog.project-dialog.standalone-detail:not(.image-only){padding:0 12px 12px}}
 dialog.project-dialog.image-only .clean-player{display:none}dialog.project-dialog.image-only{padding:0 16px 16px;background:#fff}dialog.project-dialog.image-only .original-panel{aspect-ratio:auto!important}
 </style>
-<link rel="stylesheet" href="../site-header.css?v=20261101r"></head>
-<body data-site-page="portfolio"><script src="../site-header.js?v=20261101r"></script><script src="../scene-scroll.js?v=20261101r"></script>
+<link rel="stylesheet" href="../site-header.css?v=20261101s"></head>
+<body data-site-page="portfolio"><script src="../site-header.js?v=20261101s"></script><script src="../scene-scroll.js?v=20261101s"></script>
 <header class="site-header">
   <a class="brand" href="#" aria-label="STUDIO 상상 홈">STUDIO <strong>상상</strong></a>
   <nav aria-label="메인 메뉴">
@@ -205,7 +205,7 @@ dialog.project-dialog.image-only .clean-player{display:none}dialog.project-dialo
 </header>
 <main>
   <section class="hero" id="about">
-    <video class="portfolio-banner-video" src="videos/portfolio-main-banner.mp4" autoplay muted playsinline preload="auto" aria-label="포트폴리오 메인 배너 영상"></video>
+    <video class="portfolio-banner-video" autoplay muted playsinline preload="auto" poster="videos/portfolio-main-banner-poster.webp" aria-label="포트폴리오 메인 배너 영상"></video><script>(v=>{v.src=matchMedia('(max-width:750px)').matches?'videos/portfolio-main-banner-m.mp4':'videos/portfolio-main-banner.mp4'})(document.currentScript.previousElementSibling)</script>
     <div class="hero-copy">
       <h1>말보다 확실한 결과물</h1>
       <p>STUDIO 상상을 직접 경험해보세요.</p>
@@ -409,6 +409,6 @@ openProject=function(card,index){
 const beforeDaejeonOpen=openProject;
 openProject=function(card,index){beforeDaejeonOpen(card,index);cleanPlayer.classList.toggle('daejeon-project',index===17);if(index===17){cleanPlayer.querySelector('img').src='posters/daejeon-play.webp';cleanPlayer.querySelector('img').alt='달콤한 대전여행';}};
 </script>
-<link rel="stylesheet" href="project-details.css?v=20261021f"><script src="project-details.js?v=20261101r"></script>
+<link rel="stylesheet" href="project-details.css?v=20261021f"><script src="project-details.js?v=20261101s"></script>
 </body>
 </html>

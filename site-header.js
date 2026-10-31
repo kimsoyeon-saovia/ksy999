@@ -18,7 +18,12 @@ for(const file of ['member-db.js','member.js','cart.js']){const s=document.creat
 // (pages that load this script early, like the large portfolio page, would otherwise show the header late).
 // 실제 헤더 높이를 CSS 변수(--site-header-h)로 알려 준다 (휴대폰 메인 첫 화면을 '보이는 화면 − 헤더'에 딱 맞추는 데 쓴다)
 const setHeaderH=()=>{const h=document.querySelector('sangsang-header')?.getBoundingClientRect().height;if(h)document.documentElement.style.setProperty('--site-header-h',Math.round(h)+'px')};
-addEventListener('resize',setHeaderH);visualViewport?.addEventListener('resize',setHeaderH);
+// 휴대폰 화면 높이(--site-screen-h)는 픽셀로 한 번 정해 두고, 가로 폭이 바뀔 때(회전)만 다시 잰다.
+// 주소창이 접히고 펴질 때는 그대로 두어 첫 배너 그림이 커졌다 작아졌다 하지 않는다 (일부 휴대폰은 lvh도 스크롤 중에 바뀜)
+let screenW=0;
+const setScreenH=()=>{if(innerWidth===screenW)return;screenW=innerWidth;const probe=document.createElement('div');probe.style.cssText='position:fixed;top:0;left:0;width:0;height:100lvh;visibility:hidden;pointer-events:none';document.documentElement.append(probe);const lvh=probe.getBoundingClientRect().height;probe.remove();document.documentElement.style.setProperty('--site-screen-h',Math.round(Math.max(lvh||0,innerHeight))+'px')};
+setScreenH();
+addEventListener('resize',()=>{setHeaderH();setScreenH()});visualViewport?.addEventListener('resize',setHeaderH);
 const finish=()=>{setHeaderH();requestAnimationFrame(setHeaderH);
 const enhancements=document.createElement('script');enhancements.src=new URL('site-enhancements.js'+new URL(script.src).search,root);document.body.append(enhancements);
 // Keep displayed copy clean without changing JavaScript, media URLs or data URLs.
@@ -45,10 +50,10 @@ if(page==='portfolio'){
   video.addEventListener('timeupdate',revealWhenReady);
   video.addEventListener('error',reveal);
   video.muted=true;
+  // 자동 재생이 막힌 휴대폰(절전 모드 등)에서는 큰 재생 버튼 대신 첫 화면 그림을 두고, 화면을 처음 만질 때 재생한다
   video.play().catch(()=>{
-   video.controls=true;
-   video.style.zIndex='0';
-   video.addEventListener('playing',()=>{video.controls=false;video.style.zIndex='';},{once:true});
+   reveal();const retry=()=>video.play().catch(()=>{});
+   addEventListener('touchstart',retry,{once:true,passive:true});addEventListener('click',retry,{once:true});
   });
  }
 }

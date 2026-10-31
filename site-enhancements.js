@@ -15,7 +15,9 @@ function updateTop(){
  const show=scrollY>limit;
  top.classList.toggle('is-hidden',!show);top.tabIndex=show?0:-1;
 }
-addEventListener('scroll',updateTop,{passive:true});addEventListener('resize',updateTop);updateTop();
+// 스크롤 한 번에 여러 번 재지 않도록 한 화면(프레임)에 한 번만 확인한다
+let topQueued=false;const queueTop=()=>{if(topQueued)return;topQueued=true;requestAnimationFrame(()=>{topQueued=false;updateTop();});};
+addEventListener('scroll',queueTop,{passive:true});addEventListener('resize',queueTop);updateTop();
 }
 
 // CONTACT (phone): tap the bottom estimate bar to open it as a sheet; tap the handle, title or dimmed area to close.
@@ -109,7 +111,8 @@ if(page==='main'){
   const start=services.getBoundingClientRect().top+scrollY-head;
   document.documentElement.classList.toggle('main-snap-off',phone.matches&&scrollY>=start-4);
  };
- addEventListener('scroll',syncSnap,{passive:true});addEventListener('resize',syncSnap);phone.addEventListener('change',syncSnap);syncSnap();
+ let snapQueued=false;const queueSnap=()=>{if(snapQueued)return;snapQueued=true;requestAnimationFrame(()=>{snapQueued=false;syncSnap();});};
+ addEventListener('scroll',queueSnap,{passive:true});addEventListener('resize',syncSnap);phone.addEventListener('change',syncSnap);syncSnap();
 }
 
 // MAIN (desktop): touchpads and scrollbars can stop anywhere; when scrolling stops with the

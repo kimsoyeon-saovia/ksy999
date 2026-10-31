@@ -187,8 +187,8 @@ body[data-site-page="ai-video"] .showreel-actions:not(.actions-shown){opacity:0;
  body[data-site-page="main"] .unified-footer{scroll-snap-align:none!important}
  /* Each snapped scene is exactly one visible screen (below the 104px header), so centred copy is truly centred. */
  /* 주소창이 접힌 가장 큰 화면(lvh) 기준: 스크롤 중 크기가 바뀌지 않고(배너가 커지지 않음), 주소창이 접혀도 다음 장면이 비치지 않는다 */
- body[data-site-page="main"] main>.text-hero,body[data-site-page="main"] main>.statement-panel{height:calc(100lvh - var(--site-header-h,104px))!important;min-height:0!important;box-sizing:border-box}
- body[data-site-page="main"] main>.partner{height:auto!important;min-height:calc(100lvh - var(--site-header-h,104px))!important;box-sizing:border-box}
+ body[data-site-page="main"] main>.text-hero,body[data-site-page="main"] main>.statement-panel{height:calc(var(--site-screen-h,100lvh) - var(--site-header-h,104px))!important;min-height:0!important;box-sizing:border-box}
+ body[data-site-page="main"] main>.partner{height:auto!important;min-height:calc(var(--site-screen-h,100lvh) - var(--site-header-h,104px))!important;box-sizing:border-box}
  /* Portfolio scene: heading 35% closer to the header (74px → 48px). */
  body[data-site-page="main"] .portfolio-section{justify-content:flex-start!important;padding-top:48px!important}
 
@@ -207,6 +207,9 @@ body[data-site-page="ai-video"] .showreel-actions:not(.actions-shown){opacity:0;
  /* Shrink the whole partner marquee evenly so logos keep their proportions. */
  body[data-site-page="main"] .brand-marquees{zoom:.45;margin-bottom:8px}
  body[data-site-page="main"] .brand-marquees .brand-item>span:not(.naver-logo-display){font-size:26px!important}
+ /* 협력사 이름: 로고는 그대로 두고 이름만 작게 해서 맨 아래 같은 줄에 맞춘다 */
+ body[data-site-page="main"] .brand-marquees .brand-item{justify-content:flex-end!important}
+ body[data-site-page="main"] .brand-marquees .brand-item>span:not(.naver-logo-display){font-size:19px!important;font-weight:600!important;line-height:24px!important;height:24px!important;min-height:0!important;margin-top:10px!important;font-family:Arial,'Apple SD Gothic Neo','Malgun Gothic',sans-serif!important}
  body[data-site-page="main"] .partner p{font-size:19px;line-height:1.7;word-break:keep-all;padding:0 12px}
  body[data-site-page="main"] .partner p br.a-br,body[data-site-page="main"] .partner p br.m-br{display:inline}
  body[data-site-page="main"] .motion-toggle{font-size:12px!important;color:#777!important;border:0!important;padding:14px 8px!important;margin-bottom:20px!important;background:none!important;text-decoration:none;text-underline-offset:3px}
@@ -336,7 +339,10 @@ body[data-site-page="main"] .logo-musinsa img.official-brand{width:200px}
 /* 휴대폰 메인 첫 화면: 주소창이 줄거나 늘어도 "보이는 화면 높이 − 헤더 높이"에 딱 맞춰 다음 장면이 비치지 않게 */
 @media(max-width:750px){
  /* 높이는 '주소창이 접혔을 때의 가장 큰 화면(lvh) − 실제 헤더'로 고정: 스크롤해도 크기가 변하지 않고(배너가 커지지 않음), 다음 장면이 비치지 않는다 */
- body[data-site-page="main"] .hero.text-hero,body[data-site-page="main"] .partner,body[data-site-page="main"] .statement-panel{min-height:calc(100lvh - var(--site-header-h,104px));height:auto}
+ body[data-site-page="main"] .hero.text-hero,body[data-site-page="main"] .partner,body[data-site-page="main"] .statement-panel{min-height:calc(var(--site-screen-h,100lvh) - var(--site-header-h,104px));height:auto}
  /* 협력사 화면은 내용을 세로 가운데로 */
  body[data-site-page="main"] main>.partner{display:flex!important;flex-direction:column!important;justify-content:center!important;padding-top:24px!important;padding-bottom:24px!important}
 }
+
+/* 배경 영상(AI VIDEO · PORTFOLIO 첫 배너): 휴대폰이 영상 대신 잠깐 띄우는 큰 재생 버튼을 숨긴다 (그 자리엔 첫 장면 그림이 보인다) */
+.hero-background video::-webkit-media-controls,.portfolio-banner-video::-webkit-media-controls,.hero-background video::-webkit-media-controls-start-playback-button,.portfolio-banner-video::-webkit-media-controls-start-playback-button,.hero-background video::-webkit-media-controls-overlay-play-button,.portfolio-banner-video::-webkit-media-controls-overlay-play-button{display:none!important;-webkit-appearance:none;opacity:0!important}
