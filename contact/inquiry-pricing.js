@@ -14,7 +14,9 @@ window.InquiryPricing = {
     return item;
   },
   personal(state, config) {
-    const confirmed = (state.items||[]).reduce((n,item)=>n+this.videoPoints(item.quality,item.duration,config)*this.videoQuantity(item),0);
+    // 견적서에는 영상과 포인트 충전 상품이 함께 담긴다 (충전 상품은 판매 금액을 포인트 단위로 바꿔 더한다)
+    const linePoints = item=>{const plan=item.plan&&config.plans.find(x=>x.id===item.plan);return plan?plan.price/config.pointValue:this.videoPoints(item.quality,item.duration,config);};
+    const confirmed = (state.items||[]).reduce((n,item)=>n+linePoints(item)*this.videoQuantity(item),0);
     const draft = this.videoPoints(state.quality,state.duration,config);
     const required = confirmed+draft;
     const purchased = config.plans.reduce((n,x)=>n+x.price*(state.plans[x.id]||0),0);

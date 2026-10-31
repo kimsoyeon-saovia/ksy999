@@ -17,7 +17,7 @@ function syncCart(){try{
  const before=JSON.stringify(list),alive=new Set();
  for(const item of states.personal.items){
   const quantity=P.videoQuantity(item);
-  if(!item.cartId){item.cartId=String(++next);cartLinks.add(item.cartId);list.push({id:item.cartId,quality:item.quality,duration:item.duration,quantity,addedAt:new Date().toISOString(),batch:CART_BATCH});}
+  if(!item.cartId){item.cartId=String(++next);cartLinks.add(item.cartId);list.push({id:item.cartId,...(item.plan?{plan:item.plan}:{quality:item.quality,duration:item.duration}),quantity,addedAt:new Date().toISOString(),batch:CART_BATCH});}
   else list=list.map(c=>c.id===item.cartId?{...c,quantity}:c);
   alive.add(item.cartId);
  }
@@ -54,22 +54,20 @@ function quantity(kind,id,count){return `<div class="quantity"><label>수량 <in
 function personalContent(){const s=S();return `<div class="intro"><h2>영상 예상 제작 견적 확인하기</h2><p>화질과 영상길이를 선택해 주세요.</p></div>
 <section class="selection">${step('01','영상 화질 선택')}<div class="choices quality" role="group" aria-label="영상 화질">${C.qualities.map(x=>`<button class="choice${selected(s.quality===x.id)}" data-choice="quality" data-id="${x.id}" aria-pressed="${s.quality===x.id}"><span class="check" aria-hidden="true">${s.quality===x.id?'✓':''}</span><strong>${x.name}</strong><small>${money(x.points*C.pointValue)}</small><p class="description">${x.description}</p></button>`).join('')}</div></section>
 <section class="selection">${step('02','영상 길이 선택')}<div class="choices duration" role="group" aria-label="영상 길이">${C.durations.map(x=>`<button class="choice${selected(s.duration===x.id)}" data-choice="duration" data-id="${x.id}" aria-pressed="${s.duration===x.id}"><span class="check" aria-hidden="true">${s.duration===x.id?'✓':''}</span><strong>${x.name}</strong><small>${money(x.points*C.pointValue)}</small></button>`).join('')}</div></section>
-<section class="selection">${step('03','포인트 충전','필요한 만큼 충전해 영상 제작에 사용할 수 있습니다.')}<div class="plans" role="group" aria-label="포인트 충전 상품">${C.plans.map(x=>{const on=planInCart(x.id);return `<article class="plan${on?' chosen':''}"><h4>${x.name}</h4><strong>${money(x.price)}</strong><p><span class="plan-base">${C.comma(x.points)}<span class="pt-unit">포인트</span></span> <span class="plan-bonus">+ ${C.comma(x.bonus)}<span class="pt-unit">포인트 추가</span></span></p><button type="button" class="${on?'black':'primary'}" data-plan="${x.id}" aria-pressed="${on}">${on?'장바구니에 담음 ✓':'충전 상품 담기 →'}</button></article>`}).join('')}</div><p class="point-reference"><strong class="point-member">※ 포인트 충전은 회원가입 후 이용하실 수 있습니다.</strong><br>참고 · 1포인트 = ${C.pointValue}원 · 결제가 끝나면 회원 계정에 포인트가 들어갑니다</p></section>`;}
+<section class="selection">${step('03','포인트 충전','필요한 만큼 충전해 영상 제작에 사용할 수 있습니다.')}<div class="plans" role="group" aria-label="포인트 충전 상품">${C.plans.map(x=>{const on=planInCart(x.id);return `<article class="plan${on?' chosen':''}"><h4>${x.name}</h4><strong>${money(x.price)}</strong><p><span class="plan-base">${C.comma(x.points)}<span class="pt-unit">포인트</span></span> <span class="plan-bonus">+ ${C.comma(x.bonus)}<span class="pt-unit">포인트 추가</span></span></p><button type="button" class="${on?'black':'primary'}" data-plan="${x.id}" aria-pressed="${on}">${on?'견적서에 담음 ✓':'충전 상품 담기 →'}</button></article>`}).join('')}</div><p class="point-reference"><strong class="point-member">※ 포인트 충전은 회원가입 후 이용하실 수 있습니다.</strong><br>참고 · 1포인트 = ${C.pointValue}원 · 견적서에 담아 결제하면 회원 계정에 포인트가 들어갑니다</p></section>`;}
 // 포인트 충전 상품은 장바구니에 담아 영상과 함께 결제한다 (회원만). 다시 누르면 장바구니에서 뺀다
-const readCartItems=()=>{try{const c=JSON.parse(localStorage.getItem(CART_STORAGE_KEY)||'{}')||{};return {items:Array.isArray(c.items)?c.items:[],nextId:Number(c.nextId)||0}}catch{return {items:[],nextId:0}}};
-const planInCart=id=>readCartItems().items.some(i=>i.plan===id);
+// 포인트 충전 상품도 영상처럼 견적서에 담는다 (회원만). 다시 누르면 견적서에서 뺀다
+const planInCart=id=>states.personal.items.some(i=>i.plan===id);
 function togglePlan(id){
- const x=C.plans.find(p=>p.id===id);if(!x)return;
- const c=readCartItems();
- if(planInCart(id))c.items=c.items.filter(i=>i.plan!==id);
+ const x=C.plans.find(p=>p.id===id),s=states.personal;if(!x)return;
+ if(planInCart(id))s.items=s.items.filter(i=>i.plan!==id);
  else{
-  if(!window.SangsangDB?.current()){modal('로그인이 필요합니다','<p>충전한 포인트는 회원 계정에 저장됩니다.<br>로그인한 뒤 담아 주세요.</p>',[{label:'로그인 · 회원가입',run:()=>document.querySelector('sangsang-header')?.shadowRoot?.querySelector('[data-member]')?.click()},{label:'닫기'}]);return;}
-  const next=Math.max(c.nextId,...c.items.map(i=>Number(i.id)||0))+1;
-  c.items.push({id:String(next),plan:id,quantity:1,addedAt:new Date().toISOString(),batch:CART_BATCH});c.nextId=next;
+  if(!window.SangsangDB?.current()){modal('회원 전용입니다','<p>포인트 충전은 <strong>회원가입 후</strong> 이용하실 수 있습니다.<br>로그인한 뒤 다시 담아 주세요.</p>',[{label:'로그인 · 회원가입',run:()=>document.querySelector('sangsang-header')?.shadowRoot?.querySelector('[data-member]')?.click()},{label:'닫기'}]);return;}
+  s.nextVideoId=(s.nextVideoId||0)+1;
+  s.items.push({id:String(s.nextVideoId),plan:id,quantity:1});
  }
- try{localStorage.setItem(CART_STORAGE_KEY,JSON.stringify(c))}catch{}
- window.dispatchEvent(new Event('sangsang-cart-change'));repaint();
- if(planInCart(id))modal('장바구니에 담았습니다',`<p><strong>${x.name}</strong> · ${money(x.price)}<br>결제가 끝나면 ${C.point(x.points+x.bonus)}가 회원 계정에 들어갑니다.</p>`,[{label:'장바구니로 가기',run:()=>{location.href='../cart/index.html'}},{label:'계속 둘러보기'}]);
+ s.notice=planInCart(id)?`${x.name} 포인트 충전 상품을 견적서에 담았습니다.`:'';
+ renderQuote();repaint();
 }
 function productMedia(product){return `<button type="button" class="product-media" data-preview="${product.id}" data-preview-name="${product.name}" aria-label="${product.name} 영상 미리보기 재생" aria-describedby="preview-status-${product.id}"><img src="assets/${product.image}" alt="${product.alt}" width="1774" height="887" loading="lazy"><video src="assets/${product.video}" preload="none" muted playsinline aria-hidden="true" tabindex="-1"></video><span class="preview-cue" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V5a1.5 1.5 0 0 1 3 0v6l1-1a1.7 1.7 0 0 1 2 0l1 1a1.7 1.7 0 0 1 2 0l1 1a1.7 1.7 0 0 1 2 1.7v3.5A4.8 4.8 0 0 1 15.2 22h-2.4a5 5 0 0 1-4-2L4 14a1.5 1.5 0 0 1 2.2-2Z"/><path d="M4 4 2 3M8 1V0M14 4l2-2"/></svg><span class="preview-text">클릭해서 재생</span></span><span class="preview-status" id="preview-status-${product.id}" role="status" aria-live="polite"></span></button>`;}
 function productTitle(name){
@@ -84,7 +82,8 @@ function commonContent(){return `<section class="contact" id="contact"><h2>편�
 function field(name,label,required=false,multi=false,autocomplete='off'){const s=S();return `<label class="field" for="field-${name}">${label}${required?' <em>*</em>':''}${multi?`<textarea id="field-${name}" name="${name}" rows="2"`:`<input id="field-${name}" name="${name}" autocomplete="${autocomplete}" value="${esc(s.fields[name]||'')}"`} ${required?'required':''} aria-invalid="${!!s.errors[name]}" aria-describedby="error-${name}">${multi?esc(s.fields[name]||'')+'</textarea>':''}<span class="error" id="error-${name}">${esc(s.errors[name]||'')}</span></label>`;}
 function quoteHTML(){const s=S(),personal=page==='personal',e=personal?P.personal(s,C):P.corporate(s,C);let lines='',subtitle=personal?'개인 맞춤 영상':`${e.product?.name||'제작 상품을 선택해 주세요'}${s.extras.length?' · 추가 옵션 '+s.extras.length+'개':''}`;
 if(personal){
- lines=s.items.map((item,index)=>{const count=P.videoQuantity(item);return `<div class="confirmed-video"><div><span class="confirmed-label">영상 ${index+1} · 확정 ✓</span><button type="button" class="remove-video" data-remove-video="${item.id}" aria-label="영상 ${index+1} 삭제">삭제</button></div><p><span>${C.qualities.find(x=>x.id===item.quality).name} · ${C.durations.find(x=>x.id===item.duration).name}</span><strong>${money(P.videoPoints(item.quality,item.duration,C)*C.pointValue*count)}</strong></p><div class="video-quantity"><span>수량</span><div class="video-stepper" data-video-quantity="${item.id}" role="group" aria-label="영상 ${index+1} 수량"><button type="button" data-video-step="-1" data-id="${item.id}" aria-label="영상 ${index+1} 수량 줄이기" ${count===1?'disabled':''}>−</button><output tabindex="-1" aria-label="영상 ${index+1} 수량" aria-live="polite">${count}</output><button type="button" data-video-step="1" data-id="${item.id}" aria-label="영상 ${index+1} 수량 늘리기" ${count===999?'disabled':''}>+</button></div></div></div>`;}).join('');
+ let videoNo=0;
+ lines=s.items.map((item,index)=>{const count=P.videoQuantity(item),plan=C.planOf(item),label=plan?'포인트 충전':`영상 ${++videoNo}`;return `<div class="confirmed-video${plan?' confirmed-plan':''}"><div><span class="confirmed-label">${label} · 확정 ✓</span><button type="button" class="remove-video" data-remove-video="${item.id}" aria-label="${label} 삭제">삭제</button></div><p><span>${plan?`${plan.name} · ${C.point(plan.points)} + ${C.point(plan.bonus)}`:`${C.qualities.find(x=>x.id===item.quality).name} · ${C.durations.find(x=>x.id===item.duration).name}`}</span><strong>${money(C.itemPrice(item)*count)}</strong></p><div class="video-quantity"><span>수량</span><div class="video-stepper" data-video-quantity="${item.id}" role="group" aria-label="영상 ${index+1} 수량"><button type="button" data-video-step="-1" data-id="${item.id}" aria-label="영상 ${index+1} 수량 줄이기" ${count===1?'disabled':''}>−</button><output tabindex="-1" aria-label="영상 ${index+1} 수량" aria-live="polite">${count}</output><button type="button" data-video-step="1" data-id="${item.id}" aria-label="영상 ${index+1} 수량 늘리기" ${count===999?'disabled':''}>+</button></div></div></div>`;}).join('');
  if(s.quality||s.duration)lines+=`<p class="video-draft"><span>선택 중 · ${[C.qualities.find(x=>x.id===s.quality)?.name,C.durations.find(x=>x.id===s.duration)?.name].filter(Boolean).join(' · ')}</span><span>${money(e.draft*C.pointValue)}</span></p>`;
  if(s.quality&&s.duration)lines+='<button type="button" class="primary confirm-video" data-add-video>담기 <span aria-hidden="true">→</span></button>';
  if(s.notice)lines+=`<p class="video-notice" role="status">${esc(s.notice)}</p>`;
@@ -114,7 +113,7 @@ function repaint(){
  root.querySelectorAll('[data-plan]').forEach(button=>{
    const active=planInCart(button.dataset.plan);
    button.className=active?'black':'primary';button.setAttribute('aria-pressed',active);
-   button.textContent=active?'장바구니에 담음 ✓':'충전 상품 담기 →';
+   button.textContent=active?'견적서에 담음 ✓':'충전 상품 담기 →';
    button.closest('.plan').classList.toggle('chosen',active);
  });
  root.querySelectorAll('[data-product]').forEach(button=>{
