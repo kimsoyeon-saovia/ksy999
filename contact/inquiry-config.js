@@ -4,15 +4,15 @@ window.INQUIRY_CONFIG = {
   consultation: { timeZone:'Asia/Seoul', weekdays:[1,2,3,4,5], openHour:10, closeHour:19, demoPhone:'0507-8765-4321' },
   inquiryEndpoint: '',
   privacy: { purpose: '영상 제작 상담 및 견적 안내', retention: '실제 접수 연결 전 보유 기간과 처리방침 확인이 필요합니다.' },
-  pointValue: 10,
+  pointValue: 1,
   qualities: [
-    {id:'720p',name:'720p',points:500,description:'가볍게 공유하는 기본 화질'},
-    {id:'1080p',name:'1080p',points:600,description:'선명하고 자연스러운 표준 화질'},
-    {id:'2k',name:'2K (UHD)',points:650,description:'디테일까지 또렷한 고화질'},
-    {id:'4k',name:'4K',points:700,description:'큰 화면에서도 살아나는 최고 화질'}
+    {id:'720p',name:'720p',points:5000,description:'가볍게 공유하는 기본 화질'},
+    {id:'1080p',name:'1080p',points:6000,description:'선명하고 자연스러운 표준 화질'},
+    {id:'2k',name:'2K (UHD)',points:6500,description:'디테일까지 또렷한 고화질'},
+    {id:'4k',name:'4K',points:7000,description:'큰 화면에서도 살아나는 최고 화질'}
   ],
-  durations: [{id:'5',name:'5초',points:200},{id:'10',name:'10초',points:370},{id:'15',name:'15초',points:520},{id:'30',name:'30초',points:990},{id:'60',name:'1분',points:1890}],
-  plans: [{id:'starter',name:'STARTER',price:50000,points:5000,bonus:1000},{id:'plus',name:'PLUS',price:100000,points:10000,bonus:3000}],
+  durations: [{id:'5',name:'5초',points:2000},{id:'10',name:'10초',points:3700},{id:'15',name:'15초',points:5200},{id:'30',name:'30초',points:9900},{id:'60',name:'1분',points:18900}],
+  plans: [{id:'starter',name:'STARTER',price:50000,points:50000,bonus:10000},{id:'plus',name:'PLUS',price:100000,points:100000,bonus:30000}],
   products: [
     {id:'shorts',name:'AI 숏폼',duration:'15~30초',description:'SNS 광고 및 숏폼 콘텐츠',price:900000,display:'90만원부터',image:'shorts.png',video:'shorts.mp4',alt:'하늘을 나는 빨간 망토의 치킨 캐릭터'},
     {id:'brand',name:'브랜드 영상',duration:'30~60초',description:'제품 · 서비스 · 기업 소개',price:1800000,display:'180만원부터',image:'brand.webp',video:'brand.mp4',alt:'노을과 조경이 어우러진 고급 주거 단지'},
