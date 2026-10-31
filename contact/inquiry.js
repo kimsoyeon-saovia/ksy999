@@ -26,7 +26,7 @@ function syncCart(){try{
  if(JSON.stringify(list)!==before){localStorage.setItem(CART_STORAGE_KEY,JSON.stringify({items:list,nextId:next}));window.dispatchEvent(new Event('sangsang-cart-change'));}
 }catch{}}
 function saveDrafts(){syncCart();try{const draft=clone(states);Object.values(draft).forEach(state=>{state.errors={};state.notice='';state.submitting=false;});localStorage.setItem(DRAFT_STORAGE_KEY,JSON.stringify(draft));}catch{}}
-function restoreDrafts(){try{const draft=JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY)||'{}');['personal','corporate'].forEach(type=>{const saved=draft?.[type];if(saved&&typeof saved==='object')Object.assign(states[type],saved,{errors:{},notice:'',submitting:false});if(type==='personal')Object.assign(states.personal,{plans:{},items:[],nextVideoId:0});});}catch{}}
+function restoreDrafts(){try{const draft=JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY)||'{}');['personal','corporate'].forEach(type=>{const saved=draft?.[type];if(saved&&typeof saved==='object')Object.assign(states[type],saved,{errors:{},notice:'',submitting:false});if(type==='personal')Object.assign(states.personal,{quality:null,duration:null,plans:{},items:[],nextVideoId:0});});}catch{}}
 function archiveInquiry(type){try{const state=clone(states[type]);state.errors={};state.notice='';state.submitting=false;const record={savedAt:new Date().toISOString(),type,fields:state.fields,selection:state,estimate:type==='personal'?P.personal(state,C):P.corporate(state,C)};const saved=JSON.parse(localStorage.getItem(INQUIRY_STORAGE_KEY)||'[]');const records=Array.isArray(saved)?saved:[];records.push(record);localStorage.setItem(INQUIRY_STORAGE_KEY,JSON.stringify(records));}catch{}}
 const pageFromURL=()=>location.hash==='#corporate'?'corporate':location.hash==='#personal'?'personal':location.pathname.endsWith('corporate.html')?'corporate':'personal';
 let page=pageFromURL(),audienceSelection=null,returnFocus;
@@ -474,5 +474,7 @@ restoreDrafts();
 document.addEventListener('click',saveDrafts);
 root.addEventListener('input',saveDrafts);
 root.addEventListener('change',saveDrafts);
+// 다른 페이지에 갔다가 뒤로 가기로 돌아오면 브라우저가 이전 화면을 그대로 보여 주므로, 새로 불러와 견적서를 비운다
+window.addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
 render();prepareHero();prepareBodyMotion();sizeProductButtons();updateAudience();updateTopButton();})();
 

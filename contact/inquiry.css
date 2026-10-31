@@ -313,7 +313,7 @@ body{font-synthesis:none;font-kerning:normal;text-rendering:optimizeLegibility}
 /* 추가 포인트 글자: 파랑 · 검정으로 반짝 */
 .plan .plan-bonus{animation:bonus-blink 1s steps(1,end) infinite}
 @keyframes bonus-blink{0%{color:#1647ff}50%{color:#080808}}
-@media(prefers-reduced-motion:reduce){.plan .plan-bonus{animation:none;color:#1647ff}}
+@media(prefers-reduced-motion:reduce){.plan .plan-bonus{animation:none;background:none;color:#1647ff;-webkit-text-fill-color:#1647ff}}
 /* 포인트 충전: 설명은 제목 아래 줄로, 카드 글자 간격 · 들여쓰기 */
 .step.has-sub{display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:14px;row-gap:6px}
 .step.has-sub small{grid-column:2;font-size:17px;line-height:1.5}
@@ -334,7 +334,8 @@ body{font-synthesis:none;font-kerning:normal;text-rendering:optimizeLegibility}
 @media(max-width:1600px) and (min-width:801px){.selection .plans{margin-top:40px}}
 @media(max-width:800px){.step.has-sub small{font-size:16px}.selection .plans{margin-top:20px}}
 /* 추가 포인트 글자: 파랑·검정으로 빠르게 깜빡이면서 노란 빛이 글자 뒤로 지나감 */
-.plan .plan-bonus{display:inline-block;padding:0 .25em;background:linear-gradient(100deg,transparent 35%,rgba(224,255,79,.95) 50%,transparent 65%) no-repeat;background-size:300% 100%;animation:bonus-blink .18s steps(1,end) infinite,bonus-shine 1.1s linear infinite}
+.plan .plan-bonus{display:inline-block;color:transparent;-webkit-text-fill-color:transparent;background:linear-gradient(100deg,transparent 40%,#e0ff4f 50%,transparent 60%) no-repeat #1647ff;background-size:300% 100%;-webkit-background-clip:text;background-clip:text;animation:bonus-fill .18s steps(1,end) infinite,bonus-shine 1.1s linear infinite}
+@keyframes bonus-fill{0%{background-color:#1647ff}50%{background-color:#080808}}
 @keyframes bonus-shine{0%{background-position:120% 0}100%{background-position:-20% 0}}
 @media(max-width:800px){.plan .plan-bonus{display:block}}
-@media(prefers-reduced-motion:reduce){.plan .plan-bonus{animation:none;color:#1647ff}}
+@media(prefers-reduced-motion:reduce){.plan .plan-bonus{animation:none;background:none;color:#1647ff;-webkit-text-fill-color:#1647ff}}
