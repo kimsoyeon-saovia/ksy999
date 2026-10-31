@@ -56,7 +56,7 @@ function render(){
 </div>
 <p class="ad-flash" role="status">${esc(flash)}</p>
 ${all.length?(found.length?`<div class="ad-table-wrap"><table class="ad-table">
-<thead><tr><th>아이디</th><th>이름</th><th>휴대폰</th><th>이메일</th><th>주소</th><th>가입일</th><th>이번 달 주문</th><th>장바구니</th><th>관리</th></tr></thead>
+<thead><tr><th>아이디</th><th>이름</th><th>휴대폰</th><th>이메일</th><th>주소</th><th>가입일</th><th>이번 달 주문</th><th>장바구니</th><th>포인트</th><th>관리</th></tr></thead>
 <tbody>${found.map(m=>`<tr>
  <td data-label="아이디"><strong>${esc(m.id)}</strong>${me===m.id?'<span class="ad-on">나</span>':''}</td>
  <td data-label="이름">${esc(m.name)}</td><td data-label="휴대폰">${esc(m.phone||'-')}</td><td data-label="이메일">${esc(m.email||'-')}</td>
@@ -64,6 +64,7 @@ ${all.length?(found.length?`<div class="ad-table-wrap"><table class="ad-table">
  <td data-label="가입일">${date(m.joined)}</td>
  <td data-label="이번 달 주문">${monthOrders(m).length?`<b>${monthOrders(m).length}건</b><br><small>${money(sum(monthOrders(m)))}</small>`:'<span class="ad-none">없음</span>'}</td>
  <td data-label="장바구니">${cartQty(m.cart)?`${cartQty(m.cart)}개`:'<span class="ad-none">비어 있음</span>'}</td>
+ <td data-label="포인트">${m.points?`${Number(m.points).toLocaleString('ko-KR')}P`:'<span class="ad-none">0P</span>'}</td>
  <td class="ad-actions"><button type="button" class="ghost" data-detail="${esc(m.id)}">내역</button><button type="button" class="ghost" data-edit="${esc(m.id)}">수정</button>${me===m.id?'':`<button type="button" class="ghost ad-del" data-del="${esc(m.id)}">삭제</button>`}</td>
 </tr>`).join('')}</tbody></table></div>
 <p class="ad-count">${countText(found.length,all.length)}</p>`:`<div class="my-none">'${esc(query)}'에 맞는 회원이 없습니다.</div>`)

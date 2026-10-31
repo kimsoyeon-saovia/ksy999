@@ -187,3 +187,11 @@ a{color:inherit}
 .cart-day{margin:28px 0 0;padding:0 0 10px;border-bottom:2px solid #080808;font-size:15px;font-weight:800;color:#080808}
 .cart-day:first-of-type{margin-top:8px}
 .added-at{color:#1647ff;font-weight:600}
+/* 포인트 사용 */
+.pt-use{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.pt-use label{font-size:15px;font-weight:700;margin-right:6px}
+.pt-use input{width:160px;height:44px;padding:0 12px;border:1px solid #c9c9c9;font-size:16px;text-align:right}
+.pt-use input:disabled{background:#f3f3f3}
+.pt-rows{margin-top:12px!important;padding-top:12px;border-top:1px solid #ddd}
+.pt-rows div:first-child dd{color:#1647ff;font-weight:700}
+.methods:disabled{opacity:.4}

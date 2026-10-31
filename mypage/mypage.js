@@ -18,8 +18,27 @@ const cartCount=()=>{const it=read(CART,{})?.items;return Array.isArray(it)?it.r
 const head=sub=>`<div class="shop-head"><h1>마이페이지</h1>${sub||''}</div>`;
 const icon='<svg viewBox="0 0 24 24" fill="none" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>';
 
+// 포인트 잔액 · 내역은 회원 계정(userdata/{uid}.points)에서 읽는다 (1P = C.pointValue원)
+let pts=null,ptsFor=null;
+function loadPoints(m){
+ if(!window.SangsangDB||ptsFor===m.id)return;ptsFor=m.id;
+ window.SangsangDB.whenAuthKnown().then(()=>window.SangsangDB.points()).then(p=>{pts=p;render()}).catch(()=>{pts={balance:0,history:[],error:true};render()});
+}
+const point=n=>Number(n||0).toLocaleString('ko-KR')+'P';
+function pointsHTML(){
+ if(!pts)return `<section class="block my-points"><div class="block-title"><h2>포인트</h2></div><div class="my-none">포인트를 불러오는 중입니다…</div></section>`;
+ const plans=C?.plans||[];
+ return `<section class="block my-points"><div class="block-title"><h2>포인트</h2><small>1P = ${C?.pointValue||10}원 · 결제할 때 사용</small></div>
+<div class="pt-balance"><span>보유 포인트</span><strong>${point(pts.balance)}</strong><em>${money(pts.balance*(C?.pointValue||10))} 상당</em></div>
+<div class="pt-plans">${plans.map(p=>`<button type="button" class="pt-plan" data-charge="${esc(p.id)}"><b>${esc(p.name)}</b><span>${money(p.price)}</span><small>${point(p.points)} + 보너스 ${point(p.bonus||0)}</small></button>`).join('')}</div>
+<p class="note">충전 결제는 시연용입니다. 실제 결제는 일어나지 않고 포인트만 계정에 저장됩니다.</p>
+${pts.history.length?`<ul class="my-items pt-history">${pts.history.slice(0,10).map(h=>`<li><span>${date(h.date)} · ${esc(h.memo||'')}</span><span class="${h.amount<0?'minus':'plus'}">${h.amount>0?'+':''}${point(h.amount)}</span></li>`).join('')}</ul>`:'<div class="my-none">포인트 내역이 없습니다.</div>'}
+</section>`;
+}
+
 function render(msg){
  const m=me();
+ if(!m){pts=null;ptsFor=null}else loadPoints(m);
  if(!m){
   shop.innerHTML=head()+`<div class="empty">${icon}<h2>${msg||'로그인이 필요합니다'}</h2><p>${msg?'이 브라우저에 저장된 회원 정보와 주문 · 상담 내역을 모두 지웠습니다.':'주문 내역과 상담 신청 내역은 로그인한 뒤 볼 수 있습니다.'}</p><div class="my-empty-btns"><button type="button" class="cta" data-login>로그인 · 회원가입</button><a class="sub-cta" href="../contact/index.html">견적 내러 가기</a></div></div>`;
   return;
@@ -28,11 +47,12 @@ function render(msg){
  const a=m.address||{};
  shop.innerHTML=head(`<ul class="my-stats"><li><b>${orders.length}</b>주문</li><li><b>${consults.length}</b>상담 신청</li><li><a href="../cart/index.html"><b>${cart}</b>장바구니</a></li></ul>`)+`
 <div class="shop-body"><div>
+${pointsHTML()}
 <section class="block"><div class="block-title"><h2>주문 내역</h2><small>최근 주문부터</small></div>
 ${orders.length?orders.map(o=>`<article class="my-card">
  <div class="my-card-top"><div><strong class="my-no">${esc(o.no)}</strong><span class="my-date">${date(o.date)}</span></div><span class="my-state">결제 완료</span></div>
  <ul class="my-items">${(o.items||[]).map(i=>`<li><span>${esc(i.quality)} · ${esc(i.duration)} × ${i.quantity}</span><span>${money(i.price)}</span></li>`).join('')}</ul>
- <div class="my-card-foot"><span>${esc(o.method)}</span><span>총 결제 금액 <strong>${money(o.total)}</strong></span></div>
+ <div class="my-card-foot"><span>${esc(o.method)}${o.pointsUsed?` · 포인트 ${point(o.pointsUsed)} 사용`:''}</span><span>총 결제 금액 <strong>${money(o.paid??o.total)}</strong></span></div>
  <button type="button" class="ghost my-again" data-again="${esc(o.no)}">같은 영상 다시 담기</button>
 </article>`).join(''):`<div class="my-none">아직 주문 내역이 없습니다. <a class="text-link" href="../contact/index.html">견적 내러 가기</a></div>`}
 </section>
@@ -55,6 +75,14 @@ ${consults.length?consults.map(r=>`<article class="my-card">
 shop.addEventListener('click',e=>{
  const b=e.target.closest('button');if(!b)return;
  if(b.hasAttribute('data-login')){openLogin();return}
+ if(b.dataset.charge){
+  const p=C?.plans.find(x=>x.id===b.dataset.charge);if(!p)return;
+  const add=p.points+(p.bonus||0);
+  if(!confirm(`${p.name} ${money(p.price)}을 결제하고 ${point(add)}를 충전할까요?\n(시연용 결제 · 실제 출금 없음)`))return;
+  b.disabled=true;
+  window.SangsangDB.changePoints(add,'charge',`${p.name} 충전`).then(r=>{pts=r;render();alert(`${point(add)}가 충전되었습니다.`)}).catch(err=>{b.disabled=false;alert('충전하지 못했습니다. '+window.SangsangDB.errorText(err))});
+  return;
+ }
  // 로그인 · 탈퇴는 member-db.js(Firebase)가 처리하고, 끝나면 sangsang-member-change 로 다시 그린다
  if(b.hasAttribute('data-logout')){window.SangsangDB?.logout().catch(()=>{});return}
  if(b.hasAttribute('data-leave')){
@@ -84,6 +112,7 @@ shop.addEventListener('click',e=>{
 // 헤더의 MEMBER 창에서 로그인 · 로그아웃하면 바로 다시 그린다
 window.addEventListener('sangsang-member-change',()=>render());
 window.addEventListener('sangsang-data-sync',()=>render());
+window.addEventListener('sangsang-points-change',()=>{ptsFor=null;render()});
 window.addEventListener('storage',e=>{if([MEMBERS,SESSION,ORDERS,INQUIRIES,CART].includes(e.key))render()});
 render();
 })();

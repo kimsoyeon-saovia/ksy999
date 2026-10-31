@@ -128,10 +128,36 @@ function orderItems(){
  return Array.isArray(ids)?list.filter(i=>ids.includes(i.id)):list;
 }
 const draftFields=()=>read(DRAFT,{})?.personal?.fields||{};
+// 포인트 사용 (회원만): 잔액은 회원 계정에서 읽고, 결제 금액보다 많이 쓸 수 없다
+const PV=C.pointValue;
+const point=n=>Number(n||0).toLocaleString('ko-KR')+'P';
+let ptBal=null,ptFor=null,ptUse=0;
+function loadPoints(me){
+ if(!me||!window.SangsangDB||ptFor===me.id)return;ptFor=me.id;
+ window.SangsangDB.whenAuthKnown().then(()=>window.SangsangDB.points()).then(p=>{ptBal=p.balance;const box=shop.querySelector('#pt-block');if(box)box.innerHTML=pointsBlock(member(),totals(orderItems()))}).catch(()=>{ptBal=0});
+}
+const maxUse=t=>Math.max(0,Math.min(ptBal||0,Math.floor(t.total/PV)));
+const payRows=t=>ptUse?`<dl class="pt-rows"><div><dt>포인트 사용</dt><dd>−${money(ptUse*PV)}</dd></div><div class="total"><dt>실제 결제 금액</dt><dd>${money(t.total-ptUse*PV)}</dd></div></dl>`:'';
+const payLabel=t=>{const left=t.total-ptUse*PV;return left?`${money(left)} 결제하기`:'포인트로 결제하기'};
+function pointsBlock(me,t){
+ if(!me)return `<section class="block"><div class="block-title"><h2>포인트</h2></div><p class="pay-note">회원으로 로그인하면 충전한 포인트로 결제할 수 있습니다.</p></section>`;
+ if(ptBal===null)return `<section class="block"><div class="block-title"><h2>포인트</h2></div><p class="pay-note">포인트를 불러오는 중입니다…</p></section>`;
+ return `<section class="block"><div class="block-title"><h2>포인트</h2><small>보유 <b>${point(ptBal)}</b> · 1P = ${PV}원 · <a class="text-link" style="font-size:14px" href="../mypage/index.html">충전하기</a></small></div>
+<div class="pt-use"><label for="o-points">사용할 포인트</label><input id="o-points" name="usePoints" type="number" min="0" max="${maxUse(t)}" step="1" inputmode="numeric" value="${ptUse||''}" placeholder="0" ${maxUse(t)?'':'disabled'}><span>P</span><button type="button" class="ghost" data-use-all ${maxUse(t)?'':'disabled'}>전액 사용</button></div>
+<p class="pay-note">${maxUse(t)?`최대 ${point(maxUse(t))}까지 사용할 수 있습니다. 모자란 금액은 아래 결제 수단으로 결제합니다.`:'사용할 수 있는 포인트가 없습니다.'}</p></section>`;
+}
+// 포인트 입력이 바뀌면 금액 부분만 고친다 (입력칸은 다시 그리지 않음)
+function updatePay(){
+ const t=totals(orderItems()),box=shop.querySelector('#pay-rows');if(!box)return;
+ box.innerHTML=payRows(t);shop.querySelector('#checkout [type=submit]').textContent=payLabel(t);
+ shop.querySelector('.methods').disabled=t.total-ptUse*PV===0;
+}
 function renderCheckout(){
  const list=orderItems();
  if(!list.length){shop.innerHTML=head('주문/결제',2)+`<div class="empty">${emptyIcon}<h2>주문할 영상이 없습니다</h2><p>장바구니에서 주문할 영상을 선택해 주세요.</p><a class="cta" style="width:280px" href="index.html">장바구니로 가기</a></div>`;return}
  const me=member(),f=draftFields(),t=totals(list);
+ if(me)loadPoints(me);else{ptBal=null;ptFor=null}
+ ptUse=me&&ptBal!==null?Math.min(ptUse,maxUse(t)):0;
  const value=(v)=>esc(v||'');
  shop.innerHTML=head('주문/결제',2)+`<form class="shop-body" id="checkout" novalidate><div>
 <section class="block"><div class="block-title"><h2>주문자 정보</h2><small><b style="color:#1647ff">*</b> 필수 입력</small></div>
@@ -142,15 +168,16 @@ ${me?`<div class="login-hint member"><span><strong>${esc(me.name)}</strong>님�
 <div class="f wide"><label for="o-request">제작 요청사항</label><textarea id="o-request" name="request" placeholder="희망 제작물, 분위기, 참고 자료 등을 적어 주세요.">${value([f.request,f.mood].filter(Boolean).join('\n'))}</textarea></div></div></section>
 <section class="block"><div class="block-title"><h2>주문 영상</h2><small>${list.length}건 · <a class="text-link" style="font-size:14px" href="index.html">장바구니 수정</a></small></div>
 <ul class="order-items">${list.map((item,i)=>`<li>${thumb(item)}<div><h3>개인 맞춤 영상 ${i+1}</h3><p>${esc(quality(item)?.name)} · ${esc(duration(item)?.name)} · 수량 ${qty(item)}개</p></div><strong class="price">${money(unit(item)*qty(item))}</strong></li>`).join('')}</ul></section>
+<div id="pt-block">${pointsBlock(me,t)}</div>
 <section class="block"><div class="block-title"><h2>결제 수단</h2></div>
-<fieldset class="methods"><legend>결제 수단 선택</legend>${METHODS.map((m,i)=>`<label><input type="radio" name="method" value="${m}" ${i===0?'checked':''}>${m}</label>`).join('')}</fieldset>
+<fieldset class="methods" ${ptUse&&t.total-ptUse*PV===0?'disabled':''}><legend>결제 수단 선택</legend>${METHODS.map((m,i)=>`<label><input type="radio" name="method" value="${m}" ${i===0?'checked':''}>${m}</label>`).join('')}</fieldset>
 <p class="pay-note">🔒 결제 화면 시안입니다. 실제 결제나 출금은 이루어지지 않습니다.</p></section>
 <section class="block"><div class="block-title"><h2>약관 동의</h2></div><div class="agrees">
 <label class="check all"><input type="checkbox" data-agree-all> 전체 동의합니다</label>
 <label class="check"><input type="checkbox" name="agreeOrder" data-agree> [필수] 주문 내용을 확인했으며 결제에 동의합니다</label>
 <label class="check"><input type="checkbox" name="agreePrivacy" data-agree> [필수] 개인정보 수집 및 이용에 동의합니다</label>
 <p class="agree-msg" role="status"></p></div></section>
-</div><aside class="summary" aria-label="최종 결제 금액"><h2>최종 결제 금액</h2>${summaryRows(t)}<p class="note">VAT 포함 금액입니다. 제작 범위는 결제 후 상담에서 확정합니다.</p><button type="submit" class="cta">${money(t.total)} 결제하기</button><a class="sub-cta" href="index.html">장바구니로 돌아가기</a></aside></form>`;
+</div><aside class="summary" aria-label="최종 결제 금액"><h2>최종 결제 금액</h2>${summaryRows(t)}<div id="pay-rows">${payRows(t)}</div><p class="note">VAT 포함 금액입니다. 제작 범위는 결제 후 상담에서 확정합니다.</p><button type="submit" class="cta">${payLabel(t)}</button><a class="sub-cta" href="index.html">장바구니로 돌아가기</a></aside></form>`;
  const phone=shop.querySelector('#o-phone');phone.value=fmtPhone(phone.value);
 }
 const fmtPhone=v=>{const d=String(v||'').replace(/\D/g,'').slice(0,11);return d.length<4?d:d.length<8?`${d.slice(0,3)}-${d.slice(3)}`:`${d.slice(0,3)}-${d.slice(3,d.length-4)}-${d.slice(-4)}`};
@@ -166,22 +193,27 @@ function checkoutSubmit(e){
  if(agreeBad){form.querySelector('[data-agree]:not(:checked)')?.focus();return}
  const list=orderItems(),t=totals(list),me=member(),now=new Date();
  const no=`SS-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(Math.floor(Math.random()*9000)+1000)}`;
- const order={no,date:now.toISOString(),method:el.method.value,buyer:{name,phone,email},memberId:me?.id||null,request:el.request.value.trim(),
-  items:list.map(i=>({quality:quality(i)?.name,duration:duration(i)?.name,quantity:qty(i),price:unit(i)*qty(i)})),...t};
+ const used=me?Math.min(ptUse,maxUse(t)):0,paid=t.total-used*PV;
+ const method=paid===0?'포인트 결제':used?`포인트 + ${el.method.value}`:el.method.value;
+ const order={no,date:now.toISOString(),method,buyer:{name,phone,email},memberId:me?.id||null,request:el.request.value.trim(),
+  items:list.map(i=>({quality:quality(i)?.name,duration:duration(i)?.name,quantity:qty(i),price:unit(i)*qty(i)})),...t,pointsUsed:used,paid};
  const paying=document.createElement('div');paying.className='paying';paying.setAttribute('role','status');paying.innerHTML=`<i aria-hidden="true"></i><p>${esc(order.method)} 결제를 진행하고 있습니다…</p>`;
  document.body.append(paying);
- setTimeout(()=>{
+ // 포인트를 먼저 차감하고, 실패하면(잔액 부족 등) 주문하지 않는다
+ const spend=used?window.SangsangDB.changePoints(-used,'use',`주문 ${no}`):Promise.resolve();
+ spend.then(()=>new Promise(r=>setTimeout(r,1400))).then(()=>{
   try{const orders=read(ORDERS,[]);localStorage.setItem(ORDERS,JSON.stringify([...(Array.isArray(orders)?orders:[]),order]))}catch{}
   if(!order.memberId)window.SangsangDB?.saveGuestOrder(order).catch(()=>{});
   const ids=new Set(list.map(i=>i.id));saveItems(items().filter(i=>!ids.has(i.id)));
   try{sessionStorage.removeItem(PICK)}catch{}
+  ptUse=0;ptFor=null;ptBal=null;
   paying.remove();history.replaceState(null,'',`?order=${encodeURIComponent(no)}`);renderDone(order);scrollTo({top:0});
- },1400);
+ }).catch(err=>{paying.remove();alert('결제하지 못했습니다. '+(window.SangsangDB?.errorText(err)||''));ptFor=null;ptBal=null;renderCheckout()});
 }
 function renderDone(order){
  const d=new Date(order.date);
  shop.innerHTML=head('주문완료',3)+`<section class="done"><div class="badge" aria-hidden="true">✓</div><h2>주문이 완료되었습니다</h2><p>${esc(order.buyer.name)}님, 감사합니다.<br>담당자가 확인 후 입력하신 연락처로 제작 상담 일정을 안내해 드립니다.</p>
-<dl class="receipt"><div><dt>주문번호</dt><dd><strong>${esc(order.no)}</strong></dd></div><div><dt>주문일시</dt><dd>${d.toLocaleString('ko-KR')}</dd></div><div><dt>주문 영상</dt><dd>${order.items.map(i=>`${esc(i.quality)} · ${esc(i.duration)} × ${i.quantity}`).join('<br>')}</dd></div><div><dt>결제 수단</dt><dd>${esc(order.method)}</dd></div><div><dt>연락처</dt><dd>${esc(order.buyer.phone)}<br>${esc(order.buyer.email)}</dd></div><div class="total"><dt>결제 금액</dt><dd>${money(order.total)}</dd></div></dl>
+<dl class="receipt"><div><dt>주문번호</dt><dd><strong>${esc(order.no)}</strong></dd></div><div><dt>주문일시</dt><dd>${d.toLocaleString('ko-KR')}</dd></div><div><dt>주문 영상</dt><dd>${order.items.map(i=>`${esc(i.quality)} · ${esc(i.duration)} × ${i.quantity}`).join('<br>')}</dd></div><div><dt>결제 수단</dt><dd>${esc(order.method)}</dd></div><div><dt>연락처</dt><dd>${esc(order.buyer.phone)}<br>${esc(order.buyer.email)}</dd></div>${order.pointsUsed?`<div><dt>주문 금액</dt><dd>${money(order.total)}</dd></div><div><dt>포인트 사용</dt><dd>${point(order.pointsUsed)} (−${money(order.pointsUsed*PV)})</dd></div>`:''}<div class="total"><dt>결제 금액</dt><dd>${money(order.paid??order.total)}</dd></div></dl>
 <p class="demo-note">화면 확인용 결제 시안입니다. 실제 승인이나 출금은 발생하지 않았습니다.</p>
 <div class="done-actions"><a class="sub-cta" href="../main/index.html">홈으로</a><a class="cta plain" href="${ESTIMATE_URL}">제작 문의 추가</a></div></section>`;
 }
@@ -195,8 +227,14 @@ if(view==='cart'){
  const found=no&&read(ORDERS,[]).find?.(o=>o.no===no);
  if(found)renderDone(found);else renderCheckout();
  shop.addEventListener('submit',checkoutSubmit);
- shop.addEventListener('click',e=>{if(e.target.closest('[data-login]'))openLogin()});
- shop.addEventListener('input',e=>{const t=e.target;if(t.name==='phone')t.value=fmtPhone(t.value);t.closest('.f')?.classList.remove('error')});
+ shop.addEventListener('click',e=>{
+  if(e.target.closest('[data-login]'))openLogin();
+  if(e.target.closest('[data-use-all]')){ptUse=maxUse(totals(orderItems()));shop.querySelector('#o-points').value=ptUse;updatePay()}
+ });
+ shop.addEventListener('input',e=>{
+  const t=e.target;if(t.name==='phone')t.value=fmtPhone(t.value);t.closest('.f')?.classList.remove('error');
+  if(t.name==='usePoints'){const max=maxUse(totals(orderItems()));ptUse=Math.max(0,Math.min(max,Math.floor(Number(t.value)||0)));if(Number(t.value)>max)t.value=max;updatePay()}
+ });
  shop.addEventListener('change',e=>{
   const t=e.target,form=t.form;if(!form)return;
   if(t.hasAttribute('data-agree-all'))form.querySelectorAll('[data-agree]').forEach(c=>{c.checked=t.checked});

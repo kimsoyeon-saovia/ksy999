@@ -186,7 +186,27 @@ window.SangsangDB={
  async memberActivity(uid){
   await ready;const ref=db.doc(`userdata/${uid}`);
   const [snap,os,cs]=await Promise.all([ref.get(),ref.collection('orders').get(),ref.collection('consults').get().catch(()=>null)]);
-  return {cart:snap.data()?.cart?.items||[],orders:os.docs.map(d=>d.data()),consults:cs?cs.docs.map(d=>d.data()):[]};
+  return {cart:snap.data()?.cart?.items||[],orders:os.docs.map(d=>d.data()),consults:cs?cs.docs.map(d=>d.data()):[],points:Number(snap.data()?.points?.balance)||0};
+ },
+ // 포인트: userdata/{uid}.points = { balance, history:[{date,type,amount,memo}] }
+ // 충전 · 사용은 트랜잭션으로 처리해 두 창에서 동시에 써도 잔액이 꼬이지 않는다 (충전 결제는 시안)
+ async points(){
+  await ready;const u=auth.currentUser;if(!u)return {balance:0,history:[]};
+  const p=(await db.doc(`userdata/${u.uid}`).get()).data()?.points||{};
+  return {balance:Number(p.balance)||0,history:Array.isArray(p.history)?p.history:[]};
+ },
+ async changePoints(amount,type,memo){
+  await ready;const u=auth.currentUser;if(!u)throw {code:'permission-denied'};
+  const ref=db.doc(`userdata/${u.uid}`);
+  const result=await db.runTransaction(async t=>{
+   const p=(await t.get(ref)).data()?.points||{},balance=Number(p.balance)||0,next=balance+amount;
+   if(next<0)throw {code:'not-enough-points'};
+   const history=[{date:new Date().toISOString(),type,amount,memo},...(Array.isArray(p.history)?p.history:[])].slice(0,50);
+   t.set(ref,{points:{balance:next,history}},{merge:true});
+   return {balance:next,history};
+  });
+  window.dispatchEvent(new Event('sangsang-points-change'));
+  return result;
  },
  async updateMember(id,data){
   await ready;await db.doc(`members/${id}`).update(data);
@@ -214,6 +234,7 @@ window.SangsangDB={
   if(c==='network-request-failed')return '인터넷 연결을 확인해 주세요.';
   if(c==='weak-password')return '비밀번호가 너무 쉽습니다. 영문 · 숫자를 섞어 8자 이상 입력해 주세요.';
   if(c==='permission-denied')return '권한이 없습니다.';
+  if(c==='not-enough-points')return '포인트가 부족합니다.';
   return '잠시 후 다시 시도해 주세요.';
  }
 };

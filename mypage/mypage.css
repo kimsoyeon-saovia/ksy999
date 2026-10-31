@@ -32,3 +32,13 @@
  .my-card{padding:16px}
  .my-empty-btns{grid-template-columns:1fr;width:100%}
 }
+/* 포인트 */
+.pt-balance{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;padding:20px 22px;background:#080808;color:#fff}
+.pt-balance span{font-size:14px;color:#bbb}.pt-balance strong{font-size:30px;font-weight:800;color:#e0ff4f}.pt-balance em{font-style:normal;font-size:14px;color:#bbb}
+.pt-plans{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.pt-plan{display:grid;gap:4px;padding:18px;border:1px solid #080808;background:#fff;text-align:left;cursor:pointer}
+.pt-plan b{font-size:16px;font-weight:800}.pt-plan span{font-size:20px;font-weight:800}.pt-plan small{font-size:13px;color:#555}
+.pt-plan:hover,.pt-plan:focus-visible{background:#1647ff;border-color:#1647ff;color:#fff}.pt-plan:hover small,.pt-plan:focus-visible small{color:#fff}
+.pt-plan:disabled{opacity:.5;cursor:wait}
+.pt-history{margin-top:14px}.pt-history .plus{color:#1647ff;font-weight:700}.pt-history .minus{color:#e5402f;font-weight:700}
+@media(max-width:750px){.pt-plans{grid-template-columns:1fr}}
