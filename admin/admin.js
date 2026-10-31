@@ -16,7 +16,7 @@ const thisMonth=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.ge
 const inMonth=o=>String(o.date||'').startsWith(thisMonth());
 // 장바구니에는 화질 · 길이 id만 저장되므로 견적 설정에서 이름과 가격을 찾는다
 const C=()=>window.INQUIRY_CONFIG;
-const cartLabel=i=>{const c=C();const q=c?.qualities.find(x=>x.id===i.quality),d=c?.durations.find(x=>x.id===i.duration);return `${q?.name||i.quality} · ${d?.name||i.duration}`};
+const cartLabel=i=>{const c=C();const p=c?.planOf?.(i);if(p)return `포인트 충전 · ${p.name}`;const q=c?.qualities.find(x=>x.id===i.quality),d=c?.durations.find(x=>x.id===i.duration);return `${q?.name||i.quality} · ${d?.name||i.duration}`};
 const cartQty=list=>(list||[]).reduce((n,i)=>n+(Number(i.quantity)||1),0);
 const monthOrders=m=>(m.orders||[]).filter(inMonth);
 const sum=list=>list.reduce((n,o)=>n+(Number(o.total)||0),0);
@@ -32,7 +32,9 @@ function message(title,text,login){
 }
 function filtered(){
  const q=query.trim().toLowerCase();
- const found=q?members.filter(m=>[m.id,m.name,m.phone,m.email,addrText(m.address)].some(v=>String(v||'').toLowerCase().includes(q))):[...members];
+ // 전화번호는 하이픈 없이 숫자만 넣어도 찾는다 (01012345678 → 010-1234-5678)
+ const digits=q.replace(/\D/g,''),phoneHit=m=>digits.length>=3&&/^[\d\s-]+$/.test(q)&&String(m.phone||'').replace(/\D/g,'').includes(digits);
+ const found=q?members.filter(m=>phoneHit(m)||[m.id,m.name,m.phone,m.email,addrText(m.address)].some(v=>String(v||'').toLowerCase().includes(q))):[...members];
  found.sort(sort==='name'?(a,b)=>String(a.name).localeCompare(String(b.name),'ko'):(a,b)=>String(b.joined||'').localeCompare(String(a.joined||'')));
  return found;
 }
@@ -55,7 +57,7 @@ function render(){
  <button type="button" class="ghost" data-csv${all.length||guests.length?'':' disabled'}>엑셀 저장 (전체 데이터)</button></div>
 </div>
 <p class="ad-flash" role="status">${esc(flash)}</p>
-<div class="ad-list">${listHTML(found,all,me)}</div>
+<div class="ad-members">${listHTML(found,all,me)}</div>
 ${guestsHTML()}
 <dialog class="ad-dialog"></dialog>`;
  flash='';
@@ -141,7 +143,8 @@ function openDetail(id){
 
 // ---------------- 엑셀 저장: 파일 하나에 시트를 나눠 담는다 ----------------
 // 회원 목록 · 회원 주문 · 장바구니 · 상담 신청 · 비회원 주문 · 판매 현황
-const XLSX_SRC='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+// 칸 색 · 굵은 글씨 · 테두리를 넣을 수 있는 SheetJS 확장판(xlsx-js-style)을 쓴다
+const XLSX_SRC='https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js';
 let xlsxReady=null;
 function loadXLSX(){
  if(window.XLSX)return Promise.resolve();
@@ -151,10 +154,10 @@ const dateTime=iso=>{const d=new Date(iso);return isNaN(d)?'':`${date(iso)} ${St
 const itemsText=o=>(o.items||[]).map(i=>`${i.quality} · ${i.duration} × ${i.quantity}`).join(', ');
 function sheets(){
  const list=filtered(),byDate=(a,b)=>String(b.date||'').localeCompare(String(a.date||''));
- const memberRows=list.map(m=>[m.id,m.name,m.phone,m.email,m.address?.zip,m.address?.addr1,m.address?.addr2,date(m.joined),(m.orders||[]).length,sum(m.orders||[]),cartQty(m.cart)]);
+ const memberRows=list.map(m=>[m.id,m.name,m.phone,m.email,m.address?.zip,m.address?.addr1,m.address?.addr2,date(m.joined),(m.orders||[]).length,sum(m.orders||[]),cartQty(m.cart),Number(m.points)||0]);
  const orderRows=[],cartRows=[],consultRows=[];
  for(const m of list){
-  for(const o of [...(m.orders||[])].sort(byDate))orderRows.push([o.no,dateTime(o.date),m.id,m.name,o.buyer?.phone,o.buyer?.email,itemsText(o),o.method,Number(o.subtotal)||0,Number(o.vat)||0,Number(o.total)||0,o.request]);
+  for(const o of [...(m.orders||[])].sort(byDate))orderRows.push([o.no,dateTime(o.date),m.id,m.name,o.buyer?.phone,o.buyer?.email,itemsText(o),o.method,Number(o.subtotal)||0,Number(o.vat)||0,Number(o.total)||0,Number(o.pointsUsed)||0,Number(o.pointsGained)||0,Number(o.paid??o.total)||0,o.request]);
   for(const i of [...(m.cart||[])].sort((a,b)=>String(b.addedAt||'').localeCompare(String(a.addedAt||''))))cartRows.push([m.id,m.name,dateTime(i.addedAt)||'기록 없음',cartLabel(i),Number(i.quantity)||1]);
   for(const r of [...(m.consults||[])].sort((a,b)=>String(b.savedAt||'').localeCompare(String(a.savedAt||''))))consultRows.push([dateTime(r.savedAt),m.id,m.name,r.fields?.contact,r.fields?.time,(r.items||[]).map(i=>`${i.quality} · ${i.duration} × ${i.quantity}`).join(', '),r.fields?.request]);
  }
@@ -163,29 +166,47 @@ function sheets(){
  const count={};
  for(const o of [...list.flatMap(m=>m.orders||[]),...guests])for(const i of o.items||[]){const k=`${i.quality} · ${i.duration}`;const c=count[k]||(count[k]={qty:0,sales:0,orders:0});c.qty+=Number(i.quantity)||1;c.sales+=Number(i.price)||0;c.orders++}
  const salesRows=Object.entries(count).sort((a,b)=>b[1].qty-a[1].qty||b[1].sales-a[1].sales).map(([k,c],i)=>[i+1,k,c.orders,c.qty,c.sales]);
+ // [시트 이름, 머리글, 내용, 금액 칸 번호, 합계를 낼 칸 번호]
  return [
-  ['회원 목록',['아이디','이름','휴대폰','이메일','우편번호','주소','상세 주소','가입일','주문 수','주문 금액','장바구니 수량'],memberRows],
-  ['회원 주문',['주문번호','주문일시','아이디','이름','휴대폰','이메일','주문 영상','결제 수단','상품 금액','부가세','결제 금액','요청사항'],orderRows],
-  ['장바구니',['아이디','이름','담은 날짜','영상 (화질 · 길이)','수량'],cartRows],
-  ['상담 신청',['신청일시','아이디','이름','연락처','희망 시간','상담 영상','상담 내용'],consultRows],
-  ['비회원 주문',['주문번호','주문일시','이름','휴대폰','이메일','주문 영상','결제 수단','상품 금액','부가세','결제 금액','요청사항'],guestRows],
-  ['판매 현황',['순위','영상 (화질 · 길이)','주문 건수','판매 수량','판매 금액'],salesRows]
+  ['회원 목록',['아이디','이름','휴대폰','이메일','우편번호','주소','상세 주소','가입일','주문 수','주문 금액','장바구니 수량','보유 포인트'],memberRows,[9,11],[8,9,10,11]],
+  ['회원 주문',['주문번호','주문일시','아이디','이름','휴대폰','이메일','주문 상품','결제 수단','공급가액','부가세','주문 금액','포인트 차감','충전 포인트','실제 결제 금액','요청사항'],orderRows,[8,9,10,11,12,13],[8,9,10,11,12,13]],
+  ['장바구니',['아이디','이름','담은 날짜','상품','수량'],cartRows,[],[4]],
+  ['상담 신청',['신청일시','아이디','이름','연락처','희망 시간','상담 영상','상담 내용'],consultRows,[],[]],
+  ['비회원 주문',['주문번호','주문일시','이름','휴대폰','이메일','주문 상품','결제 수단','공급가액','부가세','결제 금액','요청사항'],guestRows,[7,8,9],[7,8,9]],
+  ['판매 현황',['순위','상품','주문 건수','판매 수량','판매 금액'],salesRows,[4],[2,3,4]]
  ];
 }
+// 보고서처럼 보이게: 1행 제목, 2행 저장 정보, 3행 머리글(파랑), 줄무늬 · 테두리 · 금액 쉼표, 맨 아래 합계
 async function saveExcel(){
  await loadXLSX();
- const book=XLSX.utils.book_new();
- for(const [name,header,rows] of sheets()){
-  const ws=XLSX.utils.aoa_to_sheet([header,...rows.map(r=>r.map(v=>v??''))]);
-  ws['!cols']=header.map((h,c)=>({wch:Math.min(50,Math.max(String(h).length*2+2,...rows.map(r=>String(r[c]??'').length+2)))}));
+ const book=XLSX.utils.book_new(),today=date(new Date().toISOString()),A=XLSX.utils.encode_cell;
+ const line={style:'thin',color:{rgb:'D0D0D0'}},border={top:line,bottom:line,left:line,right:line};
+ const font={name:'맑은 고딕',sz:10};
+ for(const [name,header,rows,moneyCols,sumCols] of sheets()){
+  const n=header.length,body=rows.map(r=>r.map(v=>v??''));
+  const total=rows.length&&sumCols.length?header.map((_,c)=>c===0?'합계':sumCols.includes(c)?rows.reduce((s,r)=>s+(Number(r[c])||0),0):''):null;
+  const ws=XLSX.utils.aoa_to_sheet([[`STUDIO 상상 · ${name}`],[`저장일 ${today} · 총 ${rows.length}건`],header,...body,...(total?[total]:[])]);
+  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:n-1}},{s:{r:1,c:0},e:{r:1,c:n-1}}];
+  ws[A({r:0,c:0})].s={font:{...font,sz:15,bold:true},alignment:{vertical:'center'}};
+  ws[A({r:1,c:0})].s={font:{...font,color:{rgb:'777777'}}};
+  header.forEach((_,c)=>{ws[A({r:2,c})].s={font:{...font,bold:true,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'1647FF'}},alignment:{horizontal:'center',vertical:'center',wrapText:true},border}});
+  body.forEach((r,i)=>r.forEach((v,c)=>{const cell=ws[A({r:i+3,c})];if(!cell)return;const money=moneyCols.includes(c)&&typeof v==='number';
+   cell.s={font,border,fill:i%2?{fgColor:{rgb:'F5F7FF'}}:undefined,numFmt:money?'#,##0':undefined,alignment:{vertical:'center',horizontal:typeof v==='number'?'right':'left',wrapText:String(v).length>30}}}));
+  if(total)total.forEach((v,c)=>{const cell=ws[A({r:rows.length+3,c})];if(cell)cell.s={font:{...font,bold:true},fill:{fgColor:{rgb:'E0FF4F'}},border,numFmt:moneyCols.includes(c)?'#,##0':undefined,alignment:{horizontal:c===0?'center':'right',vertical:'center'}}});
+  if(!rows.length){ws[A({r:3,c:0})]={t:'s',v:'아직 데이터가 없습니다.',s:{font:{...font,color:{rgb:'999999'}}}};ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:3,c:n-1}})}
+  // 칸 너비: 한글은 영문 · 숫자보다 두 배 넓게 센다
+  const wide=s=>[...String(s??'')].reduce((n,ch)=>n+(ch.charCodeAt(0)>255?2:1.1),0);
+  ws['!cols']=header.map((h,c)=>({wch:Math.min(50,Math.max(wide(h)+5,...rows.map(r=>typeof r[c]==='number'?String(r[c]).length+6:wide(r[c])+3)))}));
+  ws['!rows']=[{hpt:30},{hpt:18},{hpt:26}];
+  if(rows.length)ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:2,c:0},e:{r:rows.length+2,c:n-1}})};
   XLSX.utils.book_append_sheet(book,ws,name);
  }
- XLSX.writeFile(book,`상상스튜디오_관리자데이터_${date(new Date().toISOString()).replace(/\./g,'')}.xlsx`);
+ XLSX.writeFile(book,`상상스튜디오_관리자데이터_${today.replace(/\./g,'')}.xlsx`);
 }
 
 shop.addEventListener('input',e=>{
  // 검색창은 그대로 두고 회원 표만 다시 그린다 (화면 전체를 다시 그리면 한글 조합이 끊겨 ㄱㅣㅁ처럼 입력됨)
- if(e.target.matches('.ad-search')){query=e.target.value;shop.querySelector('.ad-list').innerHTML=listHTML(filtered(),members,DB.current()?.id)}
+ if(e.target.matches('.ad-search')){query=e.target.value;shop.querySelector('.ad-members').innerHTML=listHTML(filtered(),members,DB.current()?.id)}
 });
 shop.addEventListener('change',e=>{if(e.target.matches('.ad-sort')){sort=e.target.value;render()}});
 shop.addEventListener('click',async e=>{
