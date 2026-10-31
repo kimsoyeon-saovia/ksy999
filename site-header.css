@@ -186,8 +186,9 @@ body[data-site-page="ai-video"] .showreel-actions:not(.actions-shown){opacity:0;
  body[data-site-page="main"] main>.services-ab{scroll-snap-align:start!important}
  body[data-site-page="main"] .unified-footer{scroll-snap-align:none!important}
  /* Each snapped scene is exactly one visible screen (below the 104px header), so centred copy is truly centred. */
- body[data-site-page="main"] main>.text-hero,body[data-site-page="main"] main>.statement-panel{height:calc(100svh - 104px)!important;min-height:0!important;box-sizing:border-box}
- body[data-site-page="main"] main>.partner{height:auto!important;min-height:calc(100svh - 104px)!important;box-sizing:border-box}
+ /* 주소창이 접힌 가장 큰 화면(lvh) 기준: 스크롤 중 크기가 바뀌지 않고(배너가 커지지 않음), 주소창이 접혀도 다음 장면이 비치지 않는다 */
+ body[data-site-page="main"] main>.text-hero,body[data-site-page="main"] main>.statement-panel{height:calc(100lvh - var(--site-header-h,104px))!important;min-height:0!important;box-sizing:border-box}
+ body[data-site-page="main"] main>.partner{height:auto!important;min-height:calc(100lvh - var(--site-header-h,104px))!important;box-sizing:border-box}
  /* Portfolio scene: heading 35% closer to the header (74px → 48px). */
  body[data-site-page="main"] .portfolio-section{justify-content:flex-start!important;padding-top:48px!important}
 
@@ -333,4 +334,9 @@ body[data-site-page="main"] .logo-musinsa img.official-brand{width:200px}
  #video-dialog video{width:100%}
 }
 /* 휴대폰 메인 첫 화면: 주소창이 줄거나 늘어도 "보이는 화면 높이 − 헤더 높이"에 딱 맞춰 다음 장면이 비치지 않게 */
-@media(max-width:750px){body[data-site-page="main"] .hero.text-hero{min-height:calc(100dvh - var(--site-header-h,104px))}}
+@media(max-width:750px){
+ /* 높이는 '주소창이 접혔을 때의 가장 큰 화면(lvh) − 실제 헤더'로 고정: 스크롤해도 크기가 변하지 않고(배너가 커지지 않음), 다음 장면이 비치지 않는다 */
+ body[data-site-page="main"] .hero.text-hero,body[data-site-page="main"] .partner,body[data-site-page="main"] .statement-panel{min-height:calc(100lvh - var(--site-header-h,104px));height:auto}
+ /* 협력사 화면은 내용을 세로 가운데로 */
+ body[data-site-page="main"] main>.partner{display:flex!important;flex-direction:column!important;justify-content:center!important;padding-top:24px!important;padding-bottom:24px!important}
+}

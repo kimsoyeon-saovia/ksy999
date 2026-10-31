@@ -263,7 +263,8 @@ function prepareHero(){
   play();
  },{threshold:[0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1]});
  heroObserver.observe(hero);
- Promise.all([document.fonts.load('900 124pt Seoul'),document.fonts.load('500 52pt Seoul')]).then(()=>{
+ // 글꼴(약 1MB)을 기다리되 최대 0.4초만: 늦으면 먼저 보여 주고 글꼴은 받아지면 바뀐다 (휴대폰에서 배너가 비어 보이는 시간 줄이기)
+ Promise.race([Promise.all([document.fonts.load('900 124pt Seoul'),document.fonts.load('500 52pt Seoul')]),new Promise(r=>setTimeout(r,400))]).then(()=>{
   fontsReady=true;play();
  });
 }
@@ -482,9 +483,12 @@ restoreDrafts();
 document.addEventListener('click',saveDrafts);
 root.addEventListener('input',saveDrafts);
 root.addEventListener('change',saveDrafts);
+// 휴대폰 · 태블릿: 아래 '예상 견적' 바는 맨 위 배너에서는 숨기고, 개인 · 기업 견적 본문이 올라오면 보여 준다
+function updateQuoteBar(){const hero=root.querySelector('.hero');if(!hero)return;document.body.classList.toggle('quote-away',hero.getBoundingClientRect().bottom>innerHeight*.55);}
+addEventListener('scroll',updateQuoteBar,{passive:true});addEventListener('resize',updateQuoteBar);
 // 다른 페이지에 갔다가 뒤로 가기로 돌아오면 브라우저가 이전 화면을 그대로 보여 주므로, 새로 불러와 견적서를 비운다
 window.addEventListener('pageshow',e=>{if(e.persisted)location.reload();});
-render();prepareHero();prepareBodyMotion();sizeProductButtons();updateAudience();updateTopButton();
+render();prepareHero();prepareBodyMotion();sizeProductButtons();updateAudience();updateTopButton();updateQuoteBar();
 // 마이페이지 · 장바구니의 '포인트 충전하러 가기'(#points)로 오면 충전 카드가 바로 보이게 내려 준다
 if(location.hash==='#points')setTimeout(()=>{const box=document.querySelector('#points');if(!box)return;box.querySelectorAll('.motion-waiting').forEach(el=>el.classList.remove('motion-waiting'));const top=box.getBoundingClientRect().top+scrollY-(document.querySelector('sangsang-header')?.getBoundingClientRect().height||80)-16;window.scrollTo({top,behavior:'instant'})},400);
 })();
