@@ -48,3 +48,6 @@
 .my-edit-f input{height:40px;padding:0 10px;border:1px solid #c9c9c9;font-size:15px;color:#080808}
 .my-edit-msg{min-height:18px;margin:0;font-size:13px;color:#e5402f}
 .my-edit .sub-cta{margin-top:0}
+.pt-plan{transition:transform .2s,background .2s,border-color .2s,color .2s}
+.pt-plan em{margin-top:6px;font-style:normal;font-size:13px;font-weight:700}
+@media(hover:hover) and (pointer:fine){.pt-plan:hover{transform:scale(1.02)}}

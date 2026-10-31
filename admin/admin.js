@@ -71,7 +71,7 @@ function listHTML(found,all,me){
  <td data-label="가입일">${date(m.joined)}</td>
  <td data-label="이번 달 주문">${monthOrders(m).length?`<b>${monthOrders(m).length}건</b><br><small>${money(sum(monthOrders(m)))}</small>`:'<span class="ad-none">없음</span>'}</td>
  <td data-label="장바구니">${cartQty(m.cart)?`${cartQty(m.cart)}개`:'<span class="ad-none">비어 있음</span>'}</td>
- <td data-label="포인트">${m.points?`${Number(m.points).toLocaleString('ko-KR')}c`:'<span class="ad-none">0c</span>'}</td>
+ <td data-label="포인트">${m.points?`${String(m.points).replace(/\B(?=(\d{3})+(?!\d))/g,',')}포인트`:'<span class="ad-none">0포인트</span>'}</td>
  <td class="ad-actions"><button type="button" class="ghost" data-detail="${esc(m.id)}">내역</button><button type="button" class="ghost" data-edit="${esc(m.id)}">수정</button>${me===m.id?'':`<button type="button" class="ghost ad-del" data-del="${esc(m.id)}">삭제</button>`}</td>
 </tr>`).join('')}</tbody></table></div>
 <p class="ad-count">${countText(found.length,all.length)}</p>`:`<div class="my-none">'${esc(query)}'에 맞는 회원이 없습니다.</div>`)

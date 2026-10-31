@@ -19,10 +19,12 @@ for(const file of ['member-db.js','member.js','cart.js']){const s=document.creat
 const finish=()=>{
 const enhancements=document.createElement('script');enhancements.src=new URL('site-enhancements.js'+new URL(script.src).search,root);document.body.append(enhancements);
 // Keep displayed copy clean without changing JavaScript, media URLs or data URLs.
+// 금액 · 포인트의 천 단위 쉼표(50,000)는 남긴다
+const dropCommas=s=>s.replace(/(?<!\d),|,(?!\d{3}(?!\d))/g,'');
 function cleanCopy(node){
- if(node.nodeType===3){if(!node.parentElement?.closest('script,style,textarea')&&node.data.includes(','))node.data=node.data.replaceAll(',','');return;}
+ if(node.nodeType===3){if(!node.parentElement?.closest('script,style,textarea')&&node.data.includes(',')){const next=dropCommas(node.data);if(next!==node.data)node.data=next}return;}
  if(node.nodeType!==1||node.matches('script,style,textarea'))return;
- for(const name of ['title','alt','aria-label'])if(node.hasAttribute(name))node.setAttribute(name,node.getAttribute(name).replaceAll(',',''));
+ for(const name of ['title','alt','aria-label'])if(node.hasAttribute(name))node.setAttribute(name,dropCommas(node.getAttribute(name)));
  for(const child of node.childNodes)cleanCopy(child);
 }
 cleanCopy(document.body);

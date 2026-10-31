@@ -1,6 +1,6 @@
 (() => {
 const C=window.INQUIRY_CONFIG,P=window.InquiryPricing;
-const money=n=>n.toLocaleString('ko-KR')+'원';
+const money=n=>window.INQUIRY_CONFIG.comma(n)+'원';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const inquiryRevisions={personal:0,corporate:0};
 const states={personal:{quality:null,duration:null,items:[],nextVideoId:0,notice:'',plans:{},fields:{},faq:[],errors:{},submitting:false},corporate:{product:null,extras:[],fields:{},faq:[],errors:{},submitting:false}};
@@ -52,14 +52,22 @@ function quantity(kind,id,count){return `<div class="quantity"><label>수량 <in
 function personalContent(){const s=S();return `<div class="intro"><h2>영상 예상 제작 견적 확인하기</h2><p>화질과 영상길이를 선택해 주세요.</p></div>
 <section class="selection">${step('01','영상 화질 선택')}<div class="choices quality" role="group" aria-label="영상 화질">${C.qualities.map(x=>`<button class="choice${selected(s.quality===x.id)}" data-choice="quality" data-id="${x.id}" aria-pressed="${s.quality===x.id}"><span class="check" aria-hidden="true">${s.quality===x.id?'✓':''}</span><strong>${x.name}</strong><small>${money(x.points*C.pointValue)}</small><p class="description">${x.description}</p></button>`).join('')}</div></section>
 <section class="selection">${step('02','영상 길이 선택')}<div class="choices duration" role="group" aria-label="영상 길이">${C.durations.map(x=>`<button class="choice${selected(s.duration===x.id)}" data-choice="duration" data-id="${x.id}" aria-pressed="${s.duration===x.id}"><span class="check" aria-hidden="true">${s.duration===x.id?'✓':''}</span><strong>${x.name}</strong><small>${money(x.points*C.pointValue)}</small></button>`).join('')}</div></section>
-<section class="selection">${step('03','포인트 충전','필요한 만큼 충전해 영상 제작에 사용할 수 있습니다.')}<div class="plans" role="group" aria-label="포인트 충전 상품">${C.plans.map(x=>`<article class="plan"><h4>${x.name}</h4><strong>${money(x.price)}</strong><p>${credit(x.points)} <span class="plan-bonus">+ ${credit(x.bonus)} 추가</span></p><small class="plan-total">총 ${credit(x.points+x.bonus)} 지급</small><button type="button" class="${s.plan===x.id?'black':'primary'}" data-plan="${x.id}" aria-pressed="${s.plan===x.id}">${s.plan===x.id?'선택 완료 ✓':'충전 상품 선택 →'}</button></article>`).join('')}</div><p class="point-reference">참고 · 1c = ${C.pointValue}원</p></section>`;}
-const credit=n=>Number(n||0).toLocaleString('ko-KR')+'c';
-// 포인트 충전 (회원만): 충전한 포인트는 회원 계정에 저장되고 장바구니 결제 때 쓸 수 있다. 충전 결제는 시안
-function chargePlan(id){
- const x=C.plans.find(p=>p.id===id),DB=window.SangsangDB;if(!x)return;
- if(!DB?.current()){modal('로그인이 필요합니다','<p>포인트는 회원 계정에 저장됩니다.<br>로그인한 뒤 충전해 주세요.</p>',[{label:'로그인 · 회원가입',run:()=>document.querySelector('sangsang-header')?.shadowRoot?.querySelector('[data-member]')?.click()},{label:'닫기'}]);return;}
- const add=x.points+(x.bonus||0);
- modal('포인트 충전 결제',`<p><strong>${x.name}</strong> · ${money(x.price)}<br>${credit(add)}가 회원 계정에 충전됩니다.</p><p class="demo-note">결제 화면 시안입니다. 실제 결제나 출금은 이루어지지 않습니다.</p>`,[{label:`${money(x.price)} 결제하기`,run:()=>DB.changePoints(add,'charge',`${x.name} 충전`).then(r=>modal('충전 완료',`<p>${credit(add)}가 충전되었습니다.<br>보유 포인트 <strong>${credit(r.balance)}</strong></p><p>장바구니 결제 때 사용할 수 있습니다.</p>`)).catch(err=>modal('충전하지 못했습니다',`<p>${esc(DB.errorText(err))}</p>`))},{label:'취소'}]);
+<section class="selection">${step('03','포인트 충전','필요한 만큼 충전해 영상 제작에 사용할 수 있습니다.')}<div class="plans" role="group" aria-label="포인트 충전 상품">${C.plans.map(x=>{const on=planInCart(x.id);return `<article class="plan${on?' chosen':''}"><h4>${x.name}</h4><strong>${money(x.price)}</strong><p>${C.point(x.points)} <span class="plan-bonus">+ ${C.point(x.bonus)} 추가</span></p><small class="plan-total">총 ${C.point(x.points+x.bonus)} 지급</small><button type="button" class="${on?'black':'primary'}" data-plan="${x.id}" aria-pressed="${on}">${on?'장바구니에 담음 ✓':'충전 상품 담기 →'}</button></article>`}).join('')}</div><p class="point-reference">참고 · 1포인트 = ${C.pointValue}원 · 결제가 끝나면 회원 계정에 포인트가 들어갑니다</p></section>`;}
+// 포인트 충전 상품은 장바구니에 담아 영상과 함께 결제한다 (회원만). 다시 누르면 장바구니에서 뺀다
+const readCartItems=()=>{try{const c=JSON.parse(localStorage.getItem(CART_STORAGE_KEY)||'{}')||{};return {items:Array.isArray(c.items)?c.items:[],nextId:Number(c.nextId)||0}}catch{return {items:[],nextId:0}}};
+const planInCart=id=>readCartItems().items.some(i=>i.plan===id);
+function togglePlan(id){
+ const x=C.plans.find(p=>p.id===id);if(!x)return;
+ const c=readCartItems();
+ if(planInCart(id))c.items=c.items.filter(i=>i.plan!==id);
+ else{
+  if(!window.SangsangDB?.current()){modal('로그인이 필요합니다','<p>충전한 포인트는 회원 계정에 저장됩니다.<br>로그인한 뒤 담아 주세요.</p>',[{label:'로그인 · 회원가입',run:()=>document.querySelector('sangsang-header')?.shadowRoot?.querySelector('[data-member]')?.click()},{label:'닫기'}]);return;}
+  const next=Math.max(c.nextId,...c.items.map(i=>Number(i.id)||0))+1;
+  c.items.push({id:String(next),plan:id,quantity:1,addedAt:new Date().toISOString()});c.nextId=next;
+ }
+ try{localStorage.setItem(CART_STORAGE_KEY,JSON.stringify(c))}catch{}
+ window.dispatchEvent(new Event('sangsang-cart-change'));repaint();
+ if(planInCart(id))modal('장바구니에 담았습니다',`<p><strong>${x.name}</strong> · ${money(x.price)}<br>결제가 끝나면 ${C.point(x.points+x.bonus)}가 회원 계정에 들어갑니다.</p>`,[{label:'장바구니로 가기',run:()=>{location.href='../cart/index.html'}},{label:'계속 둘러보기'}]);
 }
 function productMedia(product){return `<button type="button" class="product-media" data-preview="${product.id}" data-preview-name="${product.name}" aria-label="${product.name} 영상 미리보기 재생" aria-describedby="preview-status-${product.id}"><img src="assets/${product.image}" alt="${product.alt}" width="1774" height="887" loading="lazy"><video src="assets/${product.video}" preload="none" muted playsinline aria-hidden="true" tabindex="-1"></video><span class="preview-cue" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 13V5a1.5 1.5 0 0 1 3 0v6l1-1a1.7 1.7 0 0 1 2 0l1 1a1.7 1.7 0 0 1 2 0l1 1a1.7 1.7 0 0 1 2 1.7v3.5A4.8 4.8 0 0 1 15.2 22h-2.4a5 5 0 0 1-4-2L4 14a1.5 1.5 0 0 1 2.2-2Z"/><path d="M4 4 2 3M8 1V0M14 4l2-2"/></svg><span class="preview-text">클릭해서 재생</span></span><span class="preview-status" id="preview-status-${product.id}" role="status" aria-live="polite"></span></button>`;}
 function productTitle(name){
@@ -102,9 +110,10 @@ function repaint(){
    button.querySelector('.check').textContent=active?'✓':'';
  });
  root.querySelectorAll('[data-plan]').forEach(button=>{
-   const active=s.plan===button.dataset.plan;
+   const active=planInCart(button.dataset.plan);
    button.className=active?'black':'primary';button.setAttribute('aria-pressed',active);
-   button.textContent=active?'선택 완료 ✓':'충전 상품 선택 →';
+   button.textContent=active?'장바구니에 담음 ✓':'충전 상품 담기 →';
+   button.closest('.plan').classList.toggle('chosen',active);
  });
  root.querySelectorAll('[data-product]').forEach(button=>{
    const active=s.product===button.dataset.product;
@@ -389,7 +398,7 @@ if(b.hasAttribute('data-add-video')&&page==='personal'){
 }
 if(d.videoStep)adjustVideoQuantity(d.id,d.videoStep);
 if(d.removeVideo&&page==='personal'){P.removeVideo(s,d.removeVideo);s.notice='';repaint();root.querySelector('.quote h2').setAttribute('tabindex','-1');root.querySelector('.quote h2').focus({preventScroll:true});}
-if(d.plan&&page==='personal'){const on=s.plan!==d.plan;s.plan=on?d.plan:null;repaint(b);if(on)chargePlan(d.plan);}
+if(d.plan&&page==='personal')togglePlan(d.plan);
 if(d.product){s.product=s.product===d.product?null:d.product;delete s.errors.product;repaint(b);}
 if(d.faq!==undefined){const i=Number(d.faq);s.faq=s.faq.includes(i)?s.faq.filter(x=>x!==i):[...s.faq,i];const row=b.closest('.faq-row'),open=s.faq.includes(i);row.classList.toggle('open',open);b.setAttribute('aria-expanded',open);b.querySelector('b').textContent=open?'−':'+';row.querySelector('.faq-answer').inert=!open;}
 if(d.contact)contact(d.contact);if(b.hasAttribute('data-privacy'))privacy();});

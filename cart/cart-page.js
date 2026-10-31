@@ -10,12 +10,14 @@ const view=document.body.dataset.view,shop=document.querySelector('#shop');
 const ESTIMATE_URL='../contact/index.html';
 const METHODS=['카카오페이','토스페이','네이버페이','신용카드','계좌이체','무통장입금'];
 
-const money=n=>n.toLocaleString('ko-KR')+'원';
+const money=n=>C.comma(n)+'원';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const read=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}};
-const quality=item=>C.qualities.find(x=>x.id===item.quality);
-const duration=item=>C.durations.find(x=>x.id===item.duration);
-const unit=item=>((quality(item)?.points||0)+(duration(item)?.points||0))*C.pointValue;
+// 포인트 충전 상품은 '포인트 충전 · STARTER'처럼 영상과 같은 자리에 보여 준다
+const quality=item=>item.plan?{name:'포인트 충전'}:C.qualities.find(x=>x.id===item.quality);
+const duration=item=>item.plan?{name:C.planOf(item)?.name||''}:C.durations.find(x=>x.id===item.duration);
+const unit=item=>C.itemPrice(item);
+const title=(item,i)=>item.plan?C.itemTitle(item):`개인 맞춤 영상 ${i+1}`;
 const qty=item=>Math.max(1,Math.min(999,Math.trunc(Number(item.quantity))||1));
 // 최근에 담은 영상이 위로 온다 (담은 시각이 없는 예전 데이터는 맨 아래)
 const items=()=>{const list=read(CART,{})?.items;return Array.isArray(list)?[...list].sort((a,b)=>String(b.addedAt||'').localeCompare(String(a.addedAt||''))):[]};
@@ -54,7 +56,7 @@ function renderCart(){
  const picked=list.filter(i=>selected.has(i.id)),t=totals(picked),all=picked.length===list.length;
  shop.innerHTML=head('장바구니',1)+`<div class="shop-body"><section aria-label="담은 영상">
 <div class="list-tools"><label class="check"><input type="checkbox" data-all ${all?'checked':''}> 전체 선택 (${picked.length}/${list.length})</label><div class="tool-btns"><button type="button" class="ghost" data-remove-picked ${picked.length?'':'disabled'}>선택 삭제</button><button type="button" class="ghost" data-clear>전체 삭제</button></div></div>
-${list.map((item,i)=>{const n=qty(item),day=dayOf(item),newDay=i===0||day!==dayOf(list[i-1]);return `${newDay?`<h3 class="cart-day">${day?esc(day)+' 담은 영상':'이전에 담은 영상'}</h3>`:''}<article class="row"><label class="check"><input type="checkbox" data-pick="${esc(item.id)}" ${selected.has(item.id)?'checked':''} aria-label="개인 맞춤 영상 ${i+1} 선택"></label>${thumb(item)}<div class="info"><h2>개인 맞춤 영상 ${i+1}</h2><p>화질 ${esc(quality(item)?.name)} · 길이 ${esc(duration(item)?.name)}</p><p class="unit">개당 ${money(unit(item))}${timeOf(item)?` · <span class="added-at">${timeOf(item)} 담음</span>`:''}</p></div><div class="stepper" role="group" aria-label="개인 맞춤 영상 ${i+1} 수량"><button type="button" data-step="-1" data-id="${esc(item.id)}" aria-label="수량 줄이기" ${n<=1?'disabled':''}>−</button><output>${n}</output><button type="button" data-step="1" data-id="${esc(item.id)}" aria-label="수량 늘리기" ${n>=999?'disabled':''}>+</button></div><strong class="line-total">${money(unit(item)*n)}</strong><button type="button" class="remove" data-remove="${esc(item.id)}" aria-label="개인 맞춤 영상 ${i+1} 삭제">×</button></article>`}).join('')}
+${list.map((item,i)=>{const n=qty(item),day=dayOf(item),newDay=i===0||day!==dayOf(list[i-1]);return `${newDay?`<h3 class="cart-day">${day?esc(day)+' 담은 영상':'이전에 담은 영상'}</h3>`:''}<article class="row"><label class="check"><input type="checkbox" data-pick="${esc(item.id)}" ${selected.has(item.id)?'checked':''} aria-label="개인 맞춤 영상 ${i+1} 선택"></label>${thumb(item)}<div class="info"><h2>${esc(title(item,i))}</h2><p>${item.plan?esc(C.itemLabel(item)):`화질 ${esc(quality(item)?.name)} · 길이 ${esc(duration(item)?.name)}`}</p><p class="unit">개당 ${money(unit(item))}${timeOf(item)?` · <span class="added-at">${timeOf(item)} 담음</span>`:''}</p></div><div class="stepper" role="group" aria-label="개인 맞춤 영상 ${i+1} 수량"><button type="button" data-step="-1" data-id="${esc(item.id)}" aria-label="수량 줄이기" ${n<=1?'disabled':''}>−</button><output>${n}</output><button type="button" data-step="1" data-id="${esc(item.id)}" aria-label="수량 늘리기" ${n>=999?'disabled':''}>+</button></div><strong class="line-total">${money(unit(item)*n)}</strong><button type="button" class="remove" data-remove="${esc(item.id)}" aria-label="개인 맞춤 영상 ${i+1} 삭제">×</button></article>`}).join('')}
 <div class="list-foot"><span>담은 영상은 결제 전까지 장바구니에 보관됩니다.</span><a class="text-link" href="${ESTIMATE_URL}">+ 영상 더 담기</a></div>
 </section><aside class="summary" aria-label="결제 예정 금액"><h2>결제 예정 금액</h2>${summaryRows(t)}<p class="note">선택한 ${picked.length}개 항목 · 최종 금액은 상담 후 확정될 수 있습니다.</p><button type="button" class="cta" data-order ${picked.length?'':'disabled'}>주문하기</button><button type="button" class="sub-cta" data-consult aria-expanded="${consult.open}" aria-controls="consult">${consult.open?'상담 신청 닫기':'결제 전에 상담 먼저 받기'}</button></aside></div>${consult.open?consultHTML(picked):''}`;
 }
@@ -130,20 +132,22 @@ function orderItems(){
 const draftFields=()=>read(DRAFT,{})?.personal?.fields||{};
 // 포인트 사용 (회원만): 잔액은 회원 계정에서 읽고, 결제 금액보다 많이 쓸 수 없다
 const PV=C.pointValue;
-const point=n=>Number(n||0).toLocaleString('ko-KR')+'c';
+const point=C.point;
 let ptBal=null,ptFor=null,ptUse=0;
 function loadPoints(me){
  if(!me||!window.SangsangDB||ptFor===me.id)return;ptFor=me.id;
  window.SangsangDB.whenAuthKnown().then(()=>window.SangsangDB.points()).then(p=>{ptBal=p.balance;const box=shop.querySelector('#pt-block');if(box)box.innerHTML=pointsBlock(member(),totals(orderItems()))}).catch(()=>{ptBal=0});
 }
-const maxUse=t=>Math.max(0,Math.min(ptBal||0,Math.floor(t.total/PV)));
+// 포인트 충전 상품은 포인트로 살 수 없으므로 영상 금액까지만 쓸 수 있다
+const videoTotal=()=>orderItems().filter(i=>!i.plan).reduce((n,i)=>n+unit(i)*qty(i),0);
+const maxUse=()=>Math.max(0,Math.min(ptBal||0,Math.floor(videoTotal()/PV)));
 const payRows=t=>ptUse?`<dl class="pt-rows"><div><dt>포인트 사용</dt><dd>−${money(ptUse*PV)}</dd></div><div class="total"><dt>실제 결제 금액</dt><dd>${money(t.total-ptUse*PV)}</dd></div></dl>`:'';
 const payLabel=t=>{const left=t.total-ptUse*PV;return left?`${money(left)} 결제하기`:'포인트로 결제하기'};
 function pointsBlock(me,t){
  if(!me)return `<section class="block"><div class="block-title"><h2>포인트</h2></div><p class="pay-note">회원으로 로그인하면 충전한 포인트로 결제할 수 있습니다.</p></section>`;
  if(ptBal===null)return `<section class="block"><div class="block-title"><h2>포인트</h2></div><p class="pay-note">포인트를 불러오는 중입니다…</p></section>`;
- return `<section class="block"><div class="block-title"><h2>포인트</h2><small>보유 <b>${point(ptBal)}</b> · 1c = ${PV}원 · <a class="text-link" style="font-size:14px" href="../mypage/index.html">충전하기</a></small></div>
-<div class="pt-use"><label for="o-points">사용할 포인트</label><input id="o-points" name="usePoints" type="number" min="0" max="${maxUse(t)}" step="1" inputmode="numeric" value="${ptUse||''}" placeholder="0" ${maxUse(t)?'':'disabled'}><span>c</span><button type="button" class="ghost" data-use-all ${maxUse(t)?'':'disabled'}>전액 사용</button></div>
+ return `<section class="block"><div class="block-title"><h2>포인트</h2><small>보유 <b>${point(ptBal)}</b> · 1포인트 = ${PV}원 · <a class="text-link" style="font-size:14px" href="../contact/index.html">충전 상품 보기</a></small></div>
+<div class="pt-use"><label for="o-points">사용할 포인트</label><input id="o-points" name="usePoints" type="number" min="0" max="${maxUse(t)}" step="1" inputmode="numeric" value="${ptUse||''}" placeholder="0" ${maxUse(t)?'':'disabled'}><span>포인트</span><button type="button" class="ghost" data-use-all ${maxUse(t)?'':'disabled'}>전액 사용</button></div>
 <p class="pay-note">${maxUse(t)?`최대 ${point(maxUse(t))}까지 사용할 수 있습니다. 모자란 금액은 아래 결제 수단으로 결제합니다.`:'사용할 수 있는 포인트가 없습니다.'}</p></section>`;
 }
 // 포인트 입력이 바뀌면 금액 부분만 고친다 (입력칸은 다시 그리지 않음)
@@ -166,8 +170,8 @@ ${me?`<div class="login-hint member"><span><strong>${esc(me.name)}</strong>님�
 <div class="f"><label for="o-phone">휴대폰 번호 <b>*</b></label><input id="o-phone" name="phone" type="tel" inputmode="numeric" maxlength="13" autocomplete="tel" placeholder="010-0000-0000" value="${value(me?.phone)}"><p class="msg">휴대폰 번호를 정확히 입력해 주세요.</p></div>
 <div class="f wide"><label for="o-email">이메일 <b>*</b></label><input id="o-email" name="email" type="email" autocomplete="email" placeholder="example@email.com" value="${value(me?.email)}"><p class="msg">이메일 형식으로 입력해 주세요.</p></div>
 <div class="f wide"><label for="o-request">제작 요청사항</label><textarea id="o-request" name="request" placeholder="희망 제작물, 분위기, 참고 자료 등을 적어 주세요.">${value([f.request,f.mood].filter(Boolean).join('\n'))}</textarea></div></div></section>
-<section class="block"><div class="block-title"><h2>주문 영상</h2><small>${list.length}건 · <a class="text-link" style="font-size:14px" href="index.html">장바구니 수정</a></small></div>
-<ul class="order-items">${list.map((item,i)=>`<li>${thumb(item)}<div><h3>개인 맞춤 영상 ${i+1}</h3><p>${esc(quality(item)?.name)} · ${esc(duration(item)?.name)} · 수량 ${qty(item)}개</p></div><strong class="price">${money(unit(item)*qty(item))}</strong></li>`).join('')}</ul></section>
+<section class="block"><div class="block-title"><h2>주문 상품</h2><small>${list.length}건 · <a class="text-link" style="font-size:14px" href="index.html">장바구니 수정</a></small></div>
+<ul class="order-items">${list.map((item,i)=>`<li>${thumb(item)}<div><h3>${esc(title(item,i))}</h3><p>${esc(quality(item)?.name)} · ${esc(duration(item)?.name)} · 수량 ${qty(item)}개</p></div><strong class="price">${money(unit(item)*qty(item))}</strong></li>`).join('')}</ul></section>
 <div id="pt-block">${pointsBlock(me,t)}</div>
 <section class="block"><div class="block-title"><h2>결제 수단</h2></div>
 <fieldset class="methods" ${ptUse&&t.total-ptUse*PV===0?'disabled':''}><legend>결제 수단 선택</legend>${METHODS.map((m,i)=>`<label><input type="radio" name="method" value="${m}" ${i===0?'checked':''}>${m}</label>`).join('')}</fieldset>
@@ -192,16 +196,20 @@ function checkoutSubmit(e){
  if(bad.some(Boolean)){form.querySelector('.f.error input')?.focus();return}
  if(agreeBad){form.querySelector('[data-agree]:not(:checked)')?.focus();return}
  const list=orderItems(),t=totals(list),me=member(),now=new Date();
+ // 포인트 충전 상품은 회원 계정에 넣어야 하므로 로그인해야 결제할 수 있다
+ if(list.some(i=>i.plan)&&!me){alert('포인트 충전 상품은 로그인한 뒤 결제할 수 있습니다.');openLogin();return}
+ const gained=list.reduce((n,i)=>n+C.itemPoints(i)*qty(i),0);
  const no=`SS-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(Math.floor(Math.random()*9000)+1000)}`;
  const used=me?Math.min(ptUse,maxUse(t)):0,paid=t.total-used*PV;
  const method=paid===0?'포인트 결제':used?`포인트 + ${el.method.value}`:el.method.value;
  const order={no,date:now.toISOString(),method,buyer:{name,phone,email},memberId:me?.id||null,request:el.request.value.trim(),
-  items:list.map(i=>({quality:quality(i)?.name,duration:duration(i)?.name,quantity:qty(i),price:unit(i)*qty(i)})),...t,pointsUsed:used,paid};
+  items:list.map(i=>({quality:quality(i)?.name,duration:duration(i)?.name,quantity:qty(i),price:unit(i)*qty(i)})),...t,pointsUsed:used,pointsGained:gained,paid};
  const paying=document.createElement('div');paying.className='paying';paying.setAttribute('role','status');paying.innerHTML=`<i aria-hidden="true"></i><p>${esc(order.method)} 결제를 진행하고 있습니다…</p>`;
  document.body.append(paying);
  // 포인트를 먼저 차감하고, 실패하면(잔액 부족 등) 주문하지 않는다
  const spend=used?window.SangsangDB.changePoints(-used,'use',`주문 ${no}`):Promise.resolve();
- spend.then(()=>new Promise(r=>setTimeout(r,1400))).then(()=>{
+ // 결제가 끝나면 충전 상품의 포인트를 회원 계정에 넣는다
+ spend.then(()=>new Promise(r=>setTimeout(r,1400))).then(()=>gained?window.SangsangDB.changePoints(gained,'charge',`주문 ${no} 충전`):null).then(()=>{
   try{const orders=read(ORDERS,[]);localStorage.setItem(ORDERS,JSON.stringify([...(Array.isArray(orders)?orders:[]),order]))}catch{}
   if(!order.memberId)window.SangsangDB?.saveGuestOrder(order).catch(()=>{});
   const ids=new Set(list.map(i=>i.id));saveItems(items().filter(i=>!ids.has(i.id)));
@@ -213,7 +221,7 @@ function checkoutSubmit(e){
 function renderDone(order){
  const d=new Date(order.date);
  shop.innerHTML=head('주문완료',3)+`<section class="done"><div class="badge" aria-hidden="true">✓</div><h2>주문이 완료되었습니다</h2><p>${esc(order.buyer.name)}님, 감사합니다.<br>담당자가 확인 후 입력하신 연락처로 제작 상담 일정을 안내해 드립니다.</p>
-<dl class="receipt"><div><dt>주문번호</dt><dd><strong>${esc(order.no)}</strong></dd></div><div><dt>주문일시</dt><dd>${d.toLocaleString('ko-KR')}</dd></div><div><dt>주문 영상</dt><dd>${order.items.map(i=>`${esc(i.quality)} · ${esc(i.duration)} × ${i.quantity}`).join('<br>')}</dd></div><div><dt>결제 수단</dt><dd>${esc(order.method)}</dd></div><div><dt>연락처</dt><dd>${esc(order.buyer.phone)}<br>${esc(order.buyer.email)}</dd></div>${order.pointsUsed?`<div><dt>주문 금액</dt><dd>${money(order.total)}</dd></div><div><dt>포인트 사용</dt><dd>${point(order.pointsUsed)} (−${money(order.pointsUsed*PV)})</dd></div>`:''}<div class="total"><dt>결제 금액</dt><dd>${money(order.paid??order.total)}</dd></div></dl>
+<dl class="receipt"><div><dt>주문번호</dt><dd><strong>${esc(order.no)}</strong></dd></div><div><dt>주문일시</dt><dd>${d.toLocaleString('ko-KR')}</dd></div><div><dt>주문 상품</dt><dd>${order.items.map(i=>`${esc(i.quality)} · ${esc(i.duration)} × ${i.quantity}`).join('<br>')}</dd></div><div><dt>결제 수단</dt><dd>${esc(order.method)}</dd></div><div><dt>연락처</dt><dd>${esc(order.buyer.phone)}<br>${esc(order.buyer.email)}</dd></div>${order.pointsUsed?`<div><dt>주문 금액</dt><dd>${money(order.total)}</dd></div><div><dt>포인트 사용</dt><dd>${point(order.pointsUsed)} (−${money(order.pointsUsed*PV)})</dd></div>`:''}${order.pointsGained?`<div><dt>충전 포인트</dt><dd>+${point(order.pointsGained)} (회원 계정에 적립)</dd></div>`:''}<div class="total"><dt>결제 금액</dt><dd>${money(order.paid??order.total)}</dd></div></dl>
 <p class="demo-note">화면 확인용 결제 시안입니다. 실제 승인이나 출금은 발생하지 않았습니다.</p>
 <div class="done-actions"><a class="sub-cta" href="../main/index.html">홈으로</a><a class="cta plain" href="${ESTIMATE_URL}">제작 문의 추가</a></div></section>`;
 }

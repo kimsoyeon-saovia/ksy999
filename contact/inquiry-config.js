@@ -26,3 +26,14 @@ window.INQUIRY_CONFIG = {
     {id:'urgent',name:'긴급 납품',description:'희망 일정에 맞춰 제작 가능 여부를 상담합니다. 납기는 상담 후 확정됩니다.',price:300000}
   ]
 };
+// 장바구니 한 줄: 영상 {quality,duration} 또는 포인트 충전 {plan}. 가격 · 이름은 여기서 함께 계산한다
+(C=>{
+  const num=n=>String(Math.round(Number(n)||0)).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  C.comma=num;
+  C.point=n=>num(n)+'포인트';
+  C.planOf=item=>item&&item.plan?C.plans.find(x=>x.id===item.plan):null;
+  C.itemPrice=item=>{const p=C.planOf(item);if(p)return p.price;const q=C.qualities.find(x=>x.id===item.quality),d=C.durations.find(x=>x.id===item.duration);return ((q?.points||0)+(d?.points||0))*C.pointValue};
+  C.itemTitle=item=>{const p=C.planOf(item);return p?`포인트 충전 ${p.name}`:'개인 맞춤 영상'};
+  C.itemLabel=item=>{const p=C.planOf(item);if(p)return `${C.point(p.points)} + ${C.point(p.bonus||0)} 추가`;return [C.qualities.find(x=>x.id===item.quality)?.name,C.durations.find(x=>x.id===item.duration)?.name].filter(Boolean).join(' · ')};
+  C.itemPoints=item=>{const p=C.planOf(item);return p?p.points+(p.bonus||0):0};
+})(window.INQUIRY_CONFIG);

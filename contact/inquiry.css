@@ -304,3 +304,7 @@ body{font-synthesis:none;font-kerning:normal;text-rendering:optimizeLegibility}
 .audience{width:100%;max-width:857px;gap:69px}
 .audience a{width:calc((100% - 69px)/2);height:80px;font-size:40px;padding:0}
 @media(max-width:800px){.audience{gap:18px}.audience a{width:calc((100% - 18px)/2)}}
+/* 포인트 충전 카드: 마우스를 올리면 살짝 커지고, 장바구니에 담으면 카드 전체가 노란색 */
+.plan{transition:transform 200ms,background 200ms,border-color 200ms}
+@media(hover:hover) and (pointer:fine){.plan:hover{transform:scale(1.02)}}
+.plan.chosen{background:var(--lime);border-color:var(--lime)}

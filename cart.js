@@ -7,14 +7,14 @@ const shadow=host.shadowRoot;const nav=shadow.querySelector('nav');if(!nav||shad
 const CART='sangsang-cart-v1',SESSION='sangsang-member-session';
 const PERSONAL_URL=new URL('contact/index.html',siteRoot);
 const CART_URL=new URL('cart/index.html',siteRoot),CHECKOUT_URL=new URL('cart/checkout.html',siteRoot);
-const money=n=>n.toLocaleString('ko-KR')+'원';
+const money=n=>String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g,',')+'원';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 // 가격표: CONTACT 페이지가 아니면 견적 설정 파일을 직접 불러온다
 let config=window.INQUIRY_CONFIG||null;
 if(!config){const s=document.createElement('script');s.src=new URL('contact/inquiry-config.js',siteRoot);s.onload=()=>{config=window.INQUIRY_CONFIG;refresh()};document.head.append(s)}
-const unitPrice=item=>{if(!config)return 0;const q=config.qualities.find(x=>x.id===item.quality),d=config.durations.find(x=>x.id===item.duration);return ((q?.points||0)+(d?.points||0))*config.pointValue};
-const labelOf=item=>{if(!config)return '';return [config.qualities.find(x=>x.id===item.quality)?.name,config.durations.find(x=>x.id===item.duration)?.name].filter(Boolean).join(' · ')};
+const unitPrice=item=>config?config.itemPrice(item):0;
+const labelOf=item=>config?config.itemLabel(item):'';
 const qty=item=>Math.max(1,Math.min(999,Math.trunc(Number(item.quantity))||1));
 
 const readCart=()=>{try{return JSON.parse(localStorage.getItem(CART)||'{}')||{}}catch{return {}}};
@@ -97,7 +97,7 @@ function paint(list=items()){
   $('.cart-foot').hidden=true;return;
  }
  $('.cart-foot').hidden=false;
- $('.cart-list').innerHTML=list.map((item,i)=>{const n=qty(item),unit=unitPrice(item);return `<article class="cart-item"><div class="cart-item-top"><div><h3>개인 맞춤 영상 ${i+1}</h3><p>${esc(labelOf(item))} · 개당 ${money(unit)}</p></div>${editable?`<button type="button" class="cart-del" data-del="${esc(item.id)}">삭제</button>`:''}</div><div class="cart-item-bottom">${editable?`<div class="cart-step" role="group" aria-label="영상 ${i+1} 수량"><button type="button" data-step="-1" data-id="${esc(item.id)}" aria-label="수량 줄이기" ${n<=1?'disabled':''}>−</button><output>${n}</output><button type="button" data-step="1" data-id="${esc(item.id)}" aria-label="수량 늘리기" ${n>=999?'disabled':''}>+</button></div>`:`<p>수량 ${n}개</p>`}<strong>${money(unit*n)}</strong></div></article>`}).join('');
+ $('.cart-list').innerHTML=list.map((item,i)=>{const n=qty(item),unit=unitPrice(item);return `<article class="cart-item"><div class="cart-item-top"><div><h3>${config?.planOf(item)?esc(config.itemTitle(item)):`개인 맞춤 영상 ${i+1}`}</h3><p>${esc(labelOf(item))} · 개당 ${money(unit)}</p></div>${editable?`<button type="button" class="cart-del" data-del="${esc(item.id)}">삭제</button>`:''}</div><div class="cart-item-bottom">${editable?`<div class="cart-step" role="group" aria-label="영상 ${i+1} 수량"><button type="button" data-step="-1" data-id="${esc(item.id)}" aria-label="수량 줄이기" ${n<=1?'disabled':''}>−</button><output>${n}</output><button type="button" data-step="1" data-id="${esc(item.id)}" aria-label="수량 늘리기" ${n>=999?'disabled':''}>+</button></div>`:`<p>수량 ${n}개</p>`}<strong>${money(unit*n)}</strong></div></article>`}).join('');
  const total=list.reduce((s,i)=>s+unitPrice(i)*qty(i),0);
  $('.cart-foot').innerHTML=`<div class="cart-total"><span>예상 합계</span><strong>${money(total)}</strong></div><p class="cart-vat">VAT 포함 · 상담 후 최종 확정</p><a class="cart-go" href="${CHECKOUT_URL}" data-order>주문하기</a><a class="cart-more" href="${CART_URL}">장바구니 전체 보기</a><p class="cart-note"><a href="${PERSONAL_URL}" data-to-estimate>영상 더 담기</a> · <a href="${PERSONAL_URL}#inquiry-form" data-checkout>결제 전에 상담 먼저 받기</a></p>${editable?'':'<p class="cart-note">수량 변경은 개인 견적 페이지에서 할 수 있습니다.</p>'}`;
 }
