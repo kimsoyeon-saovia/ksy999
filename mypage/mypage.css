@@ -57,3 +57,12 @@
 .pt-history li b{display:inline-block;min-width:38px;margin-right:8px;padding:1px 6px;font-size:12px;text-align:center;color:#fff}
 .pt-history li b.plus{background:#1647ff}.pt-history li b.minus{background:#e5402f}
 .my-edit-guide{margin:0 0 4px;font-size:13px;line-height:1.5;color:#555}
+/* 포인트 내역 접기 · 펼치기 */
+.pt-detail{margin-top:22px;border-top:1px solid #e5e5e5}
+.pt-detail summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0;cursor:pointer;list-style:none}
+.pt-detail summary::-webkit-details-marker{display:none}
+.pt-detail summary b{font-size:17px;font-weight:800}
+.pt-detail summary b::before{content:"▸";display:inline-block;margin-right:8px;transition:transform .2s}
+.pt-detail[open] summary b::before{transform:rotate(90deg)}
+.pt-detail summary small{font-size:13px;color:#777}
+.pt-detail summary:hover b{color:#1647ff}

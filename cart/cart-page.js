@@ -47,6 +47,25 @@ const totals=list=>{const total=list.reduce((n,i)=>n+unit(i)*qty(i),0),vat=Math.
 const summaryRows=t=>`<dl><div><dt>공급가액</dt><dd>${money(t.subtotal)}</dd></div><div><dt>부가세 (10%, 포함)</dt><dd>${money(t.vat)}</dd></div><div class="total"><dt>총 결제 예정 금액</dt><dd>${money(t.total)}</dd></div></dl>`;
 const emptyIcon='<svg viewBox="0 0 24 24" fill="none" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 4h2l2.4 10.2a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 8H6.2"/><circle cx="9.5" cy="19" r="1.3"/><circle cx="17" cy="19" r="1.3"/></svg>';
 
+// ---------------- 포인트 충전 카드 (장바구니 아래) ----------------
+// 회원만 담을 수 있고, 다시 누르면 장바구니에서 뺀다. 결제하면 포인트가 계정에 들어가고 같은 주문의 영상 금액에서 바로 차감할 수 있다
+const PAGE_BATCH=new Date().toISOString();
+function plansHTML(list){
+ return `<section class="cart-plans" aria-label="포인트 충전"><div class="block-title"><h2>포인트 충전</h2><small>회원가입 후 이용하실 수 있습니다 · 1포인트 = ${C.pointValue}원</small></div>
+<div class="cart-plan-list">${C.plans.map(p=>{const on=list.some(i=>i.plan===p.id);return `<button type="button" class="cart-plan${on?' chosen':''}" data-cart-plan="${esc(p.id)}" aria-pressed="${on}"><b>${esc(p.name)}</b><strong>${money(p.price)}</strong><span><em>${C.comma(p.points)}<i>포인트</i></em> + ${C.comma(p.bonus)}<i>포인트 추가</i></span><u>${on?'장바구니에 담음 ✓':'장바구니에 담기 →'}</u></button>`}).join('')}</div></section>`;
+}
+function toggleCartPlan(id){
+ if(!member()){alert('포인트 충전은 회원 전용입니다.\n회원가입 후 이용하실 수 있습니다.');openLogin();return}
+ const c=read(CART,{})||{},list=Array.isArray(c.items)?c.items:[];
+ let next=list;
+ if(list.some(i=>i.plan===id))next=list.filter(i=>i.plan!==id);
+ else{const n=Math.max(Number(c.nextId)||0,...list.map(i=>Number(i.id)||0))+1;next=[...list,{id:String(n),plan:id,quantity:1,addedAt:new Date().toISOString(),batch:PAGE_BATCH}];c.nextId=n}
+ try{localStorage.setItem(CART,JSON.stringify({...c,items:next}))}catch{}
+ window.dispatchEvent(new Event('sangsang-cart-change'));
+ const added=next.find(i=>i.plan===id);if(added&&selected)selected.add(added.id);
+ renderCart();
+}
+
 // ---------------- 장바구니 ----------------
 let selected=null; // 선택된 항목 id (처음엔 전부 선택)
 function renderCart(){
@@ -54,14 +73,14 @@ function renderCart(){
  if(selected===null)selected=new Set(list.map(i=>i.id));
  for(const id of [...selected])if(!list.some(i=>i.id===id))selected.delete(id);
  if(!list.length){
-  shop.innerHTML=head('장바구니',1)+`<div class="empty">${emptyIcon}<h2>장바구니가 비어 있습니다</h2><p>화질과 길이를 골라 원하는 영상을 담아 보세요.</p><a class="cta" style="width:280px" href="${ESTIMATE_URL}">견적 내러 가기</a></div>`;
+  shop.innerHTML=head('장바구니',1)+`<div class="empty">${emptyIcon}<h2>장바구니가 비어 있습니다</h2><p>화질과 길이를 골라 원하는 영상을 담아 보세요.</p><a class="cta" style="width:280px" href="${ESTIMATE_URL}">견적 내러 가기</a></div>${plansHTML(list)}`;
   return;
  }
  const picked=list.filter(i=>selected.has(i.id)),t=totals(picked),all=picked.length===list.length;
  shop.innerHTML=head('장바구니',1)+`<div class="shop-body"><section aria-label="담은 영상">
 <div class="list-tools"><label class="check"><input type="checkbox" data-all ${all?'checked':''}> 전체 선택 (${picked.length}/${list.length})</label><div class="tool-btns"><button type="button" class="ghost" data-remove-picked ${picked.length?'':'disabled'}>선택 삭제</button><button type="button" class="ghost" data-clear>전체 삭제</button></div></div>
 ${list.map((item,i)=>{const n=qty(item),day=groupTitle(item),newDay=i===0||groupKey(item)!==groupKey(list[i-1]);return `${newDay?`<h3 class="cart-day">${day?esc(day)+'<span class="cart-day-label">담은 상품</span>':'이전에 담은 상품'}</h3>`:''}<article class="row"><label class="check"><input type="checkbox" data-pick="${esc(item.id)}" ${selected.has(item.id)?'checked':''} aria-label="개인 맞춤 영상 ${i+1} 선택"></label>${thumb(item)}<div class="info"><h2>${esc(title(item,i))}</h2><p>${item.plan?esc(C.itemLabel(item)):`화질 ${esc(quality(item)?.name)} · 길이 ${esc(duration(item)?.name)}`}</p><p class="unit">개당 ${money(unit(item))}</p></div><div class="stepper" role="group" aria-label="개인 맞춤 영상 ${i+1} 수량"><button type="button" data-step="-1" data-id="${esc(item.id)}" aria-label="수량 줄이기" ${n<=1?'disabled':''}>−</button><output>${n}</output><button type="button" data-step="1" data-id="${esc(item.id)}" aria-label="수량 늘리기" ${n>=999?'disabled':''}>+</button></div><strong class="line-total">${money(unit(item)*n)}</strong><button type="button" class="remove" data-remove="${esc(item.id)}" aria-label="개인 맞춤 영상 ${i+1} 삭제">×</button></article>`}).join('')}
-<div class="list-foot"><span>담은 영상은 결제 전까지 장바구니에 보관됩니다.</span><a class="text-link" href="${ESTIMATE_URL}">+ 영상 더 담기</a></div>
+<div class="list-foot"><span>담은 영상은 결제 전까지 장바구니에 보관됩니다.</span><a class="text-link" href="${ESTIMATE_URL}">+ 영상 더 담기</a></div>${plansHTML(list)}
 </section><aside class="summary" aria-label="결제 예정 금액"><h2>결제 예정 금액</h2>${summaryRows(t)}<p class="note">선택한 ${picked.length}개 항목 · 최종 금액은 상담 후 확정될 수 있습니다.</p><button type="button" class="cta" data-order ${picked.length?'':'disabled'}>주문하기</button><button type="button" class="sub-cta" data-consult aria-expanded="${consult.open}" aria-controls="consult">${consult.open?'상담 신청 닫기':'결제 전에 상담 먼저 받기'}</button></aside></div>${consult.open?consultHTML(picked):''}`;
 }
 
@@ -100,6 +119,7 @@ function consultSubmit(e){
  renderCart();shop.querySelector('#consult')?.focus({preventScroll:true});shop.querySelector('#consult')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
 function cartClick(e){
+ const planBtn=e.target.closest('[data-cart-plan]');if(planBtn){toggleCartPlan(planBtn.dataset.cartPlan);return}
  const b=e.target.closest('button,input');if(!b||b.closest('#consult-form'))return;
  const list=items();
  if(b.hasAttribute('data-consult')){

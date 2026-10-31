@@ -35,7 +35,11 @@ function filtered(){
  // 전화번호는 하이픈 없이 숫자만 넣어도 찾는다 (01012345678 → 010-1234-5678)
  const digits=q.replace(/\D/g,''),phoneHit=m=>digits.length>=3&&/^[\d\s-]+$/.test(q)&&String(m.phone||'').replace(/\D/g,'').includes(digits);
  const found=q?members.filter(m=>phoneHit(m)||[m.id,m.name,m.phone,m.email,addrText(m.address)].some(v=>String(v||'').toLowerCase().includes(q))):[...members];
- found.sort(sort==='name'?(a,b)=>String(a.name).localeCompare(String(b.name),'ko'):(a,b)=>String(b.joined||'').localeCompare(String(a.joined||'')));
+ // 정렬: 가입 최신 · 가입 오래된 · 구매 많은 · 구매 적은(주문 금액, 같으면 주문 수) · 이름
+ const joined=(a,b)=>String(a.joined||'').localeCompare(String(b.joined||''));
+ const bought=(a,b)=>sum(a.orders||[])-sum(b.orders||[])||(a.orders||[]).length-(b.orders||[]).length;
+ const order={new:(a,b)=>joined(b,a),old:joined,'buy-desc':(a,b)=>bought(b,a)||joined(b,a),'buy-asc':(a,b)=>bought(a,b)||joined(b,a),name:(a,b)=>String(a.name).localeCompare(String(b.name),'ko')};
+ found.sort(order[sort]||order.new);
  return found;
 }
 const countText=(n,t)=>n===t?`전체 ${t}명`:`검색 결과 ${n}명 / 전체 ${t}명`;
@@ -45,7 +49,8 @@ function render(){
  const now=new Date(),month=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
  const me=DB.current()?.id;
  const mOrders=[...all.flatMap(monthOrders),...guests.filter(inMonth)],best=bestSellers();
- shop.innerHTML=head(`<ul class="my-stats ad-stats"><li><b>${all.length}</b>전체 회원</li><li><b>${all.filter(m=>String(m.joined||'').startsWith(month)).length}</b>이번 달 가입</li><li><b>${mOrders.length}</b>이번 달 주문</li><li><b>${guests.length}</b>비회원 주문</li></ul>`)+`
+ const stat=(k,n,t)=>`<li><button type="button" class="ad-stat" data-stat="${k}" aria-label="${t} 내역 보기"><b>${n}</b>${t}</button></li>`;
+ shop.innerHTML=head(`<ul class="my-stats ad-stats">${stat('all',all.length,'전체 회원')}${stat('join',all.filter(m=>String(m.joined||'').startsWith(month)).length,'이번 달 가입')}${stat('order',mOrders.length,'이번 달 주문')}${stat('guest',guests.length,'비회원 주문')}</ul>`)+`
 <section class="ad-insight" aria-label="주문 현황">
  <div class="ad-box"><h2>이번 달 매출 <small>회원 + 비회원 · 부가세 포함</small></h2><p class="ad-big">${money(sum(mOrders))}</p></div>
  <div class="ad-box"><h2>잘 팔리는 영상 <small>전체 주문 기준 TOP 5</small></h2>${best.length?`<ol class="ad-best">${best.map((b,i)=>`<li><b>${i+1}</b><span>${esc(b.name)}</span><em>${b.qty}개 · ${money(b.sales)}</em></li>`).join('')}</ol>`:'<p class="ad-none">아직 주문이 없습니다.</p>'}</div>
@@ -53,7 +58,7 @@ function render(){
 <p class="ad-notice">관리자 화면 · 회원 정보는 <b>Firebase 데이터베이스</b>에 저장되어 있어 어느 기기에서 가입한 회원이든 모두 보입니다. <button type="button" class="text-link" data-refresh>새로고침</button></p>
 <div class="list-tools ad-tools">
  <input class="ad-search" type="search" placeholder="아이디 · 이름 · 휴대폰 · 이메일 · 주소 검색" value="${esc(query)}" aria-label="회원 검색">
- <div class="tool-btns"><select class="ad-sort" aria-label="정렬"><option value="new"${sort==='new'?' selected':''}>최근 가입순</option><option value="name"${sort==='name'?' selected':''}>이름순</option></select>
+ <div class="tool-btns"><select class="ad-sort" aria-label="정렬">${[['new','가입순 (최근 → 오래된)'],['old','가입순 (오래된 → 최근)'],['buy-desc','구매 많은 순 (많은 → 적은)'],['buy-asc','구매 적은 순 (적은 → 많은)'],['name','이름순']].map(([v,t])=>`<option value="${v}"${sort===v?' selected':''}>${t}</option>`).join('')}</select>
  <button type="button" class="ghost" data-csv${all.length||guests.length?'':' disabled'}>엑셀 저장 (전체 데이터)</button></div>
 </div>
 <p class="ad-flash" role="status">${esc(flash)}</p>
@@ -141,6 +146,27 @@ function openDetail(id){
  dlg.showModal();
 }
 
+// 위쪽 숫자(전체 회원 · 이번 달 가입 · 이번 달 주문 · 비회원 주문)를 누르면 그 내역을 회원 내역과 같은 창으로 보여 준다
+function openStat(kind){
+ const dlg=shop.querySelector('.ad-dialog'),byDate=(a,b)=>String(b.date||'').localeCompare(String(a.date||''));
+ const memberLi=m=>`<li><span><b>${esc(m.name)}</b> ${esc(m.id)}<br><small>가입 ${date(m.joined)} · ${esc(m.phone||'-')} · 주문 ${(m.orders||[]).length}건</small></span><em>${money(sum(m.orders||[]))}</em></li>`;
+ const orderLi=(o,who)=>`<li><span><b>${esc(o.no)}</b> ${date(o.date)} · ${esc(who)} · ${esc(o.method)}<br><small>${(o.items||[]).map(i=>`${esc(i.quality)} · ${esc(i.duration)} × ${i.quantity}`).join(', ')}</small></span><em>${money(o.total)}</em></li>`;
+ let title,list;
+ if(kind==='all'||kind==='join'){
+  const ms=[...members].filter(m=>kind==='all'||String(m.joined||'').startsWith(thisMonth())).sort((a,b)=>String(b.joined||'').localeCompare(String(a.joined||'')));
+  title=kind==='all'?`전체 회원 <small>${ms.length}명</small>`:`이번 달 가입 <small>${ms.length}명</small>`;
+  list=ms.length?`<ul class="ad-list">${ms.map(memberLi).join('')}</ul>`:'<p class="ad-none">해당하는 회원이 없습니다.</p>';
+ }else{
+  const os=kind==='guest'?guests.map(o=>[o,`비회원 ${o.buyer?.name||''}`]):[...members.flatMap(m=>monthOrders(m).map(o=>[o,`${m.name} (${m.id})`])),...guests.filter(inMonth).map(o=>[o,`비회원 ${o.buyer?.name||''}`])];
+  os.sort((a,b)=>byDate(a[0],b[0]));
+  title=kind==='guest'?`비회원 주문 <small>${os.length}건</small>`:`이번 달 주문 <small>${os.length}건 · ${money(os.reduce((n,[o])=>n+(Number(o.total)||0),0))}</small>`;
+  list=os.length?`<ul class="ad-list">${os.map(([o,who])=>orderLi(o,who)).join('')}</ul>`:'<p class="ad-none">해당하는 주문이 없습니다.</p>';
+ }
+ dlg.innerHTML=`<div class="ad-form ad-detail"><h2>${title}</h2>${list}<div class="ad-form-btns"><button type="button" class="cta plain" data-close>닫기</button></div></div>`;
+ dlg.querySelector('[data-close]').addEventListener('click',()=>dlg.close());
+ dlg.showModal();
+}
+
 // ---------------- 엑셀 저장: 파일 하나에 시트를 나눠 담는다 ----------------
 // 회원 목록 · 회원 주문 · 장바구니 · 상담 신청 · 비회원 주문 · 판매 현황
 // 칸 색 · 굵은 글씨 · 테두리를 넣을 수 있는 SheetJS 확장판(xlsx-js-style)을 쓴다
@@ -154,9 +180,13 @@ const dateTime=iso=>{const d=new Date(iso);return isNaN(d)?'':`${date(iso)} ${St
 const itemsText=o=>(o.items||[]).map(i=>`${i.quality} · ${i.duration} × ${i.quantity}`).join(', ');
 function sheets(){
  const list=filtered(),byDate=(a,b)=>String(b.date||'').localeCompare(String(a.date||''));
- const memberRows=list.map(m=>[m.id,m.name,m.phone,m.email,m.address?.zip,m.address?.addr1,m.address?.addr2,date(m.joined),(m.orders||[]).length,sum(m.orders||[]),cartQty(m.cart),Number(m.points)||0]);
- const orderRows=[],cartRows=[],consultRows=[];
- for(const m of list){
+ // 회원이 산 상품을 상품별로 모아 한 줄로 (예: 4K · 1분 × 2, 포인트 충전 · PLUS × 1)
+ const boughtText=m=>{const c={};for(const o of m.orders||[])for(const i of o.items||[]){const k=`${i.quality} · ${i.duration}`;c[k]=(c[k]||0)+(Number(i.quantity)||1)}return Object.entries(c).map(([k,n])=>`${k} × ${n}`).join(', ')};
+ const memberRows=list.map(m=>[m.id,m.name,m.phone,m.email,m.address?.zip,m.address?.addr1,m.address?.addr2,date(m.joined),(m.orders||[]).length,sum(m.orders||[]),boughtText(m),cartQty(m.cart),Number(m.points)||0]);
+ const orderRows=[],cartRows=[],consultRows=[],memberLinks=[];
+ for(const [mi,m] of list.entries()){
+  // 회원 목록의 아이디를 누르면 '회원 주문' 시트의 그 회원 첫 주문으로 이동 (제목 2줄 + 머리글 1줄 아래부터 내용)
+  if((m.orders||[]).length)memberLinks.push([mi,0,`#'회원 주문'!A${orderRows.length+4}`]);
   for(const o of [...(m.orders||[])].sort(byDate))orderRows.push([o.no,dateTime(o.date),m.id,m.name,o.buyer?.phone,o.buyer?.email,itemsText(o),o.method,Number(o.subtotal)||0,Number(o.vat)||0,Number(o.total)||0,Number(o.pointsUsed)||0,Number(o.pointsGained)||0,Number(o.paid??o.total)||0,o.request]);
   for(const i of [...(m.cart||[])].sort((a,b)=>String(b.addedAt||'').localeCompare(String(a.addedAt||''))))cartRows.push([m.id,m.name,dateTime(i.addedAt)||'기록 없음',cartLabel(i),Number(i.quantity)||1]);
   for(const r of [...(m.consults||[])].sort((a,b)=>String(b.savedAt||'').localeCompare(String(a.savedAt||''))))consultRows.push([dateTime(r.savedAt),m.id,m.name,r.fields?.contact,r.fields?.time,(r.items||[]).map(i=>`${i.quality} · ${i.duration} × ${i.quantity}`).join(', '),r.fields?.request]);
@@ -168,7 +198,7 @@ function sheets(){
  const salesRows=Object.entries(count).sort((a,b)=>b[1].qty-a[1].qty||b[1].sales-a[1].sales).map(([k,c],i)=>[i+1,k,c.orders,c.qty,c.sales]);
  // [시트 이름, 머리글, 내용, 금액 칸 번호, 합계를 낼 칸 번호]
  return [
-  ['회원 목록',['아이디','이름','휴대폰','이메일','우편번호','주소','상세 주소','가입일','주문 수','주문 금액','장바구니 수량','보유 포인트'],memberRows,[9,11],[8,9,10,11]],
+  ['회원 목록',['아이디 (누르면 구매 내역)','이름','휴대폰','이메일','우편번호','주소','상세 주소','가입일','주문 수','주문 금액','구매 상품','장바구니 수량','보유 포인트'],memberRows,[9,12],[8,9,11,12],memberLinks],
   ['회원 주문',['주문번호','주문일시','아이디','이름','휴대폰','이메일','주문 상품','결제 수단','공급가액','부가세','주문 금액','포인트 차감','충전 포인트','실제 결제 금액','요청사항'],orderRows,[8,9,10,11,12,13],[8,9,10,11,12,13]],
   ['장바구니',['아이디','이름','담은 날짜','상품','수량'],cartRows,[],[4]],
   ['상담 신청',['신청일시','아이디','이름','연락처','희망 시간','상담 영상','상담 내용'],consultRows,[],[]],
@@ -182,7 +212,7 @@ async function saveExcel(){
  const book=XLSX.utils.book_new(),today=date(new Date().toISOString()),A=XLSX.utils.encode_cell;
  const line={style:'thin',color:{rgb:'D0D0D0'}},border={top:line,bottom:line,left:line,right:line};
  const font={name:'맑은 고딕',sz:10};
- for(const [name,header,rows,moneyCols,sumCols] of sheets()){
+ for(const [name,header,rows,moneyCols,sumCols,links=[]] of sheets()){
   const n=header.length,body=rows.map(r=>r.map(v=>v??''));
   const total=rows.length&&sumCols.length?header.map((_,c)=>c===0?'합계':sumCols.includes(c)?rows.reduce((s,r)=>s+(Number(r[c])||0),0):''):null;
   const ws=XLSX.utils.aoa_to_sheet([[`STUDIO 상상 · ${name}`],[`저장일 ${today} · 총 ${rows.length}건`],header,...body,...(total?[total]:[])]);
@@ -192,6 +222,8 @@ async function saveExcel(){
   header.forEach((_,c)=>{ws[A({r:2,c})].s={font:{...font,bold:true,color:{rgb:'FFFFFF'}},fill:{fgColor:{rgb:'1647FF'}},alignment:{horizontal:'center',vertical:'center',wrapText:true},border}});
   body.forEach((r,i)=>r.forEach((v,c)=>{const cell=ws[A({r:i+3,c})];if(!cell)return;const money=moneyCols.includes(c)&&typeof v==='number';
    cell.s={font,border,fill:i%2?{fgColor:{rgb:'F5F7FF'}}:undefined,numFmt:money?'#,##0':undefined,alignment:{vertical:'center',horizontal:typeof v==='number'?'right':'left',wrapText:String(v).length>30}}}));
+  // 시트 안 링크: 누르면 다른 시트의 해당 줄로 이동 (파란 밑줄 글씨)
+  for(const [r,c,target] of links){const cell=ws[A({r:r+3,c})];if(!cell)continue;cell.l={Target:target,Tooltip:'구매 내역 보기'};cell.s={...cell.s,font:{...font,color:{rgb:'1647FF'},underline:true,bold:true}}}
   if(total)total.forEach((v,c)=>{const cell=ws[A({r:rows.length+3,c})];if(cell)cell.s={font:{...font,bold:true},fill:{fgColor:{rgb:'E0FF4F'}},border,numFmt:moneyCols.includes(c)?'#,##0':undefined,alignment:{horizontal:c===0?'center':'right',vertical:'center'}}});
   if(!rows.length){ws[A({r:3,c:0})]={t:'s',v:'아직 데이터가 없습니다.',s:{font:{...font,color:{rgb:'999999'}}}};ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:3,c:n-1}})}
   // 칸 너비: 한글은 영문 · 숫자보다 두 배 넓게 센다
@@ -215,6 +247,7 @@ shop.addEventListener('click',async e=>{
  if(b.hasAttribute('data-refresh')){load();return}
  if(b.dataset.edit){openEdit(b.dataset.edit);return}
  if(b.dataset.detail){openDetail(b.dataset.detail);return}
+ if(b.dataset.stat){openStat(b.dataset.stat);return}
  if(b.dataset.del){
   const id=b.dataset.del,m=members.find(x=>x.id===id);if(!m)return;
   if(!confirm(`${id} (${m.name}) 회원을 삭제할까요?\n회원 정보가 데이터베이스에서 지워지고, 이 아이디로는 더 로그인할 수 없습니다.`))return;

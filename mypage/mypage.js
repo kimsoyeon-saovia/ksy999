@@ -19,7 +19,7 @@ const head=sub=>`<div class="shop-head"><h1>마이페이지</h1>${sub||''}</div>
 const icon='<svg viewBox="0 0 24 24" fill="none" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>';
 
 // 포인트 잔액 · 내역은 회원 계정(userdata/{uid}.points)에서 읽는다 (1포인트 = C.pointValue원)
-let pts=null,ptsFor=null;
+let pts=null,ptsFor=null,ptOpen=false;
 function loadPoints(m){
  if(!window.SangsangDB||ptsFor===m.id)return;ptsFor=m.id;
  window.SangsangDB.whenAuthKnown().then(()=>window.SangsangDB.points()).then(p=>{pts=p;render()}).catch(()=>{pts={balance:0,history:[],error:true};render()});
@@ -30,9 +30,10 @@ function pointsHTML(){
  // 충전은 견적 페이지의 충전 상품을 장바구니에 담아 결제한다. 여기서는 잔액과 충전 · 사용 내역만 보여 준다
  const used=pts.history.filter(h=>h.amount<0).reduce((n,h)=>n-h.amount,0);
  return `<section class="block my-points"><div class="block-title"><h2>포인트</h2><small>1포인트 = ${C?.pointValue||1}원 · 결제할 때 사용</small></div>
-<div class="pt-balance"><span>현재 남은 포인트</span><strong>${point(pts.balance)}</strong>${used?`<em>지금까지 ${point(used)} 사용</em>`:''}<a class="pt-go" href="../contact/personal.html">포인트 충전하러 가기 →</a></div>
-<div class="block-title pt-title"><h3>포인트 충전 · 사용 내역</h3><small>최근 내역부터</small></div>
+<div class="pt-balance"><span>현재 남은 포인트</span><strong>${point(pts.balance)}</strong>${used?`<em>지금까지 ${point(used)} 사용</em>`:''}<a class="pt-go" href="../contact/personal.html#points">포인트 충전하러 가기 →</a></div>
+<details class="pt-detail"${ptOpen?' open':''}><summary><b>포인트 충전 · 사용 내역</b><small>${pts.history.length}건 · 눌러서 ${ptOpen?'접기':'펼치기'}</small></summary>
 ${pts.history.length?`<ul class="my-items pt-history">${pts.history.map(h=>`<li><span><b class="${h.amount<0?'minus':'plus'}">${h.amount<0?'사용':'충전'}</b>${date(h.date)} · ${esc(h.memo||'')}</span><span class="${h.amount<0?'minus':'plus'}">${h.amount>0?'+':''}${point(h.amount)}</span></li>`).join('')}</ul>`:'<div class="my-none">아직 포인트 내역이 없습니다.</div>'}
+</details>
 </section>`;
 }
 
@@ -127,6 +128,8 @@ shop.addEventListener('click',e=>{
   location.href='../cart/index.html';
  }
 });
+// 내역을 펼친 상태는 화면을 다시 그려도 그대로 둔다
+shop.addEventListener('toggle',e=>{if(e.target.matches?.('.pt-detail')){ptOpen=e.target.open;const s=e.target.querySelector('summary small');if(s)s.textContent=s.textContent.replace(/(펼치기|접기)$/,ptOpen?'접기':'펼치기')}},true);
 shop.addEventListener('input',e=>{if(e.target.closest('.my-edit')&&e.target.name==='phone')e.target.value=fmtPhone(e.target.value)});
 shop.addEventListener('submit',e=>{
  const f=e.target.closest('.my-edit');if(!f)return;e.preventDefault();
