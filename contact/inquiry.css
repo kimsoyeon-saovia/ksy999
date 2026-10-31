@@ -359,3 +359,13 @@ body{font-synthesis:none;font-kerning:normal;text-rendering:optimizeLegibility}
  .plan>button{margin-top:10px;padding:9px 4px;font-size:12px}
  .point-reference{font-size:12.5px}
 }
+/* 충전 카드: 담기 버튼 없이 카드 자체를 누른다 (버튼 높이만큼 카드가 낮아짐) */
+.plans .plan{position:relative;min-height:0;width:100%;font:inherit;color:inherit;text-align:left;background:var(--paper,#fff);cursor:pointer}
+.plans .plan>strong{margin-top:0;padding-left:1em}
+.plans .plan{gap:4px}
+.plans .plan>p{margin-top:10px}
+.plan-check{position:absolute;top:12px;right:12px;display:none;padding:3px 8px;background:#080808;color:#fff;font-size:12px;font-weight:700}
+.plan.chosen .plan-check{display:block}
+/* 단위 글자(p · 초 · 분 · 원)는 숫자의 70% */
+.u{font-size:.7em;margin-left:.04em}
+@media(max-width:480px){.plans .plan{gap:2px}.plan-check{top:8px;right:8px;font-size:10px;padding:2px 6px}}

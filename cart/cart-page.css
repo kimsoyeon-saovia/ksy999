@@ -236,3 +236,4 @@ a{color:inherit}
 #pt-block .block-title h2{white-space:nowrap}
 #pt-block .block-title small{display:block;margin-top:6px;line-height:1.5}
 @media(max-width:520px){.pt-use input{width:120px}}
+.cart-day .check{display:inline-flex;align-items:center;gap:10px;cursor:pointer}
