@@ -25,7 +25,7 @@ style.textContent=`
 .member-tabs button{padding:14px 0;border:0;background:none;font:500 17px UnifiedSeoul,Arial,sans-serif;color:#9a9a9a;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px}
 .member-tabs button[aria-selected="true"]{color:#080808;font-weight:800;border-bottom-color:#080808}
 .member-tabs button:hover{color:#080808}
-form[hidden],.member-done[hidden]{display:none}
+form[hidden],.member-done[hidden],.member-tabs[hidden]{display:none}
 .field{margin-bottom:20px}
 .field label{display:block;margin-bottom:6px;font-size:13px;color:#555}.field label b{color:#1647ff;font-weight:500}
 .field input{width:100%;padding:10px 0;border:0;border-bottom:1px solid #bbb;font:400 16px UnifiedSeoul,Arial,sans-serif;color:#080808;background:none;border-radius:0}
@@ -58,6 +58,8 @@ form[data-form="join"] .field{margin-bottom:16px}
 .member-note{margin:16px 0 0;font-size:13px;color:#888;text-align:center}
 .member-note button{border:0;background:none;padding:0;font:inherit;color:#080808;text-decoration:underline;cursor:pointer}
 .member-form-msg{min-height:20px;margin:-8px 0 12px;font-size:13px;color:#e5402f}
+.today-skip{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:16px;font-size:14px;color:#555;cursor:pointer}.today-skip[hidden]{display:none}.today-skip input{width:17px;height:17px;accent-color:#080808}
+.member-done .member-alt{margin-bottom:10px}
 .member-done{padding:28px 0 8px;text-align:center}.member-done h3{margin:0 0 10px;font-size:26px;font-weight:800}.member-done p{margin:0 0 28px;color:#555;line-height:1.6}
 .member-alt{margin-bottom:10px;background:#fff;border:1px solid #080808;text-decoration:none;box-sizing:border-box}.member-alt[hidden]{display:none}
 .addr-line{margin-top:8px}
@@ -129,7 +131,7 @@ ${methodSwitch}
 <button class="member-submit" type="submit">회원가입</button>
 <p class="member-note">이미 회원이신가요? <button type="button" data-go="login">로그인</button></p>
 </form>
-<div class="member-done" hidden><h3></h3><p></p><a class="member-submit member-alt" data-mypage href="${new URL('mypage/index.html',siteRoot)}" hidden>마이페이지</a><button class="member-submit" type="button" data-done>확인</button></div>
+<div class="member-done" hidden><h3></h3><p></p><a class="member-submit member-alt" data-mypage href="${new URL('mypage/index.html',siteRoot)}" hidden>마이페이지</a><button class="member-submit" type="button" data-done>확인</button><label class="today-skip" hidden><input type="checkbox" data-skip-today> 오늘 다시 보지 않기</label></div>
 </div>
 <div class="addr-layer" role="dialog" aria-label="주소 검색" hidden><div class="addr-head">주소 검색<button type="button" data-addr-close aria-label="주소 검색 닫기">×</button></div><div class="addr-box"></div></div>
 </div>`;
@@ -168,7 +170,8 @@ function showDone(title,text,mypage=false){
  for(const f of Object.values(forms))f.hidden=true;
  $('.member-tabs').hidden=true;done.hidden=false;$('.member-dialog').classList.remove('tall');
  done.querySelector('h3').textContent=title;done.querySelector('p').textContent=text;
- done.querySelector('[data-mypage]').hidden=!mypage;
+ const link=done.querySelector('[data-mypage]');link.hidden=!mypage;link.textContent='마이페이지';link.href=new URL('mypage/index.html',siteRoot);
+ done.querySelector('.today-skip').hidden=true;
  (mypage?done.querySelector('[data-mypage]'):done.querySelector('button')).focus();
 }
 
@@ -268,7 +271,23 @@ forms.login.addEventListener('submit',async e=>{
  f.reset();
  done.dataset.mode='';done.querySelector('button').textContent='확인';
  showDone(`${user.name}님, 반갑습니다`,'로그인되었습니다.',true);
+ // 찾기 기능이 생기기 전에 가입한 회원에게: 찾기 질문 등록 안내 (오늘 다시 보지 않기)
+ if(!skippedToday()&&await DB.needsFindSetup().catch(()=>false))showFindNotice(user);
 });
+const SKIP_KEY='sangsang-find-notice-skip';
+const today=()=>new Date().toISOString().slice(0,10);
+const skippedToday=()=>{try{return localStorage.getItem(SKIP_KEY)===today()}catch{return false}};
+function showFindNotice(user){
+ showDone('아이디 · 비밀번호 찾기 기능이 추가되었습니다',`${user.name}님, 찾기 질문을 등록해 주세요. 등록하면 질문으로 아이디 · 비밀번호를 찾을 수 있습니다. 기존에 등록한 메일로도 찾기가 가능합니다.`,true);
+ const link=done.querySelector('[data-mypage]');link.textContent='찾기 질문 등록하기';link.href=new URL('mypage/index.html#find',siteRoot);
+ done.querySelector('button').textContent='나중에 할게요';done.dataset.mode='notice';
+ const skip=done.querySelector('.today-skip');skip.hidden=false;skip.querySelector('input').checked=false;
+}
+// 안내를 닫거나 등록하러 갈 때 '오늘 다시 보지 않기'를 저장한다
+done.addEventListener('click',e=>{
+ if(done.dataset.mode!=='notice'||!e.target.closest('[data-mypage],[data-done]'))return;
+ if(done.querySelector('[data-skip-today]').checked)try{localStorage.setItem(SKIP_KEY,today())}catch{}
+},true);
 forms.join.addEventListener('submit',async e=>{
  e.preventDefault();const f=forms.join,msg=f.querySelector('.member-form-msg');
  const el=f.elements;

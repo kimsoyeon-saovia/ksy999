@@ -21,6 +21,9 @@ service cloud.firestore {
       allow create: if signedIn() && request.resource.data.uid == request.auth.uid
                     && request.resource.data.keys().hasOnly(['uid','email'])
                     && (!('email' in request.resource.data) || request.resource.data.email == request.auth.token.email);
+      // 예전 가입자가 찾기 메일을 등록할 때 본인 메일만 바꿀 수 있다
+      allow update: if signedIn() && resource.data.uid == request.auth.uid && request.resource.data.uid == resource.data.uid
+                    && request.resource.data.keys().hasOnly(['uid','email']);
       allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
     }
 

@@ -59,8 +59,23 @@ ${f('newPassword2','새 비밀번호 확인','','type="password" autocomplete="n
 <button type="submit" class="cta">저장</button><button type="button" class="sub-cta" data-edit-cancel>취소</button></form>`;
 }
 
+// 아이디 · 비밀번호 찾기 질문 등록 (로그인 안내창의 '찾기 질문 등록하기'로 오면 #find 로 바로 열린다)
+let findForm=location.hash==='#find';
+function findHTML(m){
+ // 새 가입자는 가입할 때 질문을 등록하므로, 질문이 없으면 찾기 기능 전에 가입한 회원이다 (로그인 상태를 불러오기 전에도 알 수 있게)
+ const qs=window.SangsangDB?.questions||[],legacy=!m.question||window.SangsangDB?.isLegacy();
+ return `<form class="my-edit" data-step="find" novalidate>
+<p class="my-edit-guide">질문과 답을 등록하면 로그인 창의 '아이디 찾기 · 비밀번호 찾기'에서 질문으로 찾을 수 있습니다.${legacy?' 등록한 메일로 인증 링크를 보내 드리며, 인증을 마치면 메일로도 비밀번호를 찾을 수 있습니다.':''}</p>
+<label class="my-edit-f"><span>찾기 질문 *</span><select name="question">${qs.map(q=>`<option${m.question===q?' selected':''}>${esc(q)}</option>`).join('')}</select></label>
+<label class="my-edit-f"><span>질문의 답 *</span><input name="answer" autocomplete="off" placeholder="질문의 답"></label>
+${legacy?`<label class="my-edit-f"><span>찾기에 쓸 메일 *</span><input name="email" type="email" value="${esc(m.email||'')}" placeholder="example@email.com"></label>`:''}
+<label class="my-edit-f"><span>현재 비밀번호 *</span><input name="password" type="password" autocomplete="current-password" placeholder="본인 확인을 위해 입력"></label>
+<p class="my-edit-msg" role="status"></p>
+<button type="submit" class="cta">등록</button><button type="button" class="sub-cta" data-find-cancel>취소</button></form>`;
+}
+
 function render(msg){
- if(editing&&!msg&&shop.querySelector('.my-edit'))return;
+ if((editing||findForm)&&!msg&&shop.querySelector('.my-edit'))return;
  const m=me();if(!m)editing=false;
  if(!m){pts=null;ptsFor=null}else loadPoints(m);
  if(!m){
@@ -90,7 +105,7 @@ ${consults.length?consults.map(r=>`<article class="my-card">
 <aside class="summary my-info" aria-label="회원 정보"><h2>회원 정보</h2>
 <dl><div><dt>아이디</dt><dd>${esc(m.id)}</dd></div><div><dt>이름</dt><dd>${esc(m.name)}</dd></div><div><dt>휴대폰</dt><dd>${esc(m.phone||'-')}</dd></div><div><dt>이메일</dt><dd>${esc(m.email||'-')}</dd></div>
 <div class="addr"><dt>주소</dt><dd>${a.addr1?`(${esc(a.zip)}) ${esc(a.addr1)}${a.addr2?'<br>'+esc(a.addr2):''}`:'등록된 주소 없음'}</dd></div><div><dt>가입일</dt><dd>${date(m.joined).slice(0,10)}</dd></div></dl>
-${editing?editHTML(m):'<button type="button" class="sub-cta" data-edit>회원정보 수정</button>'}
+${editing?editHTML(m):findForm?findHTML(m):`<button type="button" class="sub-cta" data-edit>회원정보 수정</button><button type="button" class="sub-cta${m.question?'':' my-find-need'}" data-find-setup>${m.question?'찾기 질문 변경':'아이디 · 비밀번호 찾기 질문 등록'}</button>`}
 <button type="button" class="sub-cta" data-logout>로그아웃</button>
 <button type="button" class="my-leave" data-leave>회원 탈퇴</button>
 <p class="note">회원 정보 · 장바구니 · 주문 내역은 회원 계정에 저장되어 다른 기기에서 로그인해도 그대로 보입니다. 결제는 시연용입니다.</p>
@@ -102,6 +117,8 @@ shop.addEventListener('click',e=>{
  if(b.hasAttribute('data-login')){openLogin();return}
  if(b.hasAttribute('data-edit')){editing='check';editPw='';render();shop.querySelector('.my-edit input')?.focus();return}
  if(b.hasAttribute('data-edit-cancel')){editing=false;editPw='';render();return}
+ if(b.hasAttribute('data-find-setup')){findForm=true;render();shop.querySelector('.my-edit select')?.focus();return}
+ if(b.hasAttribute('data-find-cancel')){findForm=false;shop.querySelector('.my-edit')?.remove();render();return}
  // 로그인 · 탈퇴는 member-db.js(Firebase)가 처리하고, 끝나면 sangsang-member-change 로 다시 그린다
  if(b.hasAttribute('data-logout')){window.SangsangDB?.logout().catch(()=>{});return}
  if(b.hasAttribute('data-leave')){
@@ -134,6 +151,17 @@ shop.addEventListener('input',e=>{if(e.target.closest('.my-edit')&&e.target.name
 shop.addEventListener('submit',e=>{
  const f=e.target.closest('.my-edit');if(!f)return;e.preventDefault();
  const el=f.elements,v=n=>el[n].value.trim(),msg=f.querySelector('.my-edit-msg'),btn=f.querySelector('[type=submit]');
+ if(f.dataset.step==='find'){
+  const answer=el.answer.value.trim(),pw=el.password.value,email=el.email?.value.trim();
+  const err=!answer?'질문의 답을 입력해 주세요.':el.email&&!isEmail(email)?'메일을 정확히 입력해 주세요.':!pw?'현재 비밀번호를 입력해 주세요.':'';
+  if(err){msg.textContent=err;return}
+  btn.disabled=true;msg.textContent='등록하는 중입니다…';
+  window.SangsangDB.setupFind({password:pw,question:el.question.value,answer,email}).then(r=>{
+   findForm=false;f.remove();history.replaceState(null,'',location.pathname);render();
+   alert(r.legacy?(r.mailSent?`찾기 질문을 등록했습니다.\n${email}(으)로 인증 메일을 보냈습니다. 메일의 링크를 누르면 메일로도 비밀번호를 찾을 수 있습니다. (스팸함도 확인해 주세요)`:'찾기 질문을 등록했습니다. (인증 메일은 보내지 못했습니다. 잠시 후 다시 등록해 주세요.)'):'찾기 질문을 등록했습니다.');
+  }).catch(er=>{btn.disabled=false;msg.textContent=window.SangsangDB.errorText(er)});
+  return;
+ }
  // 1단계: 비밀번호가 맞으면 수정 칸을 연다
  if(f.dataset.step==='check'){
   const pw=el.password.value;if(!pw){msg.textContent='비밀번호를 입력해 주세요.';return}
