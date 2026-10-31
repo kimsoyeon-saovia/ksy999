@@ -205,3 +205,6 @@ a{color:inherit}
 .empty .cta::after{position:absolute;right:24px}
 .cta.consult-submit{height:76px;font-size:28px}
 @media(max-width:750px){.cta.consult-submit{height:64px;font-size:22px}}
+.cart-day-label{margin-left:2.2em}
+.cta.consult-submit{font-weight:500}
+.pt-now{color:#1647ff;font-weight:700;margin:0 0 12px}
