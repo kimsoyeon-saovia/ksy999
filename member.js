@@ -9,9 +9,10 @@ const style=document.createElement('style');
 style.textContent=`
 .member-layer{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(8,8,8,.62);opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s;font-family:UnifiedSeoul,Arial,sans-serif}
 .member-layer.open{opacity:1;visibility:visible}
-.member-dialog{position:relative;display:grid;grid-template-columns:5fr 6fr;width:min(880px,100%);height:min(680px,calc(100vh - 48px));overflow:hidden;background:#fff;transform:translateY(24px);transition:transform .3s}
-/* 왼쪽 검은 소개 영역은 고정, 오른쪽 입력 영역만 스크롤 */
-.member-body{overflow-y:auto;overscroll-behavior:contain}
+.member-dialog{position:relative;display:grid;grid-template-columns:5fr 6fr;width:min(880px,100%);max-height:calc(100vh - 48px);overflow:hidden;background:#fff;transform:translateY(24px);transition:transform .3s}
+/* 회원가입처럼 긴 화면에서만 창 높이를 고정하고, 왼쪽 검은 소개 영역은 그대로 둔 채 오른쪽 입력 영역만 스크롤 */
+.member-dialog.tall{height:min(680px,calc(100vh - 48px))}
+.member-body{min-height:0;overflow-y:auto;overscroll-behavior:contain}
 .member-layer.open .member-dialog{transform:none}
 .member-visual{display:flex;flex-direction:column;justify-content:space-between;gap:40px;padding:48px 40px;background:#080808;color:#fff}
 .member-visual .brand{display:flex;align-items:center;gap:10px}.member-visual .brand span{font:800 11px Arial;letter-spacing:4px}.member-visual .brand strong{font-size:26px;font-weight:800}
@@ -157,6 +158,7 @@ let checkedId='';
 function showTab(name){
  for(const b of layer.querySelectorAll('[data-tab]'))b.setAttribute('aria-selected',String(b.dataset.tab===name));
  for(const [k,f] of Object.entries(forms))f.hidden=k!==name;
+ dialog.classList.toggle('tall',name==='join');
  done.hidden=true;$('.member-tabs').hidden=false;
  for(const f of Object.values(forms)){f.querySelectorAll('.error').forEach(e=>e.classList.remove('error'));f.querySelector('.member-form-msg').textContent=''}
  resetIdCheck();
@@ -164,7 +166,7 @@ function showTab(name){
 }
 function showDone(title,text,mypage=false){
  for(const f of Object.values(forms))f.hidden=true;
- $('.member-tabs').hidden=true;done.hidden=false;
+ $('.member-tabs').hidden=true;done.hidden=false;$('.member-dialog').classList.remove('tall');
  done.querySelector('h3').textContent=title;done.querySelector('p').textContent=text;
  done.querySelector('[data-mypage]').hidden=!mypage;
  (mypage?done.querySelector('[data-mypage]'):done.querySelector('button')).focus();
