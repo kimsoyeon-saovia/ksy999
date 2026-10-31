@@ -203,3 +203,5 @@ a{color:inherit}
 /* 빈 장바구니 "견적 내러 가기": 굵은 글자 가운데, 화살표는 오른쪽 끝 */
 .empty .cta{position:relative;justify-content:center;font-weight:800}
 .empty .cta::after{position:absolute;right:24px}
+.cta.consult-submit{height:76px;font-size:28px}
+@media(max-width:750px){.cta.consult-submit{height:64px;font-size:22px}}

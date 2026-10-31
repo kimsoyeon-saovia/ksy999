@@ -339,3 +339,7 @@ body{font-synthesis:none;font-kerning:normal;text-rendering:optimizeLegibility}
 @keyframes bonus-shine{0%{background-position:120% 0}100%{background-position:-20% 0}}
 @media(max-width:800px){.plan .plan-bonus{display:block}}
 @media(prefers-reduced-motion:reduce){.plan .plan-bonus{animation:none;background:none;color:#1647ff;-webkit-text-fill-color:#1647ff}}
+/* 기본 포인트는 크고 굵게, 추가 포인트는 그보다 작게. "포인트" 글자는 숫자보다 30% 작게 */
+.plan .plan-base{font-size:1.2em;font-weight:800}
+.plan .plan-bonus{font-size:.95em;font-weight:800}
+.plan .pt-unit{font-size:.7em;margin-left:.1em}
