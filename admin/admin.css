@@ -69,3 +69,19 @@
 /* 위쪽 숫자 칸: 누르면 내역 (모양은 그대로, 올리면 살짝 색) */
 .ad-stats .ad-stat{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;padding:0;border:0;background:none;font:inherit;color:inherit;cursor:pointer;transition:background .2s}
 .ad-stats .ad-stat:hover{background:rgba(22,71,255,.08)}
+/* 휴대폰: 회원 · 비회원 주문은 한 줄 요약(이름 · 아이디 · 주문 건수)만 보이고, 누르면 나머지가 펼쳐진다 */
+.ad-sum{display:none}
+@media(max-width:750px){
+ .ad-table tr{padding:0}
+ .ad-table td.ad-sum{display:block;padding:0}
+ .ad-table td.ad-sum::before{content:none}
+ .ad-sum-btn{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;width:100%;padding:14px 4px;border:0;background:none;font:inherit;color:#080808;text-align:left;cursor:pointer}
+ .ad-sum-btn b{font-size:16px;font-weight:800}
+ .ad-sum-btn span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;color:#777}
+ .ad-sum-btn em{font-style:normal;font-size:13px;font-weight:700}
+ .ad-sum-btn em::after{content:"▾";display:inline-block;margin-left:8px;transition:transform .2s}
+ .ad-table tr.open .ad-sum-btn em::after{transform:rotate(180deg)}
+ .ad-table tr:not(.open) td:not(.ad-sum){display:none}
+ .ad-table tr.open{padding-bottom:12px;background:#fafafa}
+ .ad-table tr.open td:not(.ad-sum){padding:5px 8px}
+}

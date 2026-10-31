@@ -67,11 +67,14 @@ ${guestsHTML()}
 <dialog class="ad-dialog"></dialog>`;
  flash='';
 }
+// 휴대폰에서 줄마다 보이는 요약(누르면 나머지 칸이 펼쳐짐). PC에서는 숨긴다
+const sumBtn=(a,b,c)=>`<button type="button" class="ad-sum-btn" data-row-toggle aria-expanded="false"><b>${a}</b><span>${b}</span><em>${c}</em></button>`;
 // 회원 표: 검색할 때는 이 부분만 다시 그려 검색창(한글 입력 중인 글자)을 건드리지 않는다
 function listHTML(found,all,me){
  return all.length?(found.length?`<div class="ad-table-wrap"><table class="ad-table">
 <thead><tr><th>아이디</th><th>이름</th><th>휴대폰</th><th>이메일</th><th>주소</th><th>가입일</th><th>이번 달 주문</th><th>장바구니</th><th>포인트</th><th>관리</th></tr></thead>
 <tbody>${found.map(m=>`<tr>
+ <td class="ad-sum">${sumBtn(esc(m.name),`${esc(m.id)}${me===m.id?' · 나':''}`,`주문 ${(m.orders||[]).length}건`)}</td>
  <td data-label="아이디"><strong>${esc(m.id)}</strong>${me===m.id?'<span class="ad-on">나</span>':''}</td>
  <td data-label="이름">${esc(m.name)}</td><td data-label="휴대폰">${esc(m.phone||'-')}</td><td data-label="이메일">${esc(m.email||'-')}</td>
  <td data-label="주소" class="ad-addr">${esc(addrText(m.address))||'<span class="ad-none">없음</span>'}</td>
@@ -87,7 +90,7 @@ function listHTML(found,all,me){
 function guestsHTML(){
  return `<section class="ad-guests"><div class="block-title"><h2>비회원 주문 <small>${guests.length}건 · 최근 주문부터</small></h2></div>
 ${guests.length?`<div class="ad-table-wrap"><table class="ad-table"><thead><tr><th>주문번호</th><th>주문일</th><th>주문자</th><th>연락처</th><th>주문 영상</th><th>결제 수단</th><th>금액</th></tr></thead><tbody>
-${[...guests].sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(o=>`<tr><td data-label="주문번호"><strong>${esc(o.no)}</strong></td><td data-label="주문일">${date(o.date)}</td><td data-label="주문자">${esc(o.buyer?.name)}</td><td data-label="연락처">${esc(o.buyer?.phone)}</td><td data-label="주문 영상">${(o.items||[]).map(i=>`${esc(i.quality)} · ${esc(i.duration)} × ${i.quantity}`).join('<br>')}</td><td data-label="결제 수단">${esc(o.method)}</td><td data-label="금액">${money(o.total)}</td></tr>`).join('')}
+${[...guests].sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(o=>`<tr><td class="ad-sum">${sumBtn(esc(o.buyer?.name||'-'),`${date(o.date)} · ${esc(o.no)}`,money(o.total))}</td><td data-label="주문번호"><strong>${esc(o.no)}</strong></td><td data-label="주문일">${date(o.date)}</td><td data-label="주문자">${esc(o.buyer?.name)}</td><td data-label="연락처">${esc(o.buyer?.phone)}</td><td data-label="주문 영상">${(o.items||[]).map(i=>`${esc(i.quality)} · ${esc(i.duration)} × ${i.quantity}`).join('<br>')}</td><td data-label="결제 수단">${esc(o.method)}</td><td data-label="금액">${money(o.total)}</td></tr>`).join('')}
 </tbody></table></div>`:'<div class="my-none">아직 비회원 주문이 없습니다.</div>'}</section>`;
 }
 
@@ -248,6 +251,7 @@ shop.addEventListener('click',async e=>{
  if(b.dataset.edit){openEdit(b.dataset.edit);return}
  if(b.dataset.detail){openDetail(b.dataset.detail);return}
  if(b.dataset.stat){openStat(b.dataset.stat);return}
+ if(b.hasAttribute('data-row-toggle')){const tr=b.closest('tr'),open=tr.classList.toggle('open');b.setAttribute('aria-expanded',String(open));return}
  if(b.dataset.del){
   const id=b.dataset.del,m=members.find(x=>x.id===id);if(!m)return;
   if(!confirm(`${id} (${m.name}) 회원을 삭제할까요?\n회원 정보가 데이터베이스에서 지워지고, 이 아이디로는 더 로그인할 수 없습니다.`))return;
