@@ -59,7 +59,7 @@ function quantity(kind,id,count){return `<div class="quantity"><label>수량 <in
 function personalContent(){const s=S();return `<div class="intro"><h2>영상 예상 제작 견적 확인하기</h2><p>화질과 영상길이를 선택해 주세요.</p></div>
 <section class="selection">${step('01','영상 화질 선택')}<div class="choices quality" role="group" aria-label="영상 화질">${C.qualities.map(x=>`<button class="choice${selected(s.quality===x.id)}" data-choice="quality" data-id="${x.id}" aria-pressed="${s.quality===x.id}"><span class="check" aria-hidden="true">${s.quality===x.id?'✓':''}</span><strong>${unitHTML(x.name)}</strong><small>${unitHTML(money(x.points*C.pointValue))}</small><p class="description">${x.description}</p></button>`).join('')}</div></section>
 <section class="selection">${step('02','영상 길이 선택')}<div class="choices duration" role="group" aria-label="영상 길이">${C.durations.map(x=>`<button class="choice${selected(s.duration===x.id)}" data-choice="duration" data-id="${x.id}" aria-pressed="${s.duration===x.id}"><span class="check" aria-hidden="true">${s.duration===x.id?'✓':''}</span><strong>${unitHTML(x.name)}</strong><small>${unitHTML(money(x.points*C.pointValue))}</small></button>`).join('')}</div></section>
-<section class="selection" id="points">${step('03','포인트 충전','필요한 만큼 충전해 영상 제작에 사용할 수 있습니다.')}<div class="plans" role="group" aria-label="포인트 충전 상품">${C.plans.map(x=>{const on=planInCart(x.id);return `<button type="button" class="plan${on?' chosen':''}" data-plan="${x.id}" aria-pressed="${on}"><span class="plan-check" aria-hidden="true">✓ 견적서에 담음</span><h4>${x.name}</h4><strong>${unitHTML(money(x.price))}</strong><p><span class="plan-base">${C.comma(x.points)}<span class="pt-unit">포인트</span></span> <span class="plan-bonus">+ ${C.comma(x.bonus)}<span class="pt-unit">포인트 추가</span></span></p></button>`}).join('')}</div><p class="point-reference"><strong class="point-member">※ 포인트 충전은 회원가입 후 이용하실 수 있습니다.</strong><br>참고 · 1포인트 = ${C.pointValue}원 · 견적서에 담아 결제하면 회원 계정에 포인트가 들어갑니다</p></section>`;}
+<section class="selection" id="points">${step('03','포인트 충전','필요한 만큼 충전해 영상 제작에 사용할 수 있습니다.')}<div class="plans" role="group" aria-label="포인트 충전 상품">${C.plans.map(x=>{const on=planInCart(x.id);return `<button type="button" class="plan${on?' chosen':''}" data-plan="${x.id}" aria-pressed="${on}"><span class="check" aria-hidden="true">${on?'✓':''}</span><h4>${x.name}</h4><strong>${unitHTML(money(x.price))}</strong><p><span class="plan-base">${C.comma(x.points)}<span class="pt-unit">포인트</span></span> <span class="plan-bonus">+ ${C.comma(x.bonus)}<span class="pt-unit">포인트 추가</span></span></p></button>`}).join('')}</div><p class="point-reference"><strong class="point-member">※ 포인트 충전은 회원가입 후 이용하실 수 있습니다.</strong><br>참고 · 1포인트 = ${C.pointValue}원 · 견적서에 담아 결제하면 회원 계정에 포인트가 들어갑니다</p></section>`;}
 // 포인트 충전 상품은 장바구니에 담아 영상과 함께 결제한다 (회원만). 다시 누르면 장바구니에서 뺀다
 // 포인트 충전 상품도 영상처럼 견적서에 담는다 (회원만). 다시 누르면 견적서에서 뺀다
 const planInCart=id=>states.personal.items.some(i=>i.plan===id);
@@ -118,10 +118,10 @@ function repaint(){
    button.classList.toggle('chosen',active);button.setAttribute('aria-pressed',active);
    button.querySelector('.check').textContent=active?'✓':'';
  });
- // 충전 카드 자체가 버튼: 담기면 노란 카드 + 오른쪽 위 '✓ 견적서에 담음'
+ // 충전 카드 자체가 버튼: 화질 · 길이 카드처럼 오른쪽 위 동그라미에 체크
  root.querySelectorAll('.plan[data-plan]').forEach(card=>{
    const active=planInCart(card.dataset.plan);
-   card.classList.toggle('chosen',active);card.setAttribute('aria-pressed',active);
+   card.classList.toggle('chosen',active);card.setAttribute('aria-pressed',active);card.querySelector('.check').textContent=active?'✓':'';
  });
  root.querySelectorAll('[data-product]').forEach(button=>{
    const active=s.product===button.dataset.product;

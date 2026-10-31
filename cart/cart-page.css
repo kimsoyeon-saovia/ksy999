@@ -237,3 +237,6 @@ a{color:inherit}
 #pt-block .block-title small{display:block;margin-top:6px;line-height:1.5}
 @media(max-width:520px){.pt-use input{width:120px}}
 .cart-day .check{display:inline-flex;align-items:center;gap:10px;cursor:pointer}
+/* 장바구니 충전 카드: 마우스를 올리거나 추가하면 검은 바탕 · 흰 글자 */
+.cart-plan:hover,.cart-plan.chosen{background:#080808;border-color:#080808;color:#fff}
+.cart-plan:hover small,.cart-plan.chosen small{color:#ccc}

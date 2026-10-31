@@ -53,8 +53,8 @@ const PAGE_BATCH=new Date().toISOString();
 // 마이페이지에 있던 충전 카드와 같은 모양 (이름 · 금액 · 포인트 · 담기)
 function plansHTML(list){
  return `<section class="cart-plans" aria-label="포인트 충전"><div class="block-title"><h2>포인트 충전</h2><small>회원가입 후 이용하실 수 있습니다 · 1포인트 = ${C.pointValue}원</small></div>
-<div class="cart-plan-list">${C.plans.map(p=>{const on=list.some(i=>i.plan===p.id);return `<button type="button" class="cart-plan${on?' chosen':''}" data-cart-plan="${esc(p.id)}" aria-pressed="${on}"><b>${esc(p.name)}</b><strong>${money(p.price)}</strong><small>${C.point(p.points)} + ${C.point(p.bonus)} 추가</small><em>${on?'장바구니에 담음 ✓':'장바구니에 담기 →'}</em></button>`}).join('')}</div>
-<p class="cart-plan-note">충전 상품은 장바구니에 담아 결제하면 포인트가 계정에 들어갑니다. (결제는 시연용)</p></section>`;
+<div class="cart-plan-list">${C.plans.map(p=>{const on=list.some(i=>i.plan===p.id);return `<button type="button" class="cart-plan${on?' chosen':''}" data-cart-plan="${esc(p.id)}" aria-pressed="${on}"><b>${esc(p.name)}</b><strong>${money(p.price)}</strong><small>${C.point(p.points)} + ${C.point(p.bonus)} 추가</small><em>${on?'추가됨 ✓':'추가 →'}</em></button>`}).join('')}</div>
+<p class="cart-plan-note">충전 상품을 추가해 결제하면 포인트가 계정에 들어갑니다. (결제는 시연용)</p></section>`;
 }
 function toggleCartPlan(id){
  if(!member()){alert('포인트 충전은 회원 전용입니다.\n회원가입 후 이용하실 수 있습니다.');openLogin();return}
@@ -73,7 +73,8 @@ function toggleCartPlan(id){
 let selected=null; // 선택된 항목 id (처음엔 전부 선택)
 function renderCart(){
  const list=items();
- if(selected===null)selected=new Set(list.map(i=>i.id));
+ // 처음에는 가장 최근에 담은 묶음만 선택한다 (예전에 담아 둔 상품까지 실수로 주문하지 않게)
+ if(selected===null)selected=new Set(list.length?list.filter(i=>groupKey(i)===groupKey(list[0])).map(i=>i.id):[]);
  for(const id of [...selected])if(!list.some(i=>i.id===id))selected.delete(id);
  if(!list.length){
   shop.innerHTML=head('장바구니',1)+`${plansHTML(list)}<div class="empty">${emptyIcon}<h2>장바구니가 비어 있습니다</h2><p>화질과 길이를 골라 원하는 영상을 담아 보세요.</p><a class="cta" style="width:280px" href="${ESTIMATE_URL}">견적 내러 가기</a></div>`;

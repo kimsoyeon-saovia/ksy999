@@ -369,3 +369,12 @@ body{font-synthesis:none;font-kerning:normal;text-rendering:optimizeLegibility}
 /* 단위 글자(p · 초 · 분 · 원)는 숫자의 70% */
 .u{font-size:.7em;margin-left:.04em}
 @media(max-width:480px){.plans .plan{gap:2px}.plan-check{top:8px;right:8px;font-size:10px;padding:2px 6px}}
+/* 충전 카드: 흰 바탕 · 살짝 둥근 모서리 · 화질/길이 카드와 같은 체크 동그라미 */
+.plans .plan{background:#fff;border-radius:4px}
+.plans .plan .check{top:16px;right:14px}
+@media(max-width:480px){
+ .plans .plan .check{top:12px;right:10px}
+ .point-reference{font-size:11.5px;line-height:1.5}
+ .point-reference .point-member{font-size:12.5px}
+}
+@media(max-width:480px){.selection>.point-reference{font-size:11.5px;line-height:1.5;margin-top:12px}.selection>.point-reference .point-member{font-size:12.5px}}
