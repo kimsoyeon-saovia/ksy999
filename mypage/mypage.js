@@ -55,11 +55,7 @@ ${f('name','이름',m.name,'autocomplete="name"')}${f('phone','휴대폰',m.phon
 ${f('zip','우편번호',a.zip)}${f('addr1','주소',a.addr1)}${f('addr2','상세 주소',a.addr2)}
 ${f('newPassword','새 비밀번호 (변경할 때만)','','type="password" autocomplete="new-password" placeholder="영문·숫자 포함 8자 이상"')}
 ${f('newPassword2','새 비밀번호 확인','','type="password" autocomplete="new-password" placeholder="새 비밀번호 다시 입력"')}
-<div class="my-edit-q"><p class="my-edit-qtitle">아이디 · 비밀번호 찾기 질문 <small>(선택 · ${m.question?'등록됨':'아직 등록하지 않음'})</small></p>
-<label class="my-edit-f"><span>찾기 질문</span><select name="question">${(window.SangsangDB?.questions||[]).map(q=>`<option${m.question===q?' selected':''}>${esc(q)}</option>`).join('')}</select></label>
-${f('answer','질문의 답',m.answer||'',`autocomplete="off" placeholder="${m.question?(m.answer?'답을 입력해 주세요':'예전에 등록한 답을 한 번 더 입력해 주세요'):'등록할 때만 입력 (비워 두면 등록 안 함)'}"`)}
-${m.question&&!m.answer?'<p class="my-edit-guide">예전에 등록한 답은 알아볼 수 없게 저장되어 있어 보이지 않습니다. 같은 답을 한 번 입력해 저장하면 다음부터 여기에 보입니다.</p>':''}
-${window.SangsangDB?.isLegacy()?'<p class="my-edit-guide">답을 등록하면 위 이메일로 인증 링크를 보내 드립니다. 인증하면 메일로도 비밀번호를 찾을 수 있습니다.</p>':''}</div>
+<button type="button" class="my-q-btn" data-q-edit>아이디 · 비밀번호 찾기 질문 ${m.question?'수정':'등록'}</button>
 <p class="my-edit-msg" role="status"></p>
 <button type="submit" class="cta">저장</button><button type="button" class="sub-cta" data-edit-cancel>취소</button></form>`;
 }
@@ -150,6 +146,39 @@ shop.addEventListener('click',e=>{
   location.href='../cart/index.html';
  }
 });
+// ---------------- 아이디 · 비밀번호 찾기 질문 수정 창 ----------------
+// 회원정보 수정(비밀번호 확인 후)의 작은 버튼으로 연다. 지금 등록된 질문 · 답을 채워 보여 주고, 바꿔서 저장할 때만 한 번 더 묻는다
+const qDialog=document.createElement('dialog');qDialog.className='my-q-dialog';document.body.append(qDialog);
+function openQuestion(){
+ const m=me();if(!m||!editPw)return;
+ const DB=window.SangsangDB,legacy=DB?.isLegacy();
+ qDialog.innerHTML=`<form method="dialog" class="my-q-form" novalidate><h2>아이디 · 비밀번호 찾기 질문</h2>
+<p class="my-q-state">${m.question?'지금 등록된 질문과 답입니다. 바꿀 부분만 고쳐 주세요.':'아직 등록된 질문이 없습니다. 등록하면 질문으로 아이디 · 비밀번호를 찾을 수 있습니다.'}</p>
+<label class="my-edit-f"><span>찾기 질문</span><select name="question">${(DB?.questions||[]).map(q=>`<option${m.question===q?' selected':''}>${esc(q)}</option>`).join('')}</select></label>
+<label class="my-edit-f"><span>질문의 답</span><input name="answer" autocomplete="off" value="${esc(m.answer||'')}" placeholder="${m.question&&!m.answer?'등록한 답을 한 번만 다시 입력해 주세요':'질문의 답'}"></label>
+${m.question&&!m.answer?'<p class="my-edit-guide">예전에 등록한 답은 글자로 저장되지 않아 여기에 보이지 않습니다. 같은 답을 한 번 입력해 저장하면 다음부터 보입니다.</p>':''}
+${legacy?'<p class="my-edit-guide">등록하면 회원 정보의 이메일로 인증 링크를 보내 드립니다. 인증하면 메일로도 비밀번호를 찾을 수 있습니다.</p>':''}
+<p class="my-edit-msg" role="status"></p>
+<div class="my-q-btns"><button type="button" class="sub-cta" data-q-close>닫기</button><button type="submit" class="cta">저장</button></div></form>`;
+ qDialog.querySelector('[data-q-close]').onclick=()=>qDialog.close();
+ qDialog.querySelector('form').onsubmit=async e=>{
+  e.preventDefault();const f=e.target,msg=f.querySelector('.my-edit-msg'),btn=f.querySelector('[type=submit]');
+  const question=f.elements.question.value,answer=f.elements.answer.value.trim(),mm=me()||{};
+  if(!answer){msg.textContent='질문의 답을 입력해 주세요.';return}
+  if(question===mm.question&&answer===(mm.answer||'')){qDialog.close();return}
+  btn.disabled=true;
+  // 예전에 등록한 답과 같으면 바뀐 게 아니므로 확인 없이 답만 저장
+  if(question===mm.question&&!mm.answer&&await DB.keepOldAnswer(question,answer).catch(()=>false)){qDialog.close();alert('등록된 답을 확인했습니다. 다음부터 여기에 보입니다.');return}
+  if(!confirm(mm.question?'질문의 답을 수정하시겠습니까?':'찾기 질문을 등록하시겠습니까?')){btn.disabled=false;return}
+  msg.textContent='저장하는 중입니다…';
+  const email=shop.querySelector('.my-edit [name=email]')?.value.trim()||mm.email;
+  DB.setupFind({password:editPw,question,answer,email}).then(r=>{qDialog.close();alert([mm.question?'찾기 질문 · 답을 수정했습니다.':'찾기 질문을 등록했습니다.',r.legacy&&r.mailSent?`${email}(으)로 인증 메일을 보냈습니다. 메일의 링크를 누르면 메일로도 비밀번호를 찾을 수 있습니다.`:''].filter(Boolean).join('\n'));const b=shop.querySelector('[data-q-edit]');if(b)b.textContent='아이디 · 비밀번호 찾기 질문 수정'})
+   .catch(er=>{btn.disabled=false;msg.textContent=DB.errorText(er)});
+ };
+ qDialog.showModal();
+}
+shop.addEventListener('click',e=>{if(e.target.closest('[data-q-edit]'))openQuestion()});
+
 // 위쪽 숫자(주문 · 상담 신청)를 누르면 그 내역으로 바로 내려간다
 shop.addEventListener('click',e=>{
  const a=e.target.closest('[data-jump]');if(!a)return;e.preventDefault();
@@ -186,17 +215,8 @@ shop.addEventListener('submit',async e=>{
  const err=!v('name')?'이름을 입력해 주세요.':!isPhone(v('phone'))?'휴대폰 번호를 정확히 입력해 주세요.':!isEmail(v('email'))?'이메일 형식으로 입력해 주세요.':npw&&!(npw.length>=8&&/[a-zA-Z]/.test(npw)&&/\d/.test(npw))?'새 비밀번호는 영문과 숫자를 섞어 8자 이상 입력해 주세요.':npw!==npw2?'새 비밀번호와 새 비밀번호 확인이 다릅니다.':'';
  if(err){msg.textContent=err;return}
  btn.disabled=true;msg.textContent='저장하는 중입니다…';
- // 찾기 질문은 선택: 답을 넣었을 때만 등록 · 변경한다 (비밀번호를 바꾸기 전에 먼저 처리)
- const answer=v('answer'),DB=window.SangsangDB,mm=me()||{};
- // 질문이나 답이 바뀌었을 때만 등록 · 변경하고, 실수로 바뀌지 않게 한 번 더 묻는다 (답을 지워 비워 두면 그대로 둔다)
- let changed=!!answer&&(answer!==(mm.answer||'')||el.question.value!==mm.question);
- // 예전에 등록해 답이 저장되어 있지 않은 경우: 입력한 답이 원래 답과 같으면 바뀐 게 아니므로 확인창 없이 답만 저장한다
- if(changed&&mm.question&&!mm.answer&&el.question.value===mm.question&&await DB.keepOldAnswer(mm.question,answer).catch(()=>false))changed=false;
- if(changed&&!confirm(mm.question?'질문의 답을 수정하시겠습니까?':'찾기 질문을 등록하시겠습니까?')){btn.disabled=false;msg.textContent='질문 · 답을 다시 확인한 뒤 저장해 주세요.';return}
- const setQ=changed?DB.setupFind({password:editPw,question:el.question.value,answer,email:v('email')}):Promise.resolve(null);
- let qResult=null;
- setQ.then(r=>{qResult=r;return DB.updateMyInfo(editPw,{name:v('name'),phone:v('phone'),email:v('email'),address:{zip:v('zip'),addr1:v('addr1'),addr2:v('addr2')}},npw||null)})
-  .then(()=>{editing=false;editPw='';render();alert([npw?'회원 정보와 비밀번호를 바꿨습니다.':'회원 정보를 저장했습니다.',qResult?(mm.question?'찾기 질문 · 답을 변경했습니다.':'찾기 질문을 등록했습니다.'):'',qResult?.legacy&&qResult.mailSent?`${v('email')}(으)로 인증 메일을 보냈습니다. 메일의 링크를 누르면 메일로도 비밀번호를 찾을 수 있습니다.`:''].filter(Boolean).join('\n'))})
+ window.SangsangDB.updateMyInfo(editPw,{name:v('name'),phone:v('phone'),email:v('email'),address:{zip:v('zip'),addr1:v('addr1'),addr2:v('addr2')}},npw||null)
+  .then(()=>{editing=false;editPw='';render();alert(npw?'회원 정보와 비밀번호를 바꿨습니다.':'회원 정보를 저장했습니다.')})
   .catch(er=>{btn.disabled=false;msg.textContent=window.SangsangDB.errorText(er)});
 });
 // 헤더의 MEMBER 창에서 로그인 · 로그아웃하면 바로 다시 그린다
