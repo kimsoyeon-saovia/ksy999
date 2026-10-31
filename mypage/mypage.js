@@ -105,7 +105,7 @@ ${consults.length?consults.map(r=>`<article class="my-card">
 <aside class="summary my-info" aria-label="회원 정보"><h2>회원 정보</h2>
 <dl><div><dt>아이디</dt><dd>${esc(m.id)}</dd></div><div><dt>이름</dt><dd>${esc(m.name)}</dd></div><div><dt>휴대폰</dt><dd>${esc(m.phone||'-')}</dd></div><div><dt>이메일</dt><dd>${esc(m.email||'-')}</dd></div>
 <div class="addr"><dt>주소</dt><dd>${a.addr1?`(${esc(a.zip)}) ${esc(a.addr1)}${a.addr2?'<br>'+esc(a.addr2):''}`:'등록된 주소 없음'}</dd></div><div><dt>가입일</dt><dd>${date(m.joined).slice(0,10)}</dd></div></dl>
-${editing?editHTML(m):findForm?findHTML(m):`<button type="button" class="sub-cta" data-edit>회원정보 수정</button><button type="button" class="sub-cta${m.question?'':' my-find-need'}" data-find-setup>${m.question?'찾기 질문 변경':'아이디 · 비밀번호 찾기 질문 등록'}</button>`}
+${editing?editHTML(m):findForm&&window.SangsangDB?.questions?findHTML(m):`<button type="button" class="sub-cta" data-edit>회원정보 수정</button><button type="button" class="sub-cta${m.question?'':' my-find-need'}" data-find-setup>${m.question?'찾기 질문 변경':'아이디 · 비밀번호 찾기 질문 등록'}</button>`}
 <button type="button" class="sub-cta" data-logout>로그아웃</button>
 <button type="button" class="my-leave" data-leave>회원 탈퇴</button>
 <p class="note">회원 정보 · 장바구니 · 주문 내역은 회원 계정에 저장되어 다른 기기에서 로그인해도 그대로 보입니다. 결제는 시연용입니다.</p>

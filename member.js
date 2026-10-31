@@ -97,6 +97,15 @@ layer.innerHTML=`<div class="member-dialog" role="dialog" aria-modal="true" aria
 <p class="member-note member-find"><button type="button" data-go="findid">아이디 찾기</button> · <button type="button" data-go="findpw">비밀번호 찾기</button></p>
 <p class="member-note">아직 회원이 아니신가요? <button type="button" data-go="join">회원가입</button></p>
 </form>
+<form data-form="findsetup" novalidate hidden>
+<h3 class="member-find-title">찾기 질문 등록</h3>
+<p class="member-note member-setup-guide">질문과 답을 등록하면 로그인 창의 '아이디 찾기 · 비밀번호 찾기'에서 질문으로 찾을 수 있습니다.</p>
+<div class="field q-field"><label for="m-set-q">찾기 질문 <b>*</b></label><select id="m-set-q" name="question">${qOptions}</select><input name="answer" type="text" autocomplete="off" placeholder="질문의 답" aria-label="질문의 답"><p class="msg">질문의 답을 입력해 주세요.</p></div>
+<div class="field" data-setup-mail><label for="m-set-email">찾기에 쓸 메일 <b>*</b></label><input id="m-set-email" name="email" type="email" autocomplete="email" placeholder="example@email.com"><p class="msg">이메일 형식으로 입력해 주세요.</p><p class="ok">등록한 메일로 인증 링크를 보내 드립니다. 인증하면 메일로도 비밀번호를 찾을 수 있습니다.</p></div>
+<p class="member-form-msg" aria-live="polite"></p>
+<button class="member-submit" type="submit">등록하기</button>
+<p class="member-note"><button type="button" data-setup-later>나중에 할게요</button></p>
+</form>
 <form data-form="findid" data-method="mail" novalidate hidden>
 <h3 class="member-find-title">아이디 찾기</h3>
 ${methodSwitch}
@@ -138,7 +147,7 @@ ${methodSwitch}
 shadow.append(layer);
 
 const $=s=>layer.querySelector(s);
-const forms={login:$('[data-form="login"]'),join:$('[data-form="join"]'),findid:$('[data-form="findid"]'),findpw:$('[data-form="findpw"]')};
+const forms={login:$('[data-form="login"]'),join:$('[data-form="join"]'),findid:$('[data-form="findid"]'),findpw:$('[data-form="findpw"]'),findsetup:$('[data-form="findsetup"]')};
 const done=$('.member-done');
 // 가입 · 로그인은 member-db.js(Firebase)가 처리하고, 여기서는 로그인한 회원의 사본만 읽는다
 const SESSION='sangsang-member-session';
@@ -223,7 +232,7 @@ function open(){
  if(me){showDone(`${me.name}님, 반갑습니다`,'로그인된 상태입니다. 주문 내역은 마이페이지에서 볼 수 있어요.',true);done.querySelector('button').textContent='로그아웃';done.dataset.mode='logout'}
  else{done.dataset.mode='';done.querySelector('button').textContent='확인';showTab('login')}
 }
-function close(){closeAddr();layer.classList.remove('open');host.style.zIndex='';document.documentElement.style.overflow='';lastFocus?.focus?.()}
+function close(){closeAddr();loginPw='';layer.classList.remove('open');host.style.zIndex='';document.documentElement.style.overflow='';lastFocus?.focus?.()}
 function mark(input,bad){input.closest('.field').classList.toggle('error',bad);return bad}
 function setIdMsg(text,ok){
  const field=forms.join.elements.userid.closest('.field'),okEl=field.querySelector('.ok'),bad=field.querySelector('.msg');
@@ -268,6 +277,8 @@ forms.login.addEventListener('submit',async e=>{
  if(bad){msg.textContent='';return}
  msg.textContent='';
  let user;try{user=await busy(f.querySelector('.member-submit'),()=>DB.login(id,pw))}catch(err){msg.textContent=DB.errorText(err);return}
+ // 로그인 직후 찾기 질문을 등록할 때 비밀번호를 다시 묻지 않도록 이 창이 열려 있는 동안만 기억한다
+ loginPw=pw;
  f.reset();
  done.dataset.mode='';done.querySelector('button').textContent='확인';
  showDone(`${user.name}님, 반갑습니다`,'로그인되었습니다.',true);
@@ -279,15 +290,37 @@ const today=()=>new Date().toISOString().slice(0,10);
 const skippedToday=()=>{try{return localStorage.getItem(SKIP_KEY)===today()}catch{return false}};
 function showFindNotice(user){
  showDone('아이디 · 비밀번호 찾기 기능이 추가되었습니다',`${user.name}님, 찾기 질문을 등록해 주세요. 등록하면 질문으로 아이디 · 비밀번호를 찾을 수 있습니다. 기존에 등록한 메일로도 찾기가 가능합니다.`,true);
- const link=done.querySelector('[data-mypage]');link.textContent='찾기 질문 등록하기';link.href=new URL('mypage/index.html#find',siteRoot);
+ const link=done.querySelector('[data-mypage]');link.textContent='찾기 질문 등록하기';link.href='#find-setup';
  done.querySelector('button').textContent='나중에 할게요';done.dataset.mode='notice';
  const skip=done.querySelector('.today-skip');skip.hidden=false;skip.querySelector('input').checked=false;
 }
-// 안내를 닫거나 등록하러 갈 때 '오늘 다시 보지 않기'를 저장한다
+let loginPw='';
+// 안내를 닫거나 등록하러 갈 때 '오늘 다시 보지 않기'를 저장하고, '찾기 질문 등록하기'는 이 팝업 안에서 등록 칸을 연다
 done.addEventListener('click',e=>{
  if(done.dataset.mode!=='notice'||!e.target.closest('[data-mypage],[data-done]'))return;
  if(done.querySelector('[data-skip-today]').checked)try{localStorage.setItem(SKIP_KEY,today())}catch{}
+ if(e.target.closest('[data-mypage]')){e.preventDefault();e.stopPropagation();showFindSetup()}
 },true);
+function showFindSetup(){
+ const f=forms.findsetup,legacy=DB.isLegacy(),me=read(SESSION,null);
+ let email='';try{email=JSON.parse(localStorage.getItem('sangsang-members-v2'))?.[me?.id]?.email||''}catch{}
+ for(const x of Object.values(forms))x.hidden=x!==f;
+ done.hidden=true;$('.member-tabs').hidden=true;dialog.classList.add('tall');
+ f.reset();f.querySelectorAll('.error').forEach(x=>x.classList.remove('error'));f.querySelector('.member-form-msg').textContent='';
+ f.querySelector('[data-setup-mail]').hidden=!legacy;f.elements.email.value=email;
+ f.elements.question.focus();
+}
+forms.findsetup.addEventListener('submit',async e=>{
+ e.preventDefault();const f=forms.findsetup,el=f.elements,msg=f.querySelector('.member-form-msg');
+ const legacy=!f.querySelector('[data-setup-mail]').hidden,answer=el.answer.value.trim(),email=el.email.value.trim();
+ if([mark(el.answer,!answer),legacy&&mark(el.email,!isEmail(email))].some(Boolean)){msg.textContent='';return}
+ if(!loginPw){msg.textContent='다시 로그인한 뒤 등록해 주세요.';return}
+ let r;try{r=await busy(f.querySelector('.member-submit'),()=>DB.setupFind({password:loginPw,question:el.question.value,answer,email}))}catch(err){msg.textContent=DB.errorText(err);return}
+ loginPw='';
+ showDone('찾기 질문을 등록했습니다',r.legacy&&r.mailSent?`이제 질문으로 아이디 · 비밀번호를 찾을 수 있습니다. ${email}(으)로 인증 메일을 보냈습니다. 메일의 링크를 누르면 메일로도 비밀번호를 찾을 수 있습니다. (스팸함도 확인해 주세요)`:'이제 질문으로 아이디 · 비밀번호를 찾을 수 있습니다.',true);
+ done.dataset.mode='';done.querySelector('[data-done]').textContent='확인';
+});
+forms.findsetup.querySelector('[data-setup-later]').addEventListener('click',()=>{loginPw='';close()});
 forms.join.addEventListener('submit',async e=>{
  e.preventDefault();const f=forms.join,msg=f.querySelector('.member-form-msg');
  const el=f.elements;
