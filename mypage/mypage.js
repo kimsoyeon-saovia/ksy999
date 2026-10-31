@@ -57,7 +57,7 @@ ${f('newPassword','새 비밀번호 (변경할 때만)','','type="password" auto
 ${f('newPassword2','새 비밀번호 확인','','type="password" autocomplete="new-password" placeholder="새 비밀번호 다시 입력"')}
 <div class="my-edit-q"><p class="my-edit-qtitle">아이디 · 비밀번호 찾기 질문 <small>(선택 · ${m.question?'등록됨':'아직 등록하지 않음'})</small></p>
 <label class="my-edit-f"><span>찾기 질문</span><select name="question">${(window.SangsangDB?.questions||[]).map(q=>`<option${m.question===q?' selected':''}>${esc(q)}</option>`).join('')}</select></label>
-${f('answer','질문의 답','',`autocomplete="off" placeholder="${m.question?'바꿀 때만 입력 (비워 두면 그대로)':'등록할 때만 입력 (비워 두면 등록 안 함)'}"`)}
+${f('answer','질문의 답',m.answer||'',`autocomplete="off" placeholder="${m.question?'답을 입력해 주세요':'등록할 때만 입력 (비워 두면 등록 안 함)'}"`)}
 ${window.SangsangDB?.isLegacy()?'<p class="my-edit-guide">답을 등록하면 위 이메일로 인증 링크를 보내 드립니다. 인증하면 메일로도 비밀번호를 찾을 수 있습니다.</p>':''}</div>
 <p class="my-edit-msg" role="status"></p>
 <button type="submit" class="cta">저장</button><button type="button" class="sub-cta" data-edit-cancel>취소</button></form>`;
@@ -88,10 +88,10 @@ function render(msg){
  }
  const orders=myOrders(m),consults=myConsults(m),cart=cartCount();
  const a=m.address||{};
- shop.innerHTML=head(`<ul class="my-stats"><li><b>${orders.length}</b>주문</li><li><b>${consults.length}</b>상담 신청</li><li><a href="../cart/index.html"><b>${cart}</b>장바구니</a></li></ul>`)+`
+ shop.innerHTML=head(`<ul class="my-stats"><li><a href="#my-orders" data-jump="my-orders"><b>${orders.length}</b>주문</a></li><li><a href="#my-consults" data-jump="my-consults"><b>${consults.length}</b>상담 신청</a></li><li><a href="../cart/index.html"><b>${cart}</b>장바구니</a></li></ul>`)+`
 <div class="shop-body"><div>
 ${pointsHTML()}
-<section class="block"><div class="block-title"><h2>주문 내역</h2><small>최근 주문부터</small></div>
+<section class="block" id="my-orders"><div class="block-title"><h2>주문 내역</h2><small>최근 주문부터</small></div>
 ${orders.length?orders.map(o=>`<article class="my-card">
  <div class="my-card-top"><div><strong class="my-no">${esc(o.no)}</strong><span class="my-date">${date(o.date)}</span></div><span class="my-state">결제 완료</span></div>
  <ul class="my-items">${(o.items||[]).map(i=>`<li><span>${esc(i.quality)} · ${esc(i.duration)} × ${i.quantity}</span><span>${money(i.price)}</span></li>`).join('')}</ul>
@@ -99,7 +99,7 @@ ${orders.length?orders.map(o=>`<article class="my-card">
  <button type="button" class="ghost my-again" data-again="${esc(o.no)}">같은 영상 다시 담기</button>
 </article>`).join(''):`<div class="my-none">아직 주문 내역이 없습니다. <a class="text-link" href="../contact/index.html">견적 내러 가기</a></div>`}
 </section>
-<section class="block"><div class="block-title"><h2>상담 신청 내역</h2><small>장바구니에서 신청한 상담</small></div>
+<section class="block" id="my-consults"><div class="block-title"><h2>상담 신청 내역</h2><small>장바구니에서 신청한 상담</small></div>
 ${consults.length?consults.map(r=>`<article class="my-card">
  <div class="my-card-top"><div><strong>결제 전 상담</strong><span class="my-date">${date(r.savedAt)}</span></div><span class="my-state gray">접수 완료</span></div>
  <p class="my-req">${esc((r.fields?.request||'').split('\n').slice(0,3).join(' / '))}</p>
@@ -149,6 +149,13 @@ shop.addEventListener('click',e=>{
   location.href='../cart/index.html';
  }
 });
+// 위쪽 숫자(주문 · 상담 신청)를 누르면 그 내역으로 바로 내려가고 잠깐 표시한다
+shop.addEventListener('click',e=>{
+ const a=e.target.closest('[data-jump]');if(!a)return;e.preventDefault();
+ const box=document.getElementById(a.dataset.jump);if(!box)return;
+ const top=box.getBoundingClientRect().top+scrollY-(document.querySelector('sangsang-header')?.getBoundingClientRect().height||80)-12;
+ window.scrollTo({top,behavior:'smooth'});box.classList.remove('my-flash');void box.offsetWidth;box.classList.add('my-flash');
+});
 // 내역을 펼친 상태는 화면을 다시 그려도 그대로 둔다
 shop.addEventListener('toggle',e=>{if(e.target.matches?.('.pt-detail')){ptOpen=e.target.open;const s=e.target.querySelector('summary small');if(s)s.textContent=s.textContent.replace(/(펼치기|접기)$/,ptOpen?'접기':'펼치기')}},true);
 shop.addEventListener('input',e=>{if(e.target.closest('.my-edit')&&e.target.name==='phone')e.target.value=fmtPhone(e.target.value)});
@@ -179,11 +186,14 @@ shop.addEventListener('submit',e=>{
  if(err){msg.textContent=err;return}
  btn.disabled=true;msg.textContent='저장하는 중입니다…';
  // 찾기 질문은 선택: 답을 넣었을 때만 등록 · 변경한다 (비밀번호를 바꾸기 전에 먼저 처리)
- const answer=v('answer'),DB=window.SangsangDB;
- const setQ=answer?DB.setupFind({password:editPw,question:el.question.value,answer,email:v('email')}):Promise.resolve(null);
+ const answer=v('answer'),DB=window.SangsangDB,mm=me()||{};
+ // 질문이나 답이 바뀌었을 때만 등록 · 변경하고, 실수로 바뀌지 않게 한 번 더 묻는다 (답을 지워 비워 두면 그대로 둔다)
+ const changed=!!answer&&(answer!==(mm.answer||'')||el.question.value!==mm.question);
+ if(changed&&!confirm(mm.question?'질문의 답을 수정하시겠습니까?':'찾기 질문을 등록하시겠습니까?')){btn.disabled=false;msg.textContent='질문 · 답을 다시 확인한 뒤 저장해 주세요.';return}
+ const setQ=changed?DB.setupFind({password:editPw,question:el.question.value,answer,email:v('email')}):Promise.resolve(null);
  let qResult=null;
  setQ.then(r=>{qResult=r;return DB.updateMyInfo(editPw,{name:v('name'),phone:v('phone'),email:v('email'),address:{zip:v('zip'),addr1:v('addr1'),addr2:v('addr2')}},npw||null)})
-  .then(()=>{editing=false;editPw='';render();alert([npw?'회원 정보와 비밀번호를 바꿨습니다.':'회원 정보를 저장했습니다.',qResult?'찾기 질문을 등록했습니다.':'',qResult?.legacy&&qResult.mailSent?`${v('email')}(으)로 인증 메일을 보냈습니다. 메일의 링크를 누르면 메일로도 비밀번호를 찾을 수 있습니다.`:''].filter(Boolean).join('\n'))})
+  .then(()=>{editing=false;editPw='';render();alert([npw?'회원 정보와 비밀번호를 바꿨습니다.':'회원 정보를 저장했습니다.',qResult?(mm.question?'찾기 질문 · 답을 변경했습니다.':'찾기 질문을 등록했습니다.'):'',qResult?.legacy&&qResult.mailSent?`${v('email')}(으)로 인증 메일을 보냈습니다. 메일의 링크를 누르면 메일로도 비밀번호를 찾을 수 있습니다.`:''].filter(Boolean).join('\n'))})
   .catch(er=>{btn.disabled=false;msg.textContent=window.SangsangDB.errorText(er)});
 });
 // 헤더의 MEMBER 창에서 로그인 · 로그아웃하면 바로 다시 그린다

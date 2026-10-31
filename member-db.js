@@ -223,7 +223,7 @@ window.SangsangDB={
    const keys=withQ?[await finderKey('id',email,question,answer),await finderKey('pw',id,question,answer),...await markKeys(id,email)]:[];
    const b=db.batch();
    b.set(db.doc(`usernames/${id}`),{uid,email});
-   b.set(db.doc(`members/${id}`),{uid,name,phone,email,address,...(withQ?{question}:{}),finderKeys:keys,joined:new Date().toISOString()});
+   b.set(db.doc(`members/${id}`),{uid,name,phone,email,address,...(withQ?{question,answer:String(answer).trim()}:{}),finderKeys:keys,joined:new Date().toISOString()});
    if(withQ){b.set(db.doc(`finder/${keys[0]}`),{uid,id});b.set(db.doc(`finder/${keys[1]}`),{uid,email});b.set(db.doc(`finder/${keys[2]}`),{uid,id});b.set(db.doc(`finder/${keys[3]}`),{uid,id})}
    try{await b.commit()}catch(e){await user.delete().catch(()=>{});throw e}
    await user.sendEmailVerification().catch(()=>{});
@@ -295,7 +295,7 @@ window.SangsangDB={
   if(!had.has(pwKey))b.set(db.doc(`finder/${pwKey}`),{uid:u.uid,email:mail});
   if(mailKey&&!had.has(mailKey))b.set(db.doc(`finder/${mailKey}`),{uid:u.uid,id});
   for(const k of new Set(marks))if(!had.has(k))b.set(db.doc(`finder/${k}`),{uid:u.uid,id});
-  b.update(ref,{question,finderKeys:[...keep],email:mail});
+  b.update(ref,{question,answer:String(answer).trim(),finderKeys:[...keep],email:mail});
   if(legacy)b.update(db.doc(`usernames/${id}`),{email:mail});
   await b.commit();
   let mailSent=false;
