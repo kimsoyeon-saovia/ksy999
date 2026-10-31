@@ -18,17 +18,15 @@ for(const file of ['member-db.js','member.js','cart.js']){const s=document.creat
 // (pages that load this script early, like the large portfolio page, would otherwise show the header late).
 // 실제 헤더 높이를 CSS 변수(--site-header-h)로 알려 준다 (휴대폰 메인 첫 화면을 '보이는 화면 − 헤더'에 딱 맞추는 데 쓴다)
 const setHeaderH=()=>{const h=document.querySelector('sangsang-header')?.getBoundingClientRect().height;if(h)document.documentElement.style.setProperty('--site-header-h',Math.round(h)+'px')};
-// 휴대폰 화면 높이(--site-screen-h)는 픽셀로 한 번 정해 두고, 가로 폭이 바뀔 때(회전)만 다시 잰다.
-// 주소창이 접히고 펴질 때는 그대로 두어 첫 배너 그림이 커졌다 작아졌다 하지 않는다 (일부 휴대폰은 lvh도 스크롤 중에 바뀜)
-// (가로 폭이 같아도 지금까지보다 더 큰 화면이 나오면 그 값으로 한 번 늘린다)
-let screenW=0,screenH=0;
-const setScreenH=()=>{if(innerWidth===screenW){if(innerHeight>screenH){screenH=innerHeight;document.documentElement.style.setProperty('--site-screen-h',screenH+'px')}return;}screenW=innerWidth;const probe=document.createElement('div');probe.style.cssText='position:fixed;top:0;left:0;width:0;height:100lvh;visibility:hidden;pointer-events:none';document.documentElement.append(probe);const lvh=probe.getBoundingClientRect().height;probe.remove();screenH=Math.round(Math.max(lvh||0,innerHeight));document.documentElement.style.setProperty('--site-screen-h',screenH+'px')};
-// 지금 보이는 화면 높이(--site-view-h): 주소창이 접히고 펴질 때마다 맞춰서, 휴대폰 메인 장면이 화면을 꼭 채우고
-// 다음 장면이 아래로 비치지 않게 한다 (배너 사진은 위의 고정 높이를 써서 커지지 않는다)
-let viewQueued=false;
-const setViewH=()=>{if(viewQueued)return;viewQueued=true;requestAnimationFrame(()=>{viewQueued=false;document.documentElement.style.setProperty('--site-view-h',innerHeight+'px')})};
-setScreenH();document.documentElement.style.setProperty('--site-view-h',innerHeight+'px');
-addEventListener('resize',()=>{setHeaderH();setScreenH();setViewH()});visualViewport?.addEventListener('resize',setViewH);visualViewport?.addEventListener('resize',setHeaderH);
+// 휴대폰 화면 높이는 픽셀로 한 번 정해 두고, 가로 폭이 바뀔 때(회전)만 다시 잰다. 주소창 · 아래 버튼 바가 접히고 펴져도
+// 그대로라서 메인 장면과 배너 사진의 크기가 스크롤 중에 바뀌지 않는다.
+//  --site-screen-h: 주소창 · 버튼 바가 다 접혔을 때의 화면 높이(가장 큼) → 장면이 늘 화면을 꽉 채워 다음 장면이 비치지 않는다
+//  --site-bars-h:   주소창 · 버튼 바가 펴졌을 때 가려지는 높이 → 글자를 '보이는 부분'의 가운데에 두는 데 쓴다
+let screenW=0;
+const measure=unit=>{const probe=document.createElement('div');probe.style.cssText='position:fixed;top:0;left:0;width:0;height:100'+unit+';visibility:hidden;pointer-events:none';document.documentElement.append(probe);const h=probe.getBoundingClientRect().height;probe.remove();return h||innerHeight};
+const setScreenH=()=>{if(innerWidth===screenW)return;screenW=innerWidth;const big=Math.round(Math.max(measure('lvh'),innerHeight)),small=Math.round(Math.min(measure('svh'),innerHeight));document.documentElement.style.setProperty('--site-screen-h',big+'px');document.documentElement.style.setProperty('--site-bars-h',Math.max(0,big-small)+'px')};
+setScreenH();
+addEventListener('resize',()=>{setHeaderH();setScreenH()});
 const finish=()=>{setHeaderH();requestAnimationFrame(setHeaderH);
 const enhancements=document.createElement('script');enhancements.src=new URL('site-enhancements.js'+new URL(script.src).search,root);document.body.append(enhancements);
 // Keep displayed copy clean without changing JavaScript, media URLs or data URLs.

@@ -51,12 +51,8 @@ const phone=matchMedia('(max-width:600px)');
 function fitToWindow(){
  if(!dialog.open||!dialog.classList.contains('has-info'))return;
  dialog.style.removeProperty('--fit-w');dialog.classList.remove('is-compact');player.style.maxWidth='';
- if(phone.matches){
-  const over=dialog.scrollHeight-dialog.clientHeight;if(over<=0)return;
-  const w=player.offsetWidth,h=player.offsetHeight;
-  player.style.maxWidth=Math.floor(w*Math.max(h-over-2,h*.6)/h)+'px';
-  return;
- }
+ // 휴대폰: 영상 썸네일은 줄이지 않고 창 너비에 꽉 차게 둔다 (내용이 길면 창 안에서 스크롤)
+ if(phone.matches)return;
  const narrow=min=>{for(let i=0;i<8;i++){
   const over=dialog.scrollHeight-dialog.clientHeight;if(over<=1)return true;
   const w=dialog.offsetWidth,next=Math.max(min,Math.floor(w-over*16/9-4));
