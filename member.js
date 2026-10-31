@@ -29,6 +29,10 @@ form[hidden],.member-done[hidden]{display:none}
 .field input:focus{outline:0;border-bottom:2px solid #080808;padding-bottom:9px}
 .field.error input{border-bottom-color:#e5402f}
 .field select{width:100%;margin-bottom:6px;padding:10px 8px;border:1px solid #bbb;font:400 15px UnifiedSeoul,Arial,sans-serif;color:#080808;background:#fff;border-radius:0}
+form[data-method="mail"] .by-q,form[data-method="q"] .by-mail{display:none}
+.find-method{display:grid;grid-template-columns:1fr 1fr;margin:0 0 22px;border:1px solid #080808}
+.find-method button{height:44px;border:0;background:#fff;font:500 15px UnifiedSeoul,Arial,sans-serif;color:#080808;cursor:pointer}
+.find-method button[aria-checked="true"]{background:#080808;color:#fff}
 .member-find{margin-top:14px}.member-find-title{margin:0 0 20px;font-size:22px;font-weight:800}
 .field .msg{display:none;margin-top:6px;font-size:12px;color:#e5402f}.field.error .msg{display:block}
 .field .ok{margin:6px 0 0;font-size:12px;color:#1647ff}.field.error .ok{display:none}
@@ -63,6 +67,8 @@ const link=document.createElement('a');link.href='#member';link.textContent='MEM
 nav.append(link);
 
 const qOptions=(window.SangsangDB?.questions||[]).map(q=>`<option>${q}</option>`).join('');
+// 찾기 방법: 가입 이메일로 인증 / 가입할 때 고른 질문으로 인증
+const methodSwitch=`<div class="find-method" role="radiogroup" aria-label="인증 방법"><button type="button" role="radio" data-method="mail" aria-checked="true">이메일로 인증</button><button type="button" role="radio" data-method="q" aria-checked="false">질문으로 인증</button></div>`;
 const layer=document.createElement('div');layer.className='member-layer';
 layer.innerHTML=`<div class="member-dialog" role="dialog" aria-modal="true" aria-label="회원 로그인 및 가입">
 <button class="member-close" type="button" aria-label="닫기">×</button>
@@ -79,21 +85,25 @@ layer.innerHTML=`<div class="member-dialog" role="dialog" aria-modal="true" aria
 <p class="member-note member-find"><button type="button" data-go="findid">아이디 찾기</button> · <button type="button" data-go="findpw">비밀번호 찾기</button></p>
 <p class="member-note">아직 회원이 아니신가요? <button type="button" data-go="join">회원가입</button></p>
 </form>
-<form data-form="findid" novalidate hidden>
+<form data-form="findid" data-method="mail" novalidate hidden>
 <h3 class="member-find-title">아이디 찾기</h3>
+${methodSwitch}
 <div class="field"><label for="m-fid-email">가입한 이메일 <b>*</b></label><input id="m-fid-email" name="email" type="email" autocomplete="email" placeholder="example@email.com"><p class="msg">이메일 형식으로 입력해 주세요.</p></div>
-<div class="field"><label for="m-fid-q">가입할 때 고른 질문 <b>*</b></label><select id="m-fid-q" name="question">${qOptions}</select><input name="answer" type="text" autocomplete="off" placeholder="질문의 답" aria-label="질문의 답"><p class="msg">답을 입력해 주세요.</p></div>
+<div class="field by-q"><label for="m-fid-q">가입할 때 고른 질문 <b>*</b></label><select id="m-fid-q" name="question">${qOptions}</select><input name="answer" type="text" autocomplete="off" placeholder="질문의 답" aria-label="질문의 답"><p class="msg">답을 입력해 주세요.</p></div>
 <p class="member-form-msg" aria-live="polite"></p>
-<button class="member-submit" type="submit">아이디 찾기</button>
+<p class="member-note by-mail">가입한 이메일로 확인 링크를 보내 드립니다. 메일의 링크를 누르면 아이디가 보입니다.</p>
+<button class="member-submit" type="submit"><span class="by-mail">확인 메일 받기</span><span class="by-q">아이디 찾기</span></button>
 <p class="member-note"><button type="button" data-go="login">로그인으로 돌아가기</button></p>
 </form>
-<form data-form="findpw" novalidate hidden>
+<form data-form="findpw" data-method="mail" novalidate hidden>
 <h3 class="member-find-title">비밀번호 찾기</h3>
+${methodSwitch}
 <div class="field"><label for="m-fpw-id">아이디 <b>*</b></label><input id="m-fpw-id" name="userid" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="아이디"><p class="msg">아이디를 입력해 주세요.</p></div>
-<div class="field"><label for="m-fpw-q">가입할 때 고른 질문 <b>*</b></label><select id="m-fpw-q" name="question">${qOptions}</select><input name="answer" type="text" autocomplete="off" placeholder="질문의 답" aria-label="질문의 답"><p class="msg">답을 입력해 주세요.</p></div>
+<div class="field by-mail"><label for="m-fpw-email">가입한 이메일 <b>*</b></label><input id="m-fpw-email" name="email" type="email" autocomplete="email" placeholder="example@email.com"><p class="msg">이메일 형식으로 입력해 주세요.</p></div>
+<div class="field by-q"><label for="m-fpw-q">가입할 때 고른 질문 <b>*</b></label><select id="m-fpw-q" name="question">${qOptions}</select><input name="answer" type="text" autocomplete="off" placeholder="질문의 답" aria-label="질문의 답"><p class="msg">답을 입력해 주세요.</p></div>
 <p class="member-form-msg" aria-live="polite"></p>
 <button class="member-submit" type="submit">재설정 메일 받기</button>
-<p class="member-note">답이 맞으면 가입한 이메일로 비밀번호 재설정 링크를 보내 드립니다. <button type="button" data-go="login">로그인으로 돌아가기</button></p>
+<p class="member-note">확인되면 가입한 이메일로 비밀번호 재설정 링크를 보내 드립니다. <button type="button" data-go="login">로그인으로 돌아가기</button></p>
 </form>
 <form data-form="join" novalidate hidden>
 <div class="field"><label for="m-join-id">아이디 <b>*</b></label><div class="with-btn"><input id="m-join-id" name="userid" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="12" placeholder="영문 소문자·숫자 4~12자"><button type="button" class="check-btn" data-check-id>중복확인</button></div><p class="msg">영문 소문자로 시작하는 4~12자(소문자·숫자)로 입력해 주세요.</p><p class="ok" hidden></p></div>
@@ -267,11 +277,22 @@ forms.join.addEventListener('submit',async e=>{
  showDone(`${name}님, 가입을 환영합니다`,`${email}(으)로 인증 메일을 보냈습니다. 메일의 링크를 눌러 이메일 인증을 마쳐 주세요. (메일이 안 보이면 스팸함도 확인해 주세요)`);
  done.dataset.mode='to-login';done.querySelector('button').textContent='로그인하러 가기';
 });
-// 아이디 찾기: 가입 이메일 + 질문 + 답
+// 찾기 방법 고르기 (이메일 / 질문)
+layer.querySelectorAll('[data-method]').forEach(b=>b.addEventListener('click',()=>{
+ const f=b.closest('form');f.dataset.method=b.dataset.method;
+ f.querySelectorAll('[data-method]').forEach(x=>x.setAttribute('aria-checked',String(x===b)));
+ f.querySelectorAll('.error').forEach(x=>x.classList.remove('error'));f.querySelector('.member-form-msg').textContent='';
+}));
+// 아이디 찾기: 이메일 인증(확인 링크) 또는 가입 이메일 + 질문 + 답
 forms.findid.addEventListener('submit',async e=>{
  e.preventDefault();const f=forms.findid,el=f.elements,msg=f.querySelector('.member-form-msg');
- const email=el.email.value.trim(),answer=el.answer.value.trim();
- if([mark(el.email,!isEmail(email)),mark(el.answer,!answer)].some(Boolean)){msg.textContent='';return}
+ const email=el.email.value.trim(),answer=el.answer.value.trim(),byQ=f.dataset.method==='q';
+ if([mark(el.email,!isEmail(email)),byQ&&mark(el.answer,!answer)].some(Boolean)){msg.textContent='';return}
+ if(!byQ){
+  try{await busy(f.querySelector('.member-submit'),()=>DB.sendFindIdLink(email))}catch(err){msg.textContent=DB.errorText(err);return}
+  f.reset();showDone('확인 메일을 보냈습니다',`${email}(으)로 확인 링크를 보냈습니다. 이 브라우저에서 메일의 링크를 누르면 아이디가 보입니다. (가입한 이메일이 아니면 메일이 와도 아이디가 나오지 않습니다 · 스팸함도 확인해 주세요)`);
+  done.dataset.mode='';return;
+ }
  let id;try{id=await busy(f.querySelector('.member-submit'),()=>DB.findId(email,el.question.value,answer))}catch(err){msg.textContent=DB.errorText(err);return}
  if(!id){msg.textContent='입력하신 정보와 맞는 회원이 없습니다. 이메일 · 질문 · 답을 다시 확인해 주세요.';return}
  f.reset();showDone('아이디를 찾았습니다',`회원님의 아이디는 「${id}」입니다.`);
@@ -280,11 +301,20 @@ forms.findid.addEventListener('submit',async e=>{
 // 비밀번호 찾기: 아이디 + 질문 + 답 → 가입 이메일로 재설정 메일
 forms.findpw.addEventListener('submit',async e=>{
  e.preventDefault();const f=forms.findpw,el=f.elements,msg=f.querySelector('.member-form-msg');
- const id=el.userid.value.trim().toLowerCase(),answer=el.answer.value.trim();
- if([mark(el.userid,!id),mark(el.answer,!answer)].some(Boolean)){msg.textContent='';return}
- let sent;try{sent=await busy(f.querySelector('.member-submit'),()=>DB.resetPassword(id,el.question.value,answer))}catch(err){msg.textContent=DB.errorText(err);return}
+ const id=el.userid.value.trim().toLowerCase(),answer=el.answer.value.trim(),email=el.email.value.trim(),byQ=f.dataset.method==='q';
+ if([mark(el.userid,!id),byQ?mark(el.answer,!answer):mark(el.email,!isEmail(email))].some(Boolean)){msg.textContent='';return}
+ let sent;try{sent=await busy(f.querySelector('.member-submit'),()=>byQ?DB.resetPassword(id,el.question.value,answer):DB.resetByEmail(id,email))}catch(err){msg.textContent=DB.errorText(err);return}
  if(!sent){msg.textContent='입력하신 정보와 맞는 회원이 없습니다. (2026년 10월 31일 이전 가입 회원은 관리자에게 문의해 주세요)';return}
  f.reset();showDone('재설정 메일을 보냈습니다',`${sent}(으)로 비밀번호 재설정 링크를 보냈습니다. 메일의 링크에서 새 비밀번호를 정한 뒤 로그인해 주세요. (스팸함도 확인해 주세요)`);
  done.dataset.mode='to-login';done.querySelector('button').textContent='로그인하러 가기';
 });
+// 아이디 찾기 메일의 링크로 돌아왔을 때 결과를 보여 준다 (member-db.js가 남긴 결과)
+function showFindResult(){
+ let r=null;try{r=JSON.parse(sessionStorage.getItem('sangsang-find-result'));sessionStorage.removeItem('sangsang-find-result')}catch{}
+ if(!r)return;
+ open();
+ showDone(r.ok?'아이디를 찾았습니다':'아이디를 찾지 못했습니다',r.ok?`회원님의 아이디는 「${r.id}」입니다.`:r.text);
+ done.dataset.mode='to-login';done.querySelector('button').textContent='로그인하러 가기';
+}
+window.addEventListener('sangsang-find-result',showFindResult);showFindResult();
 })();

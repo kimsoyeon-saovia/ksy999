@@ -38,10 +38,34 @@ async function profileOf(user){
  const id=idOf(user);if(!id)return null;
  const snap=await db.doc(`members/${id}`).get();return snap.exists?{id,...snap.data()}:null;
 }
+const FIND_EMAIL='sangsang-find-email',FIND_RESULT='sangsang-find-result';
+// 아이디 찾기 메일의 링크로 들어왔을 때: 그 이메일로 잠깐 로그인해 아이디를 읽고, 결과를 남긴 뒤 로그아웃한다
+async function finishFindLink(){
+ if(!auth.isSignInWithEmailLink(location.href))return;
+ const url=location.href;history.replaceState(null,'',location.pathname);
+ let email=null;try{email=localStorage.getItem(FIND_EMAIL)}catch{}
+ if(!email)email=prompt('아이디를 찾을 때 입력한 이메일을 다시 입력해 주세요.');
+ let result;
+ signingUp=true;
+ try{
+  const cred=await auth.signInWithEmailLink(String(email||'').trim(),url);
+  const id=idOf(cred.user);
+  if(cred.additionalUserInfo?.isNewUser||!id){await cred.user.delete().catch(()=>{});result={ok:false,text:'이 이메일로 가입한 회원이 없습니다.'}}
+  else result={ok:true,id};
+ }catch(e){result={ok:false,text:'링크가 만료되었거나 이메일이 맞지 않습니다. 아이디 찾기를 다시 해 주세요.'}}
+ finally{
+  await auth.signOut().catch(()=>{});signingUp=false;try{localStorage.removeItem(FIND_EMAIL)}catch{}
+  // 이 동안 건너뛴 로그인 상태 알림을 대신한다 (로그아웃 상태)
+  cache(null);clearLocal();resolveFirst();window.dispatchEvent(new Event('sangsang-member-change'));
+ }
+ try{sessionStorage.setItem(FIND_RESULT,JSON.stringify(result))}catch{}
+ window.dispatchEvent(new Event('sangsang-find-result'));
+}
 const ready=(async()=>{
  if(!window.firebase?.firestore){for(const f of ['firebase-app-compat.js','firebase-auth-compat.js','firebase-firestore-compat.js'])await load(SDK+f)}
  const app=firebase.apps.length?firebase.app():firebase.initializeApp(CONFIG);
  auth=app.auth();db=app.firestore();
+ finishFindLink().catch(()=>{});
  auth.onAuthStateChanged(async user=>{
   // 가입 중에는 회원 정보를 아직 만드는 중이라 건너뛴다
   if(signingUp)return;
@@ -203,6 +227,18 @@ window.SangsangDB={
   await ready;const email=(await db.doc(`finder/${await finderKey('pw',id,question,answer)}`).get()).data()?.email;
   if(!email)return null;await auth.sendPasswordResetEmail(email);return maskEmail(email);
  },
+ // 비밀번호 찾기(이메일 인증): 아이디와 가입 이메일이 맞으면 재설정 메일을 보낸다
+ async resetByEmail(id,email){
+  await ready;const saved=(await db.doc(`usernames/${id}`).get()).data()?.email;
+  if(!saved||norm(saved)!==norm(email))return null;
+  await auth.sendPasswordResetEmail(saved);return maskEmail(saved);
+ },
+ // 아이디 찾기(이메일 인증): 가입 이메일로 확인 링크를 보내고, 링크를 누르면 아이디를 보여 준다
+ async sendFindIdLink(email){
+  await ready;
+  await auth.sendSignInLinkToEmail(email,{url:location.origin+location.pathname+'?find=id',handleCodeInApp:true});
+  try{localStorage.setItem(FIND_EMAIL,email)}catch{}
+ },
  async resendVerification(){await ready;await auth.currentUser?.sendEmailVerification()},
  emailVerified(){const u=auth?.currentUser;return !u||u.email?.endsWith('@'+ID_DOMAIN)?null:u.emailVerified},
  current(){const id=idOf(auth?.currentUser);return id?{id}:null},
@@ -267,6 +303,7 @@ window.SangsangDB={
   const c=errCode(e);
   if(c==='email-already-in-use')return '이미 가입된 이메일입니다. 아이디 찾기를 이용해 주세요.';
   if(c==='invalid-email')return '이메일 주소를 다시 확인해 주세요.';
+  if(c==='operation-not-allowed'||c==='unauthorized-continue-uri'||c==='unauthorized-domain')return '이메일 인증 설정이 아직 준비되지 않았습니다. 질문으로 인증을 이용해 주세요.';
   if(c==='deleted')return '삭제된 계정입니다. 관리자에게 문의해 주세요.';
   if(['invalid-credential','wrong-password','user-not-found','invalid-login-credentials'].includes(c))return auth?.currentUser?'비밀번호가 맞지 않습니다.':'아이디 또는 비밀번호가 맞지 않습니다.';
   if(c==='too-many-requests')return '로그인 시도가 너무 많습니다. 잠시 후 다시 시도해 주세요.';
