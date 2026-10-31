@@ -149,7 +149,16 @@ function openDetail(id){
  dlg.showModal();
 }
 
-// 위쪽 숫자(전체 회원 · 이번 달 가입 · 이번 달 주문 · 비회원 주문)를 누르면 그 내역을 회원 내역과 같은 창으로 보여 준다
+// 위쪽 숫자를 누르면 그 내용이 있는 곳으로 내려간다
+// 전체 회원 → 회원 목록(검색 지움) · 이번 달 가입 → 회원 목록(최근 가입순) · 이번 달 주문 → 이번 달 매출 · 비회원 주문 → 비회원 주문 목록
+function jumpStat(kind){
+ if(kind==='all'&&query){query='';render()}
+ if(kind==='join'&&(sort!=='new'||query)){sort='new';query='';render()}
+ const target=shop.querySelector(kind==='order'?'.ad-insight':kind==='guest'?'.ad-guests':'.ad-tools');if(!target)return;
+ const top=target.getBoundingClientRect().top+scrollY-(document.querySelector('sangsang-header')?.getBoundingClientRect().height||80)-12;
+ window.scrollTo({top,behavior:'smooth'});
+}
+// (예전) 숫자를 누르면 내역을 창으로 보여 주던 기능 — 지금은 jumpStat으로 이동만 한다
 function openStat(kind){
  const dlg=shop.querySelector('.ad-dialog'),byDate=(a,b)=>String(b.date||'').localeCompare(String(a.date||''));
  const memberLi=m=>`<li><span><b>${esc(m.name)}</b> ${esc(m.id)}<br><small>가입 ${date(m.joined)} · ${esc(m.phone||'-')} · 주문 ${(m.orders||[]).length}건</small></span><em>${money(sum(m.orders||[]))}</em></li>`;
@@ -250,7 +259,7 @@ shop.addEventListener('click',async e=>{
  if(b.hasAttribute('data-refresh')){load();return}
  if(b.dataset.edit){openEdit(b.dataset.edit);return}
  if(b.dataset.detail){openDetail(b.dataset.detail);return}
- if(b.dataset.stat){openStat(b.dataset.stat);return}
+ if(b.dataset.stat){jumpStat(b.dataset.stat);return}
  if(b.hasAttribute('data-row-toggle')){const tr=b.closest('tr'),open=tr.classList.toggle('open');b.setAttribute('aria-expanded',String(open));return}
  if(b.dataset.del){
   const id=b.dataset.del,m=members.find(x=>x.id===id);if(!m)return;
