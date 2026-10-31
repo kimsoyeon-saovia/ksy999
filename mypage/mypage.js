@@ -96,12 +96,13 @@ ${orders.length?orders.map(o=>`<article class="my-card">
  <button type="button" class="ghost my-again" data-again="${esc(o.no)}">같은 영상 다시 담기</button>
 </article>`).join(''):`<div class="my-none">아직 주문 내역이 없습니다. <a class="text-link" href="../contact/index.html">견적 내러 가기</a></div>`}
 </section>
-<section class="block" id="my-consults"><div class="block-title"><h2>상담 신청 내역</h2><small>장바구니에서 신청한 상담</small></div>
-${consults.length?consults.map(r=>`<article class="my-card">
- <div class="my-card-top"><div><strong>결제 전 상담</strong><span class="my-date">${date(r.savedAt)}</span></div><span class="my-state gray">접수 완료</span></div>
- <p class="my-req">${esc((r.fields?.request||'').split('\n').slice(0,3).join(' / '))}</p>
- <div class="my-card-foot"><span>희망 시간 ${esc(r.fields?.time||'-')}</span><span>연락처 ${esc(r.fields?.contact||'-')}</span></div>
-</article>`).join(''):`<div class="my-none">상담 신청 내역이 없습니다.</div>`}
+<section class="block" id="my-consults"><div class="block-title"><h2>상담 신청 내역</h2><small>견적서 · 장바구니에서 신청한 상담</small></div>
+${consults.length?consults.map(r=>{const kind=r.type==='cart-consult'?'결제 전 상담':r.type==='corporate'?'기업 제작 문의':'견적서 상담 문의',req=[r.fields?.request||r.fields?.description,r.fields?.mood?`분위기: ${r.fields.mood}`:''].filter(Boolean).join('\n');return `<article class="my-card">
+ <div class="my-card-top"><div><strong>${kind}</strong><span class="my-date">${date(r.savedAt)}</span></div><span class="my-state gray">접수 완료</span></div>
+ ${(r.items||[]).length?`<ul class="my-items">${r.items.map(i=>`<li><span>${esc(i.quality)} · ${esc(i.duration)} × ${i.quantity}</span></li>`).join('')}</ul>`:''}
+ <p class="my-req">${esc(req.split('\n').slice(0,3).join(' / '))||'-'}</p>
+ <div class="my-card-foot"><span>${r.fields?.time?`희망 시간 ${esc(r.fields.time)}`:r.estimate?.total?`예상 견적 ${money(r.estimate.total)}`:''}</span><span>연락처 ${esc(r.fields?.contact||'-')}</span></div>
+</article>`}).join(''):`<div class="my-none">상담 신청 내역이 없습니다.</div>`}
 </section></div>
 <aside class="summary my-info" aria-label="회원 정보"><h2>회원 정보</h2>
 <dl><div><dt>아이디</dt><dd>${esc(m.id)}</dd></div><div><dt>이름</dt><dd>${esc(m.name)}</dd></div><div><dt>휴대폰</dt><dd>${esc(m.phone||'-')}</dd></div><div><dt>이메일</dt><dd>${esc(m.email||'-')}</dd></div>

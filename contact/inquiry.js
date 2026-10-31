@@ -27,7 +27,10 @@ function syncCart(){try{
 }catch{}}
 function saveDrafts(){syncCart();try{const draft=clone(states);Object.values(draft).forEach(state=>{state.errors={};state.notice='';state.submitting=false;});localStorage.setItem(DRAFT_STORAGE_KEY,JSON.stringify(draft));}catch{}}
 function restoreDrafts(){try{const draft=JSON.parse(localStorage.getItem(DRAFT_STORAGE_KEY)||'{}');['personal','corporate'].forEach(type=>{const saved=draft?.[type];if(saved&&typeof saved==='object')Object.assign(states[type],saved,{errors:{},notice:'',submitting:false});if(type==='personal')Object.assign(states.personal,{quality:null,duration:null,plans:{},items:[],nextVideoId:0});});}catch{}}
-function archiveInquiry(type){try{const state=clone(states[type]);state.errors={};state.notice='';state.submitting=false;const record={savedAt:new Date().toISOString(),type,fields:state.fields,selection:state,estimate:type==='personal'?P.personal(state,C):P.corporate(state,C)};const saved=JSON.parse(localStorage.getItem(INQUIRY_STORAGE_KEY)||'[]');const records=Array.isArray(saved)?saved:[];records.push(record);localStorage.setItem(INQUIRY_STORAGE_KEY,JSON.stringify(records));}catch{}}
+// 로그인한 회원이 신청하면 회원 아이디를 함께 남겨 마이페이지 · 관리자 화면의 상담 신청 내역에 보이게 한다 (member-db.js가 계정에도 저장)
+function archiveInquiry(type){try{const state=clone(states[type]);state.errors={};state.notice='';state.submitting=false;let memberId=null;try{memberId=JSON.parse(localStorage.getItem('sangsang-member-session'))?.id||null}catch{}
+const items=type==='personal'?(state.items||[]).map(i=>{const p=C.planOf(i);return {quality:p?'포인트 충전':C.qualities.find(x=>x.id===i.quality)?.name,duration:p?p.name:C.durations.find(x=>x.id===i.duration)?.name,quantity:P.videoQuantity(i)}}):[];
+const record={savedAt:new Date().toISOString(),type,memberId,fields:state.fields,items,selection:state,estimate:type==='personal'?P.personal(state,C):P.corporate(state,C)};const saved=JSON.parse(localStorage.getItem(INQUIRY_STORAGE_KEY)||'[]');const records=Array.isArray(saved)?saved:[];records.push(record);localStorage.setItem(INQUIRY_STORAGE_KEY,JSON.stringify(records));}catch{}}
 const pageFromURL=()=>location.hash==='#corporate'?'corporate':location.hash==='#personal'?'personal':location.pathname.endsWith('corporate.html')?'corporate':'personal';
 let page=pageFromURL(),audienceSelection=null,returnFocus;
 const root=document.querySelector('#inquiry'),dialog=document.querySelector('#modal');
@@ -406,7 +409,9 @@ if(d.plan&&page==='personal')togglePlan(d.plan);
 if(d.product){s.product=s.product===d.product?null:d.product;delete s.errors.product;repaint(b);}
 if(d.faq!==undefined){const i=Number(d.faq);s.faq=s.faq.includes(i)?s.faq.filter(x=>x!==i):[...s.faq,i];const row=b.closest('.faq-row'),open=s.faq.includes(i);row.classList.toggle('open',open);b.setAttribute('aria-expanded',open);b.querySelector('b').textContent=open?'−':'+';row.querySelector('.faq-answer').inert=!open;}
 if(d.contact)contact(d.contact);if(b.hasAttribute('data-privacy'))privacy();});
-root.addEventListener('input',e=>{const t=e.target;if(t.closest('#inquiry-form')&&t.name){S().fields[t.name]=t.type==='checkbox'?t.checked:t.value;if(S().errors[t.name]){delete S().errors[t.name];t.setAttribute('aria-invalid','false');document.querySelector('#error-'+t.name).textContent='';}}});
+// 연락처에 숫자만 넣으면 전화번호 모양으로 하이픈을 넣는다 (이메일을 쓰면 그대로 둔다)
+const fmtPhone=v=>{const d=v.replace(/\D/g,'').slice(0,11);return d.length<4?d:d.length<8?`${d.slice(0,3)}-${d.slice(3)}`:`${d.slice(0,3)}-${d.slice(3,d.length-4)}-${d.slice(-4)}`};
+root.addEventListener('input',e=>{const t=e.target;if(t.name==='contact'&&t.closest('#inquiry-form')&&/^[\d\s-]+$/.test(t.value)){const v=fmtPhone(t.value);if(v!==t.value)t.value=v;}if(t.closest('#inquiry-form')&&t.name){S().fields[t.name]=t.type==='checkbox'?t.checked:t.value;if(S().errors[t.name]){delete S().errors[t.name];t.setAttribute('aria-invalid','false');document.querySelector('#error-'+t.name).textContent='';}}});
 root.addEventListener('change',e=>{const t=e.target,d=t.dataset,s=S();if(d.extra){s.extras=t.checked?[...s.extras,d.extra]:s.extras.filter(x=>x!==d.extra);renderQuote();}if(d.quantity){const count=Math.min(999,Math.max(1,Math.floor(Number(t.value)||1)));if(d.quantity==='plan')s.plans[d.id]=count;const key=`[data-quantity="${d.quantity}"][data-id="${d.id}"]`;repaint();document.querySelector(key)?.focus({preventScroll:true});}});
 function selectionPrompt(type,state){
  if(type==='corporate'){
