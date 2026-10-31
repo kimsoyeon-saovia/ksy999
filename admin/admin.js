@@ -55,7 +55,14 @@ function render(){
  <button type="button" class="ghost" data-csv${all.length||guests.length?'':' disabled'}>엑셀 저장 (전체 데이터)</button></div>
 </div>
 <p class="ad-flash" role="status">${esc(flash)}</p>
-${all.length?(found.length?`<div class="ad-table-wrap"><table class="ad-table">
+<div class="ad-list">${listHTML(found,all,me)}</div>
+${guestsHTML()}
+<dialog class="ad-dialog"></dialog>`;
+ flash='';
+}
+// 회원 표: 검색할 때는 이 부분만 다시 그려 검색창(한글 입력 중인 글자)을 건드리지 않는다
+function listHTML(found,all,me){
+ return all.length?(found.length?`<div class="ad-table-wrap"><table class="ad-table">
 <thead><tr><th>아이디</th><th>이름</th><th>휴대폰</th><th>이메일</th><th>주소</th><th>가입일</th><th>이번 달 주문</th><th>장바구니</th><th>포인트</th><th>관리</th></tr></thead>
 <tbody>${found.map(m=>`<tr>
  <td data-label="아이디"><strong>${esc(m.id)}</strong>${me===m.id?'<span class="ad-on">나</span>':''}</td>
@@ -68,13 +75,13 @@ ${all.length?(found.length?`<div class="ad-table-wrap"><table class="ad-table">
  <td class="ad-actions"><button type="button" class="ghost" data-detail="${esc(m.id)}">내역</button><button type="button" class="ghost" data-edit="${esc(m.id)}">수정</button>${me===m.id?'':`<button type="button" class="ghost ad-del" data-del="${esc(m.id)}">삭제</button>`}</td>
 </tr>`).join('')}</tbody></table></div>
 <p class="ad-count">${countText(found.length,all.length)}</p>`:`<div class="my-none">'${esc(query)}'에 맞는 회원이 없습니다.</div>`)
-:`<div class="empty"><h2>아직 가입한 회원이 없습니다</h2><p>헤더의 MEMBER 메뉴에서 회원가입하면 여기에 나타납니다.</p></div>`}
-<section class="ad-guests"><div class="block-title"><h2>비회원 주문 <small>${guests.length}건 · 최근 주문부터</small></h2></div>
+:`<div class="empty"><h2>아직 가입한 회원이 없습니다</h2><p>헤더의 MEMBER 메뉴에서 회원가입하면 여기에 나타납니다.</p></div>`;
+}
+function guestsHTML(){
+ return `<section class="ad-guests"><div class="block-title"><h2>비회원 주문 <small>${guests.length}건 · 최근 주문부터</small></h2></div>
 ${guests.length?`<div class="ad-table-wrap"><table class="ad-table"><thead><tr><th>주문번호</th><th>주문일</th><th>주문자</th><th>연락처</th><th>주문 영상</th><th>결제 수단</th><th>금액</th></tr></thead><tbody>
 ${[...guests].sort((a,b)=>String(b.date).localeCompare(String(a.date))).map(o=>`<tr><td data-label="주문번호"><strong>${esc(o.no)}</strong></td><td data-label="주문일">${date(o.date)}</td><td data-label="주문자">${esc(o.buyer?.name)}</td><td data-label="연락처">${esc(o.buyer?.phone)}</td><td data-label="주문 영상">${(o.items||[]).map(i=>`${esc(i.quality)} · ${esc(i.duration)} × ${i.quantity}`).join('<br>')}</td><td data-label="결제 수단">${esc(o.method)}</td><td data-label="금액">${money(o.total)}</td></tr>`).join('')}
-</tbody></table></div>`:'<div class="my-none">아직 비회원 주문이 없습니다.</div>'}</section>
-<dialog class="ad-dialog"></dialog>`;
- flash='';
+</tbody></table></div>`:'<div class="my-none">아직 비회원 주문이 없습니다.</div>'}</section>`;
 }
 
 async function load(){
@@ -177,7 +184,8 @@ async function saveExcel(){
 }
 
 shop.addEventListener('input',e=>{
- if(e.target.matches('.ad-search')){query=e.target.value;const pos=e.target.selectionStart;render();const s=shop.querySelector('.ad-search');s.focus();s.setSelectionRange(pos,pos)}
+ // 검색창은 그대로 두고 회원 표만 다시 그린다 (화면 전체를 다시 그리면 한글 조합이 끊겨 ㄱㅣㅁ처럼 입력됨)
+ if(e.target.matches('.ad-search')){query=e.target.value;shop.querySelector('.ad-list').innerHTML=listHTML(filtered(),members,DB.current()?.id)}
 });
 shop.addEventListener('change',e=>{if(e.target.matches('.ad-sort')){sort=e.target.value;render()}});
 shop.addEventListener('click',async e=>{
