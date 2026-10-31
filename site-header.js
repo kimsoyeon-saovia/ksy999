@@ -16,7 +16,10 @@ document.body.prepend(host);
 for(const file of ['member-db.js','member.js','cart.js']){const s=document.createElement('script');s.src=new URL(file+new URL(script.src).search,root);s.async=false;document.head.append(s);}
 // The header paints right away; everything that needs the full page waits until it has been parsed
 // (pages that load this script early, like the large portfolio page, would otherwise show the header late).
-const finish=()=>{
+// 실제 헤더 높이를 CSS 변수(--site-header-h)로 알려 준다 (휴대폰 메인 첫 화면을 '보이는 화면 − 헤더'에 딱 맞추는 데 쓴다)
+const setHeaderH=()=>{const h=document.querySelector('sangsang-header')?.getBoundingClientRect().height;if(h)document.documentElement.style.setProperty('--site-header-h',Math.round(h)+'px')};
+addEventListener('resize',setHeaderH);visualViewport?.addEventListener('resize',setHeaderH);
+const finish=()=>{setHeaderH();requestAnimationFrame(setHeaderH);
 const enhancements=document.createElement('script');enhancements.src=new URL('site-enhancements.js'+new URL(script.src).search,root);document.body.append(enhancements);
 // Keep displayed copy clean without changing JavaScript, media URLs or data URLs.
 // 금액 · 포인트의 천 단위 쉼표(50,000)는 남긴다

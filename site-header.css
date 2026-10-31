@@ -332,3 +332,5 @@ body[data-site-page="main"] .logo-musinsa img.official-brand{width:200px}
  #video-dialog{width:100vw;max-width:100vw;margin-inline:0;padding:42px 0 0;border-radius:0}
  #video-dialog video{width:100%}
 }
+/* 휴대폰 메인 첫 화면: 주소창이 줄거나 늘어도 "보이는 화면 높이 − 헤더 높이"에 딱 맞춰 다음 장면이 비치지 않게 */
+@media(max-width:750px){body[data-site-page="main"] .hero.text-hero{min-height:calc(100dvh - var(--site-header-h,104px))}}
