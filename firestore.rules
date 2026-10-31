@@ -1,0 +1,60 @@
+rules_version = '2';
+
+// STUDIO 상상 회원 데이터 보안 규칙 (Firebase 콘솔 > Firestore Database > 규칙 에 붙여 넣고 게시)
+// - usernames/{아이디}: 아이디 중복 확인 + 로그인용 이메일 (uid · email만 저장, 누구나 아이디로 조회 가능)
+// - members/{아이디}: 회원 정보 (본인과 관리자만 읽기 · 수정)
+// - finder/{열쇠}: 아이디 · 비밀번호 찾기용. 열쇠는 '이메일(또는 아이디) + 질문 + 답'을 알아볼 수 없게 바꾼 값이라
+//   모두 맞게 입력한 사람만 그 문서 하나를 읽을 수 있다 (목록 보기는 막음)
+// - admins/{uid}: 관리자 목록 (콘솔에서만 추가)
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() { return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)); }
+    // 예전 가입자: 아이디@member.sangsang.example 로 로그인 / 새 가입자: usernames에 등록한 uid로 확인
+    function ownsId(id) {
+      return signedIn() && (request.auth.token.email == id + '@member.sangsang.example'
+        || getAfter(/databases/$(database)/documents/usernames/$(id)).data.uid == request.auth.uid);
+    }
+
+    match /usernames/{id} {
+      allow get: if true;
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.keys().hasOnly(['uid','email'])
+                    && (!('email' in request.resource.data) || request.resource.data.email == request.auth.token.email);
+      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+
+    match /members/{id} {
+      allow get: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow list: if isAdmin();
+      allow create: if ownsId(id) && request.resource.data.uid == request.auth.uid;
+      allow update: if signedIn() && request.resource.data.uid == resource.data.uid
+                    && request.resource.data.joined == resource.data.joined
+                    && (resource.data.uid == request.auth.uid || isAdmin());
+      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+
+    match /finder/{key} {
+      allow get: if true;
+      allow create: if signedIn() && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.keys().hasOnly(['uid','id','email']);
+      allow delete: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+
+    // userdata/{uid}: 회원별 장바구니 · 주문 · 상담 · 포인트 (본인과 관리자만)
+    match /userdata/{uid}/{rest=**} {
+      allow read, write: if signedIn() && (request.auth.uid == uid || isAdmin());
+    }
+
+    // guestOrders/{주문번호}: 비회원 주문 (누구나 새 주문만 남길 수 있고, 읽기 · 삭제는 관리자만)
+    match /guestOrders/{no} {
+      allow create: if request.resource.data.memberId == null && request.resource.data.no == no
+                    && request.resource.data.items is list && request.resource.data.total is number;
+      allow read, delete: if isAdmin();
+    }
+
+    match /admins/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+    }
+  }
+}

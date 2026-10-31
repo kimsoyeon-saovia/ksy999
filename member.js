@@ -28,6 +28,8 @@ form[hidden],.member-done[hidden]{display:none}
 .field input{width:100%;padding:10px 0;border:0;border-bottom:1px solid #bbb;font:400 16px UnifiedSeoul,Arial,sans-serif;color:#080808;background:none;border-radius:0}
 .field input:focus{outline:0;border-bottom:2px solid #080808;padding-bottom:9px}
 .field.error input{border-bottom-color:#e5402f}
+.field select{width:100%;margin-bottom:6px;padding:10px 8px;border:1px solid #bbb;font:400 15px UnifiedSeoul,Arial,sans-serif;color:#080808;background:#fff;border-radius:0}
+.member-find{margin-top:14px}.member-find-title{margin:0 0 20px;font-size:22px;font-weight:800}
 .field .msg{display:none;margin-top:6px;font-size:12px;color:#e5402f}.field.error .msg{display:block}
 .field .ok{margin:6px 0 0;font-size:12px;color:#1647ff}.field.error .ok{display:none}
 .with-btn{display:flex;align-items:flex-end;gap:10px}.with-btn input{flex:1;min-width:0}
@@ -60,6 +62,7 @@ shadow.append(style);
 const link=document.createElement('a');link.href='#member';link.textContent='MEMBER';link.dataset.member='';link.setAttribute('aria-haspopup','dialog');
 nav.append(link);
 
+const qOptions=(window.SangsangDB?.questions||[]).map(q=>`<option>${q}</option>`).join('');
 const layer=document.createElement('div');layer.className='member-layer';
 layer.innerHTML=`<div class="member-dialog" role="dialog" aria-modal="true" aria-label="회원 로그인 및 가입">
 <button class="member-close" type="button" aria-label="닫기">×</button>
@@ -73,7 +76,24 @@ layer.innerHTML=`<div class="member-dialog" role="dialog" aria-modal="true" aria
 <div class="field"><label for="m-login-pw">비밀번호 <b>*</b></label><input id="m-login-pw" name="password" type="password" autocomplete="current-password" placeholder="비밀번호"><p class="msg">비밀번호를 입력해 주세요.</p></div>
 <p class="member-form-msg" aria-live="polite"></p>
 <button class="member-submit" type="submit">로그인</button>
+<p class="member-note member-find"><button type="button" data-go="findid">아이디 찾기</button> · <button type="button" data-go="findpw">비밀번호 찾기</button></p>
 <p class="member-note">아직 회원이 아니신가요? <button type="button" data-go="join">회원가입</button></p>
+</form>
+<form data-form="findid" novalidate hidden>
+<h3 class="member-find-title">아이디 찾기</h3>
+<div class="field"><label for="m-fid-email">가입한 이메일 <b>*</b></label><input id="m-fid-email" name="email" type="email" autocomplete="email" placeholder="example@email.com"><p class="msg">이메일 형식으로 입력해 주세요.</p></div>
+<div class="field"><label for="m-fid-q">가입할 때 고른 질문 <b>*</b></label><select id="m-fid-q" name="question">${qOptions}</select><input name="answer" type="text" autocomplete="off" placeholder="질문의 답" aria-label="질문의 답"><p class="msg">답을 입력해 주세요.</p></div>
+<p class="member-form-msg" aria-live="polite"></p>
+<button class="member-submit" type="submit">아이디 찾기</button>
+<p class="member-note"><button type="button" data-go="login">로그인으로 돌아가기</button></p>
+</form>
+<form data-form="findpw" novalidate hidden>
+<h3 class="member-find-title">비밀번호 찾기</h3>
+<div class="field"><label for="m-fpw-id">아이디 <b>*</b></label><input id="m-fpw-id" name="userid" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="아이디"><p class="msg">아이디를 입력해 주세요.</p></div>
+<div class="field"><label for="m-fpw-q">가입할 때 고른 질문 <b>*</b></label><select id="m-fpw-q" name="question">${qOptions}</select><input name="answer" type="text" autocomplete="off" placeholder="질문의 답" aria-label="질문의 답"><p class="msg">답을 입력해 주세요.</p></div>
+<p class="member-form-msg" aria-live="polite"></p>
+<button class="member-submit" type="submit">재설정 메일 받기</button>
+<p class="member-note">답이 맞으면 가입한 이메일로 비밀번호 재설정 링크를 보내 드립니다. <button type="button" data-go="login">로그인으로 돌아가기</button></p>
 </form>
 <form data-form="join" novalidate hidden>
 <div class="field"><label for="m-join-id">아이디 <b>*</b></label><div class="with-btn"><input id="m-join-id" name="userid" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" maxlength="12" placeholder="영문 소문자·숫자 4~12자"><button type="button" class="check-btn" data-check-id>중복확인</button></div><p class="msg">영문 소문자로 시작하는 4~12자(소문자·숫자)로 입력해 주세요.</p><p class="ok" hidden></p></div>
@@ -82,6 +102,7 @@ layer.innerHTML=`<div class="member-dialog" role="dialog" aria-modal="true" aria
 <div class="field"><label for="m-join-name">이름 <b>*</b></label><input id="m-join-name" name="name" type="text" autocomplete="name" placeholder="홍길동"><p class="msg">이름을 입력해 주세요.</p></div>
 <div class="field"><label for="m-join-phone">휴대폰 번호 <b>*</b></label><input id="m-join-phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="13" placeholder="010-0000-0000"><p class="msg">휴대폰 번호를 정확히 입력해 주세요.</p></div>
 <div class="field"><label for="m-join-email">이메일 <b>*</b></label><input id="m-join-email" name="email" type="email" autocomplete="email" placeholder="example@email.com"><p class="msg">이메일 형식으로 입력해 주세요.</p></div>
+<div class="field"><label for="m-join-q">아이디 · 비밀번호 찾기 질문 <b>*</b></label><select id="m-join-q" name="question">${qOptions}</select><input name="answer" type="text" autocomplete="off" placeholder="질문의 답" aria-label="질문의 답"><p class="msg">질문을 고르고 답을 입력해 주세요.</p></div>
 <div class="field" data-address><label for="m-join-zip">주소 (선택)</label><div class="with-btn"><input id="m-join-zip" name="zip" readonly placeholder="우편번호"><button type="button" class="check-btn" data-addr>주소 검색</button></div><input class="addr-line" name="addr1" readonly placeholder="주소 검색을 눌러 주세요" aria-label="기본 주소"><input class="addr-line" name="addr2" autocomplete="address-line2" placeholder="상세 주소 (동 · 호수)" aria-label="상세 주소"><p class="msg">주소 검색으로 주소를 입력해 주세요.</p></div>
 <label class="agree"><input name="agree" type="checkbox"> 개인정보 수집 및 이용에 동의합니다 (필수)</label>
 <p class="member-form-msg" aria-live="polite"></p>
@@ -95,7 +116,7 @@ layer.innerHTML=`<div class="member-dialog" role="dialog" aria-modal="true" aria
 shadow.append(layer);
 
 const $=s=>layer.querySelector(s);
-const forms={login:$('[data-form="login"]'),join:$('[data-form="join"]')};
+const forms={login:$('[data-form="login"]'),join:$('[data-form="join"]'),findid:$('[data-form="findid"]'),findpw:$('[data-form="findpw"]')};
 const done=$('.member-done');
 // 가입 · 로그인은 member-db.js(Firebase)가 처리하고, 여기서는 로그인한 회원의 사본만 읽는다
 const SESSION='sangsang-member-session';
@@ -236,13 +257,34 @@ forms.join.addEventListener('submit',async e=>{
  if(!isId(id))setIdMsg('영문 소문자로 시작하는 4~12자(소문자·숫자)로 입력해 주세요.',false);
  else if(checkedId!==id)setIdMsg('아이디 중복확인을 해 주세요.',false);
  const address={zip:el.zip.value.trim(),addr1:el.addr1.value.trim(),addr2:el.addr2.value.trim()};
- const bad=[idBad,mark(el.password,!isPw(pw)),mark(el.password2,!pw2||pw!==pw2),mark(el.name,!name),mark(el.phone,!isPhone(phone)),mark(el.email,!isEmail(email)),mark(el.zip,false),agreeBad].some(Boolean);
+ const question=el.question.value,answer=el.answer.value.trim();
+ const bad=[idBad,mark(el.password,!isPw(pw)),mark(el.password2,!pw2||pw!==pw2),mark(el.name,!name),mark(el.phone,!isPhone(phone)),mark(el.email,!isEmail(email)),mark(el.answer,!answer),mark(el.zip,false),agreeBad].some(Boolean);
  if(bad){msg.textContent=agreeBad?'필수 약관에 동의해 주세요.':'';return}
  msg.textContent='';
- try{await busy(f.querySelector('.member-submit'),()=>DB.signup({id,password:pw,name,phone,email,address}))}
- catch(err){const t=DB.errorText(err);if(/아이디/.test(t)){resetIdCheck();setIdMsg(t,false)}else msg.textContent=t;return}
+ try{await busy(f.querySelector('.member-submit'),()=>DB.signup({id,password:pw,name,phone,email,address,question,answer}))}
+ catch(err){const t=DB.errorText(err);if(/^이미 사용 중인 아이디/.test(t)){resetIdCheck();setIdMsg(t,false)}else msg.textContent=t;return}
  f.reset();resetIdCheck();
- showDone(`${name}님, 가입을 환영합니다`,'STUDIO 상상의 멤버가 되셨습니다.');
+ showDone(`${name}님, 가입을 환영합니다`,`${email}(으)로 인증 메일을 보냈습니다. 메일의 링크를 눌러 이메일 인증을 마쳐 주세요. (메일이 안 보이면 스팸함도 확인해 주세요)`);
+ done.dataset.mode='to-login';done.querySelector('button').textContent='로그인하러 가기';
+});
+// 아이디 찾기: 가입 이메일 + 질문 + 답
+forms.findid.addEventListener('submit',async e=>{
+ e.preventDefault();const f=forms.findid,el=f.elements,msg=f.querySelector('.member-form-msg');
+ const email=el.email.value.trim(),answer=el.answer.value.trim();
+ if([mark(el.email,!isEmail(email)),mark(el.answer,!answer)].some(Boolean)){msg.textContent='';return}
+ let id;try{id=await busy(f.querySelector('.member-submit'),()=>DB.findId(email,el.question.value,answer))}catch(err){msg.textContent=DB.errorText(err);return}
+ if(!id){msg.textContent='입력하신 정보와 맞는 회원이 없습니다. 이메일 · 질문 · 답을 다시 확인해 주세요.';return}
+ f.reset();showDone('아이디를 찾았습니다',`회원님의 아이디는 「${id}」입니다.`);
+ done.dataset.mode='to-login';done.querySelector('button').textContent='로그인하러 가기';
+});
+// 비밀번호 찾기: 아이디 + 질문 + 답 → 가입 이메일로 재설정 메일
+forms.findpw.addEventListener('submit',async e=>{
+ e.preventDefault();const f=forms.findpw,el=f.elements,msg=f.querySelector('.member-form-msg');
+ const id=el.userid.value.trim().toLowerCase(),answer=el.answer.value.trim();
+ if([mark(el.userid,!id),mark(el.answer,!answer)].some(Boolean)){msg.textContent='';return}
+ let sent;try{sent=await busy(f.querySelector('.member-submit'),()=>DB.resetPassword(id,el.question.value,answer))}catch(err){msg.textContent=DB.errorText(err);return}
+ if(!sent){msg.textContent='입력하신 정보와 맞는 회원이 없습니다. (2026년 10월 31일 이전 가입 회원은 관리자에게 문의해 주세요)';return}
+ f.reset();showDone('재설정 메일을 보냈습니다',`${sent}(으)로 비밀번호 재설정 링크를 보냈습니다. 메일의 링크에서 새 비밀번호를 정한 뒤 로그인해 주세요. (스팸함도 확인해 주세요)`);
  done.dataset.mode='to-login';done.querySelector('button').textContent='로그인하러 가기';
 });
 })();

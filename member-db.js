@@ -17,7 +17,17 @@ const SDK='https://www.gstatic.com/firebasejs/10.12.2/';
 // 아이디로 로그인하도록, Firebase에는 아이디를 이메일 모양으로 바꿔 등록한다 (메일은 보내지 않음)
 const ID_DOMAIN='member.sangsang.example';
 const toEmail=id=>`${id}@${ID_DOMAIN}`;
-const idOf=user=>user?.email?.endsWith('@'+ID_DOMAIN)?user.email.slice(0,-ID_DOMAIN.length-1):null;
+// 예전 가입자는 가짜 이메일에서, 새 가입자(진짜 이메일)는 가입 때 저장한 표시 이름(displayName)에서 아이디를 읽는다
+const idOf=user=>!user?null:user.email?.endsWith('@'+ID_DOMAIN)?user.email.slice(0,-ID_DOMAIN.length-1):user.displayName||null;
+// 아이디 · 비밀번호 찾기 질문 (가입할 때 하나 고른다)
+const QUESTIONS=['기억에 남는 추억의 장소는?','자신의 인생 좌우명은?','자신의 보물 제1호는?','가장 기억에 남는 선생님 성함은?','타인이 모르는 자신만의 신체비밀이 있다면?','추억하고 싶은 날짜가 있다면?','받았던 선물 중 기억에 남는 독특한 선물은?','유년시절 가장 생각나는 친구 이름은?','인상 깊게 읽은 책 이름은?','읽은 책 중에서 좋아하는 구절이 있다면?','자신이 두번째로 존경하는 인물은?','친구들에게 공개하지 않은 어릴 적 별명이 있다면?','초등학교 때 기억에 남는 짝꿍 이름은?','다시 태어나면 되고 싶은 것은?','내가 좋아하는 캐릭터는?'];
+// 찾기용 열쇠: '이메일(또는 아이디) + 질문 + 답'을 SHA-256으로 바꾼 값. 답은 그대로 저장하지 않는다 (띄어쓰기 · 대소문자는 무시)
+const norm=s=>String(s||'').trim().toLowerCase().replace(/\s+/g,'');
+async function finderKey(kind,who,q,answer){
+ const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(`${kind}|${norm(who)}|${q}|${norm(answer)}`));
+ return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+const maskEmail=e=>{const [a,d]=String(e).split('@');return (a.length<=2?a[0]+'*':a.slice(0,2)+'*'.repeat(Math.min(6,a.length-2)))+'@'+d};
 const MEMBERS='sangsang-members-v2',SESSION='sangsang-member-session';
 const write=(k,v)=>{try{v==null?localStorage.removeItem(k):localStorage.setItem(k,JSON.stringify(v))}catch{}};
 
@@ -152,14 +162,22 @@ window.SangsangDB={
  whenAuthKnown:()=>ready.then(()=>firstState),
  // 아이디 중복 확인: usernames 컬렉션에는 아이디 → uid 만 저장되어 누구나 존재 여부만 확인할 수 있다
  async isIdTaken(id){await ready;return (await db.doc(`usernames/${id}`).get()).exists},
- async signup({id,password,name,phone,email,address}){
+ questions:QUESTIONS,
+ // 가입: 진짜 이메일로 계정을 만들고 인증 메일을 보낸다. 찾기 질문의 답은 열쇠(finder)로만 남긴다
+ async signup({id,password,name,phone,email,address,question,answer}){
   await ready;signingUp=true;
   try{
-   const cred=await auth.createUserWithEmailAndPassword(toEmail(id),password);
-   const uid=cred.user.uid,b=db.batch();
-   b.set(db.doc(`usernames/${id}`),{uid});
-   b.set(db.doc(`members/${id}`),{uid,name,phone,email,address,joined:new Date().toISOString()});
-   try{await b.commit()}catch(e){await cred.user.delete().catch(()=>{});throw e}
+   const cred=await auth.createUserWithEmailAndPassword(email,password);
+   const user=cred.user,uid=user.uid;
+   await user.updateProfile({displayName:id});
+   const idKey=await finderKey('id',email,question,answer),pwKey=await finderKey('pw',id,question,answer);
+   const b=db.batch();
+   b.set(db.doc(`usernames/${id}`),{uid,email});
+   b.set(db.doc(`members/${id}`),{uid,name,phone,email,address,question,finderKeys:[idKey,pwKey],joined:new Date().toISOString()});
+   b.set(db.doc(`finder/${idKey}`),{uid,id});
+   b.set(db.doc(`finder/${pwKey}`),{uid,email});
+   try{await b.commit()}catch(e){await user.delete().catch(()=>{});throw e}
+   await user.sendEmailVerification().catch(()=>{});
   }finally{
    signingUp=false;
    // 기존 흐름처럼 가입 후에는 로그인 화면으로 보낸다
@@ -169,13 +187,24 @@ window.SangsangDB={
  // 로그인 후 회원 정보를 바로 돌려준다 (환영 문구에 이름을 쓰기 위해)
  async login(id,password){
   await ready;
-  const {user}=await auth.signInWithEmailAndPassword(toEmail(id),password);
+  // 새 가입자는 usernames에 저장한 이메일로, 예전 가입자는 아이디 모양 이메일로 로그인한다
+  const email=(await db.doc(`usernames/${id}`).get().catch(()=>null))?.data()?.email||toEmail(id);
+  const {user}=await auth.signInWithEmailAndPassword(email,password);
   const profile=await profileOf(user);
   if(!profile){await auth.signOut();throw {code:'deleted'}}
   cache(profile);window.dispatchEvent(new Event('sangsang-member-change'));
   return profile;
  },
  async logout(){await ready;await auth.signOut()},
+ // 아이디 찾기: 가입 이메일 + 질문 + 답이 모두 맞으면 아이디를 돌려준다 (없으면 null)
+ async findId(email,question,answer){await ready;return (await db.doc(`finder/${await finderKey('id',email,question,answer)}`).get()).data()?.id||null},
+ // 비밀번호 찾기: 아이디 + 질문 + 답이 맞으면 가입 이메일로 재설정 메일을 보내고, 가린 이메일을 돌려준다 (없으면 null)
+ async resetPassword(id,question,answer){
+  await ready;const email=(await db.doc(`finder/${await finderKey('pw',id,question,answer)}`).get()).data()?.email;
+  if(!email)return null;await auth.sendPasswordResetEmail(email);return maskEmail(email);
+ },
+ async resendVerification(){await ready;await auth.currentUser?.sendEmailVerification()},
+ emailVerified(){const u=auth?.currentUser;return !u||u.email?.endsWith('@'+ID_DOMAIN)?null:u.emailVerified},
  current(){const id=idOf(auth?.currentUser);return id?{id}:null},
  async isAdmin(){await ready;const u=auth.currentUser;if(!u)return false;try{return (await db.doc(`admins/${u.uid}`).get()).exists}catch{return false}},
  async listMembers(){await ready;return (await db.collection('members').get()).docs.map(d=>({id:d.id,...d.data()}))},
@@ -223,19 +252,21 @@ window.SangsangDB={
  // 관리자 삭제: 회원 정보와 아이디를 지운다 (로그인 계정은 남지만 회원 정보가 없어 로그인되지 않음)
  async deleteMember(id){
   await ready;
-  const uid=(await db.doc(`members/${id}`).get()).data()?.uid;
+  const data=(await db.doc(`members/${id}`).get()).data()||{},uid=data.uid;
   if(uid)await removeUserData(uid).catch(()=>{});
-  const b=db.batch();b.delete(db.doc(`members/${id}`));b.delete(db.doc(`usernames/${id}`));await b.commit()},
+  const b=db.batch();(data.finderKeys||[]).forEach(k=>b.delete(db.doc(`finder/${k}`)));b.delete(db.doc(`members/${id}`));b.delete(db.doc(`usernames/${id}`));await b.commit()},
  // 본인 탈퇴: 회원 정보 · 아이디 · 장바구니 · 주문 · 상담 내역 · 로그인 계정을 모두 지운다
  async leave(){
   await ready;const u=auth.currentUser,id=idOf(u);if(!u||!id)return;
   await removeUserData(u.uid);
-  const b=db.batch();b.delete(db.doc(`members/${id}`));b.delete(db.doc(`usernames/${id}`));await b.commit();
+  const keys=(await db.doc(`members/${id}`).get()).data()?.finderKeys||[];
+  const b=db.batch();keys.forEach(k=>b.delete(db.doc(`finder/${k}`)));b.delete(db.doc(`members/${id}`));b.delete(db.doc(`usernames/${id}`));await b.commit();
   await u.delete().catch(()=>auth.signOut());
  },
  errorText(e){
   const c=errCode(e);
-  if(c==='email-already-in-use')return '이미 사용 중인 아이디입니다.';
+  if(c==='email-already-in-use')return '이미 가입된 이메일입니다. 아이디 찾기를 이용해 주세요.';
+  if(c==='invalid-email')return '이메일 주소를 다시 확인해 주세요.';
   if(c==='deleted')return '삭제된 계정입니다. 관리자에게 문의해 주세요.';
   if(['invalid-credential','wrong-password','user-not-found','invalid-login-credentials'].includes(c))return auth?.currentUser?'비밀번호가 맞지 않습니다.':'아이디 또는 비밀번호가 맞지 않습니다.';
   if(c==='too-many-requests')return '로그인 시도가 너무 많습니다. 잠시 후 다시 시도해 주세요.';
