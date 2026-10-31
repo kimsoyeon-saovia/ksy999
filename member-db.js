@@ -278,6 +278,10 @@ window.SangsangDB={
   if(idOf(auth.currentUser)===id){const s=await db.doc(`members/${id}`).get();cache({id,...s.data()});window.dispatchEvent(new Event('sangsang-member-change'))}
  },
  // 본인 정보 수정: 현재 비밀번호로 한 번 더 확인한 뒤 고친다 (새 비밀번호를 넣으면 비밀번호도 바꾼다)
+ async verifyPassword(password){
+  await ready;const u=auth.currentUser;if(!u)throw {code:'permission-denied'};
+  await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,password));
+ },
  async updateMyInfo(password,data,newPassword){
   await ready;const u=auth.currentUser,id=idOf(u);if(!u||!id)throw {code:'permission-denied'};
   await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email,password));

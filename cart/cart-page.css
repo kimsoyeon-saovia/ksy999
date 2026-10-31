@@ -195,3 +195,5 @@ a{color:inherit}
 .pt-rows{margin-top:12px!important;padding-top:12px;border-top:1px solid #ddd}
 .pt-rows div:first-child dd{color:#1647ff;font-weight:700}
 .methods:disabled{opacity:.4}
+.member-only{display:inline-block;margin-left:6px;padding:1px 7px;background:#1647ff;color:#fff;font-size:12px;font-weight:700;vertical-align:1px}
+.summary .member-note{color:#1647ff;font-weight:700}

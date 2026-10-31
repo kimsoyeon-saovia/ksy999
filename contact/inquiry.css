@@ -309,8 +309,15 @@ body{font-synthesis:none;font-kerning:normal;text-rendering:optimizeLegibility}
 @media(hover:hover) and (pointer:fine){.plan:hover{transform:scale(1.02)}}
 .plan.chosen{background:var(--lime);border-color:var(--lime)}
 .point-member{font-weight:700;color:#1647ff}
-@media(max-width:480px){.plan>strong{font-size:26px}.plan>p{font-size:15px;word-break:keep-all}.plan .plan-bonus{font-size:14px}.plan .plan-total{font-size:12.5px;word-break:keep-all;white-space:nowrap}.plan>button{font-size:13px}.point-reference{word-break:keep-all}}
+@media(max-width:480px){.plan>strong{font-size:26px}.plan>p{font-size:15px;word-break:keep-all}.plan .plan-total{font-size:12.5px;word-break:keep-all;white-space:nowrap}.plan>button{font-size:13px}.point-reference{word-break:keep-all}}
 /* 추가 포인트 글자: 파랑 · 검정으로 반짝 */
 .plan .plan-bonus{animation:bonus-blink 1s steps(1,end) infinite}
 @keyframes bonus-blink{0%{color:#1647ff}50%{color:#080808}}
 @media(prefers-reduced-motion:reduce){.plan .plan-bonus{animation:none;color:#1647ff}}
+/* 포인트 충전: 설명은 제목 아래 줄로, 카드 글자 간격 · 들여쓰기 */
+.step.has-sub{display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:14px;row-gap:6px}
+.step.has-sub small{grid-column:2;font-size:17px;line-height:1.5}
+.plan>p{margin-top:14px;padding-left:.7em;line-height:1.55}
+.plan .plan-bonus{font-size:1.18em;font-weight:800}
+.point-member{font-size:1.2em}
+@media(max-width:800px){.step.has-sub small{font-size:14px}}

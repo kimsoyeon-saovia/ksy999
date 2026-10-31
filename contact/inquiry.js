@@ -9,13 +9,15 @@ const clone=value=>JSON.parse(JSON.stringify(value));
 // 장바구니는 견적서와 따로 저장한다. 견적서에서 '담기'한 영상은 담은 시각과 함께 장바구니에 한 줄씩 더해지고,
 // 이번 방문 중 견적서에서 바꾼 수량 · 삭제는 그 줄에만 반영된다. 장바구니 내용이 견적서로 다시 불려 오지는 않는다.
 const CART_STORAGE_KEY='sangsang-cart-v1',cartLinks=new Set();
+// 이 페이지에 들어온 시각: 이번 방문에 담은 상품은 장바구니에서 한 묶음(같은 시각)으로 보인다
+const CART_BATCH=new Date().toISOString();
 function syncCart(){try{
  const cart=JSON.parse(localStorage.getItem(CART_STORAGE_KEY)||'{}')||{};
  let list=Array.isArray(cart.items)?cart.items:[],next=Number(cart.nextId)||list.reduce((n,c)=>Math.max(n,Number(c.id)||0),0);
  const before=JSON.stringify(list),alive=new Set();
  for(const item of states.personal.items){
   const quantity=P.videoQuantity(item);
-  if(!item.cartId){item.cartId=String(++next);cartLinks.add(item.cartId);list.push({id:item.cartId,quality:item.quality,duration:item.duration,quantity,addedAt:new Date().toISOString()});}
+  if(!item.cartId){item.cartId=String(++next);cartLinks.add(item.cartId);list.push({id:item.cartId,quality:item.quality,duration:item.duration,quantity,addedAt:new Date().toISOString(),batch:CART_BATCH});}
   else list=list.map(c=>c.id===item.cartId?{...c,quantity}:c);
   alive.add(item.cartId);
  }
@@ -47,7 +49,7 @@ const faqs={personal:[
  ['완성된 영상은 어떤 형식으로 받나요?','사용 채널과 목적에 맞는 해상도, 비율 및 파일 형식을 상담 시 협의해 전달합니다.'],
  ['제작한 영상을 광고나 SNS에 사용할 수 있나요?','예정된 광고와 SNS 사용 채널을 알려 주세요. 소재의 권리와 이용 조건을 확인하고 사용 범위를 제작 전에 협의합니다.']
 ]};
-function step(n,title,sub=''){return `<div class="step"><span class="number">${n}</span><h3>${title}</h3>${sub?`<small>${sub}</small>`:''}</div>`;}
+function step(n,title,sub=''){return `<div class="step${sub?' has-sub':''}"><span class="number">${n}</span><h3>${title}</h3>${sub?`<small>${sub}</small>`:''}</div>`;}
 function quantity(kind,id,count){return `<div class="quantity"><label>수량 <input type="number" min="1" max="999" step="1" value="${count}" data-quantity="${kind}" data-id="${id}" aria-label="${esc(kind==='plan'?C.plans.find(x=>x.id===id).name:'제작 항목')} 수량"></label><button type="button" data-remove="${kind}" data-id="${id}">삭제</button></div>`;}
 function personalContent(){const s=S();return `<div class="intro"><h2>영상 예상 제작 견적 확인하기</h2><p>화질과 영상길이를 선택해 주세요.</p></div>
 <section class="selection">${step('01','영상 화질 선택')}<div class="choices quality" role="group" aria-label="영상 화질">${C.qualities.map(x=>`<button class="choice${selected(s.quality===x.id)}" data-choice="quality" data-id="${x.id}" aria-pressed="${s.quality===x.id}"><span class="check" aria-hidden="true">${s.quality===x.id?'✓':''}</span><strong>${x.name}</strong><small>${money(x.points*C.pointValue)}</small><p class="description">${x.description}</p></button>`).join('')}</div></section>
@@ -63,7 +65,7 @@ function togglePlan(id){
  else{
   if(!window.SangsangDB?.current()){modal('로그인이 필요합니다','<p>충전한 포인트는 회원 계정에 저장됩니다.<br>로그인한 뒤 담아 주세요.</p>',[{label:'로그인 · 회원가입',run:()=>document.querySelector('sangsang-header')?.shadowRoot?.querySelector('[data-member]')?.click()},{label:'닫기'}]);return;}
   const next=Math.max(c.nextId,...c.items.map(i=>Number(i.id)||0))+1;
-  c.items.push({id:String(next),plan:id,quantity:1,addedAt:new Date().toISOString()});c.nextId=next;
+  c.items.push({id:String(next),plan:id,quantity:1,addedAt:new Date().toISOString(),batch:CART_BATCH});c.nextId=next;
  }
  try{localStorage.setItem(CART_STORAGE_KEY,JSON.stringify(c))}catch{}
  window.dispatchEvent(new Event('sangsang-cart-change'));repaint();

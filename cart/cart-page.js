@@ -20,7 +20,8 @@ const unit=item=>C.itemPrice(item);
 const title=(item,i)=>item.plan?C.itemTitle(item):`개인 맞춤 영상 ${i+1}`;
 const qty=item=>Math.max(1,Math.min(999,Math.trunc(Number(item.quantity))||1));
 // 최근에 담은 영상이 위로 온다 (담은 시각이 없는 예전 데이터는 맨 아래)
-const items=()=>{const list=read(CART,{})?.items;return Array.isArray(list)?[...list].sort((a,b)=>String(b.addedAt||'').localeCompare(String(a.addedAt||''))):[]};
+// 같은 방문(batch)에 담은 상품끼리 붙어 있도록 묶음 시각 → 담은 시각 순서로 정렬한다
+const items=()=>{const list=read(CART,{})?.items;const k=i=>String(i.batch||i.addedAt||'');return Array.isArray(list)?[...list].sort((a,b)=>k(b).localeCompare(k(a))||String(b.addedAt||'').localeCompare(String(a.addedAt||''))):[]};
 function saveItems(list){
  const c=read(CART,{})||{};
  try{localStorage.setItem(CART,JSON.stringify({...c,items:list}))}catch{}
@@ -29,7 +30,10 @@ function saveItems(list){
 const DAYS=['일','월','화','수','목','금','토'];
 const pad=n=>String(n).padStart(2,'0');
 const dayOf=item=>{const d=new Date(item.addedAt);return isNaN(d)?'':`${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())} (${DAYS[d.getDay()]})`};
+// 장바구니 묶음: 견적 페이지에 들어온 시각(batch)마다 한 묶음. 예전 데이터는 날짜로 묶는다
 const timeOf=item=>{const d=new Date(item.addedAt);return isNaN(d)?'':`${pad(d.getHours())}:${pad(d.getMinutes())}`};
+const groupKey=item=>item.batch||dayOf(item);
+const groupTitle=item=>{if(!item.batch)return dayOf(item);const b={addedAt:item.batch};return `${dayOf(b)} ${timeOf(b)}`};
 const member=()=>{const s=read(SESSION,null);if(!s?.id)return null;return {id:s.id,name:s.name,...(read(MEMBERS,{})[s.id]||{})}};
 const openLogin=()=>document.querySelector('sangsang-header')?.shadowRoot?.querySelector('[data-member]')?.click();
 
@@ -56,9 +60,9 @@ function renderCart(){
  const picked=list.filter(i=>selected.has(i.id)),t=totals(picked),all=picked.length===list.length;
  shop.innerHTML=head('장바구니',1)+`<div class="shop-body"><section aria-label="담은 영상">
 <div class="list-tools"><label class="check"><input type="checkbox" data-all ${all?'checked':''}> 전체 선택 (${picked.length}/${list.length})</label><div class="tool-btns"><button type="button" class="ghost" data-remove-picked ${picked.length?'':'disabled'}>선택 삭제</button><button type="button" class="ghost" data-clear>전체 삭제</button></div></div>
-${list.map((item,i)=>{const n=qty(item),day=dayOf(item),newDay=i===0||day!==dayOf(list[i-1]);return `${newDay?`<h3 class="cart-day">${day?esc(day)+' 담은 영상':'이전에 담은 영상'}</h3>`:''}<article class="row"><label class="check"><input type="checkbox" data-pick="${esc(item.id)}" ${selected.has(item.id)?'checked':''} aria-label="개인 맞춤 영상 ${i+1} 선택"></label>${thumb(item)}<div class="info"><h2>${esc(title(item,i))}</h2><p>${item.plan?esc(C.itemLabel(item)):`화질 ${esc(quality(item)?.name)} · 길이 ${esc(duration(item)?.name)}`}</p><p class="unit">개당 ${money(unit(item))}${timeOf(item)?` · <span class="added-at">${timeOf(item)} 담음</span>`:''}</p></div><div class="stepper" role="group" aria-label="개인 맞춤 영상 ${i+1} 수량"><button type="button" data-step="-1" data-id="${esc(item.id)}" aria-label="수량 줄이기" ${n<=1?'disabled':''}>−</button><output>${n}</output><button type="button" data-step="1" data-id="${esc(item.id)}" aria-label="수량 늘리기" ${n>=999?'disabled':''}>+</button></div><strong class="line-total">${money(unit(item)*n)}</strong><button type="button" class="remove" data-remove="${esc(item.id)}" aria-label="개인 맞춤 영상 ${i+1} 삭제">×</button></article>`}).join('')}
+${list.map((item,i)=>{const n=qty(item),day=groupTitle(item),newDay=i===0||groupKey(item)!==groupKey(list[i-1]);return `${newDay?`<h3 class="cart-day">${day?esc(day)+' 담은 상품':'이전에 담은 상품'}</h3>`:''}<article class="row"><label class="check"><input type="checkbox" data-pick="${esc(item.id)}" ${selected.has(item.id)?'checked':''} aria-label="개인 맞춤 영상 ${i+1} 선택"></label>${thumb(item)}<div class="info"><h2>${esc(title(item,i))}</h2><p>${item.plan?esc(C.itemLabel(item))+' <b class="member-only">회원 전용</b>':`화질 ${esc(quality(item)?.name)} · 길이 ${esc(duration(item)?.name)}`}</p><p class="unit">개당 ${money(unit(item))}${timeOf(item)?` · <span class="added-at">${timeOf(item)} 담음</span>`:''}</p></div><div class="stepper" role="group" aria-label="개인 맞춤 영상 ${i+1} 수량"><button type="button" data-step="-1" data-id="${esc(item.id)}" aria-label="수량 줄이기" ${n<=1?'disabled':''}>−</button><output>${n}</output><button type="button" data-step="1" data-id="${esc(item.id)}" aria-label="수량 늘리기" ${n>=999?'disabled':''}>+</button></div><strong class="line-total">${money(unit(item)*n)}</strong><button type="button" class="remove" data-remove="${esc(item.id)}" aria-label="개인 맞춤 영상 ${i+1} 삭제">×</button></article>`}).join('')}
 <div class="list-foot"><span>담은 영상은 결제 전까지 장바구니에 보관됩니다.</span><a class="text-link" href="${ESTIMATE_URL}">+ 영상 더 담기</a></div>
-</section><aside class="summary" aria-label="결제 예정 금액"><h2>결제 예정 금액</h2>${summaryRows(t)}<p class="note">선택한 ${picked.length}개 항목 · 최종 금액은 상담 후 확정될 수 있습니다.</p><button type="button" class="cta" data-order ${picked.length?'':'disabled'}>주문하기</button><button type="button" class="sub-cta" data-consult aria-expanded="${consult.open}" aria-controls="consult">${consult.open?'상담 신청 닫기':'결제 전에 상담 먼저 받기'}</button></aside></div>${consult.open?consultHTML(picked):''}`;
+</section><aside class="summary" aria-label="결제 예정 금액"><h2>결제 예정 금액</h2>${summaryRows(t)}<p class="note">선택한 ${picked.length}개 항목 · 최종 금액은 상담 후 확정될 수 있습니다.</p>${list.some(i=>i.plan)?'<p class="note member-note">※ 포인트 충전 상품은 회원 전용입니다. 로그인한 뒤 결제할 수 있습니다.</p>':''}<button type="button" class="cta" data-order ${picked.length?'':'disabled'}>주문하기</button><button type="button" class="sub-cta" data-consult aria-expanded="${consult.open}" aria-controls="consult">${consult.open?'상담 신청 닫기':'결제 전에 상담 먼저 받기'}</button></aside></div>${consult.open?consultHTML(picked):''}`;
 }
 
 // ---------------- 결제 전 상담 신청 (장바구니 아래에 펼쳐짐) ----------------
@@ -220,7 +224,10 @@ function checkoutSubmit(e){
 }
 function renderDone(order){
  const d=new Date(order.date);
- shop.innerHTML=head('주문완료',3)+`<section class="done"><div class="badge" aria-hidden="true">✓</div><h2>주문이 완료되었습니다</h2><p>${esc(order.buyer.name)}님, 감사합니다.<br>담당자가 확인 후 입력하신 연락처로 제작 상담 일정을 안내해 드립니다.</p>
+ // 포인트 충전만 결제했을 때는 제작 상담 안내 대신 '바로 사용 가능' 안내를 보여 준다
+ const onlyPoints=order.items.length&&order.items.every(i=>i.quality==='포인트 충전'),hasPoints=order.items.some(i=>i.quality==='포인트 충전');
+ const doneText=onlyPoints?`${esc(order.buyer.name)}님, 감사합니다.<br>충전된 포인트는 <strong>바로 사용 가능합니다.</strong>`:`${esc(order.buyer.name)}님, 감사합니다.<br>담당자가 확인 후 입력하신 연락처로 제작 상담 일정을 안내해 드립니다.${hasPoints?'<br>충전된 포인트는 <strong>바로 사용 가능합니다.</strong>':''}`;
+ shop.innerHTML=head('주문완료',3)+`<section class="done"><div class="badge" aria-hidden="true">✓</div><h2>${onlyPoints?'포인트 충전이 완료되었습니다':'주문이 완료되었습니다'}</h2><p>${doneText}</p>
 <dl class="receipt"><div><dt>주문번호</dt><dd><strong>${esc(order.no)}</strong></dd></div><div><dt>주문일시</dt><dd>${d.toLocaleString('ko-KR')}</dd></div><div><dt>주문 상품</dt><dd>${order.items.map(i=>`${esc(i.quality)} · ${esc(i.duration)} × ${i.quantity}`).join('<br>')}</dd></div><div><dt>결제 수단</dt><dd>${esc(order.method)}</dd></div><div><dt>연락처</dt><dd>${esc(order.buyer.phone)}<br>${esc(order.buyer.email)}</dd></div>${order.pointsUsed?`<div><dt>주문 금액</dt><dd>${money(order.total)}</dd></div><div><dt>포인트 사용</dt><dd>${point(order.pointsUsed)} (−${money(order.pointsUsed*PV)})</dd></div>`:''}${order.pointsGained?`<div><dt>충전 포인트</dt><dd>+${point(order.pointsGained)} (회원 계정에 적립)</dd></div>`:''}<div class="total"><dt>결제 금액</dt><dd>${money(order.paid??order.total)}</dd></div></dl>
 <p class="demo-note">화면 확인용 결제 시안입니다. 실제 승인이나 출금은 발생하지 않았습니다.</p>
 <div class="done-actions"><a class="sub-cta" href="../main/index.html">홈으로</a><a class="cta plain" href="${ESTIMATE_URL}">제작 문의 추가</a></div></section>`;

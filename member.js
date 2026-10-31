@@ -9,7 +9,9 @@ const style=document.createElement('style');
 style.textContent=`
 .member-layer{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(8,8,8,.62);opacity:0;visibility:hidden;transition:opacity .25s,visibility .25s;font-family:UnifiedSeoul,Arial,sans-serif}
 .member-layer.open{opacity:1;visibility:visible}
-.member-dialog{position:relative;display:grid;grid-template-columns:5fr 6fr;width:min(880px,100%);max-height:calc(100vh - 48px);overflow:auto;background:#fff;transform:translateY(24px);transition:transform .3s}
+.member-dialog{position:relative;display:grid;grid-template-columns:5fr 6fr;width:min(880px,100%);height:min(680px,calc(100vh - 48px));overflow:hidden;background:#fff;transform:translateY(24px);transition:transform .3s}
+/* 왼쪽 검은 소개 영역은 고정, 오른쪽 입력 영역만 스크롤 */
+.member-body{overflow-y:auto;overscroll-behavior:contain}
 .member-layer.open .member-dialog{transform:none}
 .member-visual{display:flex;flex-direction:column;justify-content:space-between;gap:40px;padding:48px 40px;background:#080808;color:#fff}
 .member-visual .brand{display:flex;align-items:center;gap:10px}.member-visual .brand span{font:800 11px Arial;letter-spacing:4px}.member-visual .brand strong{font-size:26px;font-weight:800}
@@ -28,11 +30,19 @@ form[hidden],.member-done[hidden]{display:none}
 .field input{width:100%;padding:10px 0;border:0;border-bottom:1px solid #bbb;font:400 16px UnifiedSeoul,Arial,sans-serif;color:#080808;background:none;border-radius:0}
 .field input:focus{outline:0;border-bottom:2px solid #080808;padding-bottom:9px}
 .field.error input{border-bottom-color:#e5402f}
-.field select{width:100%;margin-bottom:6px;padding:10px 8px;border:1px solid #bbb;font:400 15px UnifiedSeoul,Arial,sans-serif;color:#080808;background:#fff;border-radius:0}
+/* 찾기 질문: 다른 칸처럼 밑줄 모양으로, 질문과 답 사이를 넉넉하게 */
+.field select{display:block;width:100%;margin:0 0 14px;padding:10px 28px 10px 0;border:0;border-bottom:1px solid #bbb;border-radius:0;font:500 15px UnifiedSeoul,Arial,sans-serif;color:#080808;background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23080808' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 4px center;appearance:none;-webkit-appearance:none;cursor:pointer}
+.field select:focus{outline:0;border-bottom:2px solid #080808;padding-bottom:9px}
+.field.q-field{margin:28px 0 26px;padding:18px 18px 6px;background:#f6f6f6}
+.field.q-field label{margin-bottom:2px}
 form[data-method="mail"] .by-q,form[data-method="q"] .by-mail{display:none}
-.find-method{display:grid;grid-template-columns:1fr 1fr;margin:0 0 22px;border:1px solid #080808}
-.find-method button{height:44px;border:0;background:#fff;font:500 15px UnifiedSeoul,Arial,sans-serif;color:#080808;cursor:pointer}
+.find-method{display:grid;grid-template-columns:1fr 1fr;margin:0 0 22px;padding-bottom:22px;border-bottom:1px solid #ddd}
+.find-method button{height:44px;border:1px solid #080808;background:#fff;font:500 15px UnifiedSeoul,Arial,sans-serif;color:#080808;cursor:pointer;transition:background .2s,color .2s,border-color .2s}
+.find-method button+button{border-left:0}
 .find-method button[aria-checked="true"]{background:#080808;color:#fff}
+.find-method button:hover{background:#1647ff;border-color:#1647ff;color:#fff}
+.member-find button,.member-note button{transition:color .2s,background .2s}
+.member-find button:hover{background:#1647ff;color:#fff;text-decoration:none}
 .member-find{margin-top:14px}.member-find-title{margin:0 0 20px;font-size:22px;font-weight:800}
 .field .msg{display:none;margin-top:6px;font-size:12px;color:#e5402f}.field.error .msg{display:block}
 .field .ok{margin:6px 0 0;font-size:12px;color:#1647ff}.field.error .ok{display:none}
@@ -59,7 +69,7 @@ form[data-form="join"] .field{margin-bottom:16px}
 .addr-note{margin:0;padding:10px 18px;background:#f4f4f4;font-size:13px;line-height:1.55;color:#555}.addr-note b{color:#080808}
 @media(max-width:750px){nav{gap:2px}nav a{padding:10px 6px}}
 @media(max-width:520px){nav{gap:0}nav a{font-size:11.5px;padding:9px 5px;letter-spacing:-.01em}}
-@media(max-width:750px){.member-layer{padding:14px}.member-dialog{grid-template-columns:1fr}.member-visual{display:none}.member-body{padding:52px 22px 28px}.member-visual h2{font-size:28px}}
+@media(max-width:750px){.member-layer{padding:14px}.member-dialog{grid-template-columns:1fr;height:auto;max-height:calc(100vh - 28px)}.member-visual{display:none}.member-body{padding:52px 22px 28px}.member-visual h2{font-size:28px}}
 `;
 shadow.append(style);
 
@@ -89,7 +99,7 @@ layer.innerHTML=`<div class="member-dialog" role="dialog" aria-modal="true" aria
 <h3 class="member-find-title">아이디 찾기</h3>
 ${methodSwitch}
 <div class="field"><label for="m-fid-email">가입한 이메일 <b>*</b></label><input id="m-fid-email" name="email" type="email" autocomplete="email" placeholder="example@email.com"><p class="msg">이메일 형식으로 입력해 주세요.</p></div>
-<div class="field by-q"><label for="m-fid-q">가입할 때 고른 질문 <b>*</b></label><select id="m-fid-q" name="question">${qOptions}</select><input name="answer" type="text" autocomplete="off" placeholder="질문의 답" aria-label="질문의 답"><p class="msg">답을 입력해 주세요.</p></div>
+<div class="field q-field by-q"><label for="m-fid-q">가입할 때 고른 질문 <b>*</b></label><select id="m-fid-q" name="question">${qOptions}</select><input name="answer" type="text" autocomplete="off" placeholder="질문의 답" aria-label="질문의 답"><p class="msg">답을 입력해 주세요.</p></div>
 <p class="member-form-msg" aria-live="polite"></p>
 <p class="member-note by-mail">가입한 이메일로 확인 링크를 보내 드립니다. 메일의 링크를 누르면 아이디가 보입니다.</p>
 <button class="member-submit" type="submit"><span class="by-mail">확인 메일 받기</span><span class="by-q">아이디 찾기</span></button>
@@ -100,7 +110,7 @@ ${methodSwitch}
 ${methodSwitch}
 <div class="field"><label for="m-fpw-id">아이디 <b>*</b></label><input id="m-fpw-id" name="userid" type="text" autocomplete="username" autocapitalize="off" spellcheck="false" placeholder="아이디"><p class="msg">아이디를 입력해 주세요.</p></div>
 <div class="field by-mail"><label for="m-fpw-email">가입한 이메일 <b>*</b></label><input id="m-fpw-email" name="email" type="email" autocomplete="email" placeholder="example@email.com"><p class="msg">이메일 형식으로 입력해 주세요.</p></div>
-<div class="field by-q"><label for="m-fpw-q">가입할 때 고른 질문 <b>*</b></label><select id="m-fpw-q" name="question">${qOptions}</select><input name="answer" type="text" autocomplete="off" placeholder="질문의 답" aria-label="질문의 답"><p class="msg">답을 입력해 주세요.</p></div>
+<div class="field q-field by-q"><label for="m-fpw-q">가입할 때 고른 질문 <b>*</b></label><select id="m-fpw-q" name="question">${qOptions}</select><input name="answer" type="text" autocomplete="off" placeholder="질문의 답" aria-label="질문의 답"><p class="msg">답을 입력해 주세요.</p></div>
 <p class="member-form-msg" aria-live="polite"></p>
 <button class="member-submit" type="submit">재설정 메일 받기</button>
 <p class="member-note">확인되면 가입한 이메일로 비밀번호 재설정 링크를 보내 드립니다. <button type="button" data-go="login">로그인으로 돌아가기</button></p>
@@ -112,7 +122,7 @@ ${methodSwitch}
 <div class="field"><label for="m-join-name">이름 <b>*</b></label><input id="m-join-name" name="name" type="text" autocomplete="name" placeholder="홍길동"><p class="msg">이름을 입력해 주세요.</p></div>
 <div class="field"><label for="m-join-phone">휴대폰 번호 <b>*</b></label><input id="m-join-phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="13" placeholder="010-0000-0000"><p class="msg">휴대폰 번호를 정확히 입력해 주세요.</p></div>
 <div class="field"><label for="m-join-email">이메일 <b>*</b></label><input id="m-join-email" name="email" type="email" autocomplete="email" placeholder="example@email.com"><p class="msg">이메일 형식으로 입력해 주세요.</p></div>
-<div class="field"><label for="m-join-q">아이디 · 비밀번호 찾기 질문 <b>*</b></label><select id="m-join-q" name="question">${qOptions}</select><input name="answer" type="text" autocomplete="off" placeholder="질문의 답" aria-label="질문의 답"><p class="msg">질문을 고르고 답을 입력해 주세요.</p></div>
+<div class="field q-field"><label for="m-join-q">아이디 · 비밀번호 찾기 질문 <b>*</b></label><select id="m-join-q" name="question">${qOptions}</select><input name="answer" type="text" autocomplete="off" placeholder="질문의 답" aria-label="질문의 답"><p class="msg">질문을 고르고 답을 입력해 주세요.</p></div>
 <div class="field" data-address><label for="m-join-zip">주소 (선택)</label><div class="with-btn"><input id="m-join-zip" name="zip" readonly placeholder="우편번호"><button type="button" class="check-btn" data-addr>주소 검색</button></div><input class="addr-line" name="addr1" readonly placeholder="주소 검색을 눌러 주세요" aria-label="기본 주소"><input class="addr-line" name="addr2" autocomplete="address-line2" placeholder="상세 주소 (동 · 호수)" aria-label="상세 주소"><p class="msg">주소 검색으로 주소를 입력해 주세요.</p></div>
 <label class="agree"><input name="agree" type="checkbox"> 개인정보 수집 및 이용에 동의합니다 (필수)</label>
 <p class="member-form-msg" aria-live="polite"></p>

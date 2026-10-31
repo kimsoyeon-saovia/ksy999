@@ -51,3 +51,9 @@
 .pt-plan{transition:transform .2s,background .2s,border-color .2s,color .2s}
 .pt-plan em{margin-top:6px;font-style:normal;font-size:13px;font-weight:700}
 @media(hover:hover) and (pointer:fine){.pt-plan:hover{transform:scale(1.02)}}
+.pt-go{margin-left:auto;padding:8px 14px;background:#e0ff4f;color:#080808;font-size:14px;font-weight:700;text-decoration:none;transition:transform .2s}
+.pt-go:hover{transform:scale(1.03)}
+.pt-title{margin-top:22px}.pt-title h3{margin:0;font-size:17px;font-weight:800}
+.pt-history li b{display:inline-block;min-width:38px;margin-right:8px;padding:1px 6px;font-size:12px;text-align:center;color:#fff}
+.pt-history li b.plus{background:#1647ff}.pt-history li b.minus{background:#e5402f}
+.my-edit-guide{margin:0 0 4px;font-size:13px;line-height:1.5;color:#555}

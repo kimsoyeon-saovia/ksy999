@@ -27,12 +27,12 @@ function loadPoints(m){
 const point=n=>String(Math.round(Number(n)||0)).replace(/\B(?=(\d{3})+(?!\d))/g,',')+'포인트';
 function pointsHTML(){
  if(!pts)return `<section class="block my-points"><div class="block-title"><h2>포인트</h2></div><div class="my-none">포인트를 불러오는 중입니다…</div></section>`;
- const plans=C?.plans||[];
- return `<section class="block my-points"><div class="block-title"><h2>포인트</h2><small>1포인트 = ${C?.pointValue||10}원 · 결제할 때 사용</small></div>
-<div class="pt-balance"><span>보유 포인트</span><strong>${point(pts.balance)}</strong><em>${money(pts.balance*(C?.pointValue||10))} 상당</em></div>
-<div class="pt-plans">${plans.map(p=>`<button type="button" class="pt-plan" data-charge="${esc(p.id)}"><b>${esc(p.name)}</b><span>${money(p.price)}</span><small>${point(p.points)} + ${point(p.bonus||0)} 추가</small><em>장바구니에 담기 →</em></button>`).join('')}</div>
-<p class="note">충전 상품은 장바구니에 담아 결제하면 포인트가 계정에 들어갑니다. (결제는 시연용)</p>
-${pts.history.length?`<ul class="my-items pt-history">${pts.history.slice(0,10).map(h=>`<li><span>${date(h.date)} · ${esc(h.memo||'')}</span><span class="${h.amount<0?'minus':'plus'}">${h.amount>0?'+':''}${point(h.amount)}</span></li>`).join('')}</ul>`:'<div class="my-none">포인트 내역이 없습니다.</div>'}
+ // 충전은 견적 페이지의 충전 상품을 장바구니에 담아 결제한다. 여기서는 잔액과 충전 · 사용 내역만 보여 준다
+ const used=pts.history.filter(h=>h.amount<0).reduce((n,h)=>n-h.amount,0);
+ return `<section class="block my-points"><div class="block-title"><h2>포인트</h2><small>1포인트 = ${C?.pointValue||1}원 · 결제할 때 사용</small></div>
+<div class="pt-balance"><span>현재 남은 포인트</span><strong>${point(pts.balance)}</strong>${used?`<em>지금까지 ${point(used)} 사용</em>`:''}<a class="pt-go" href="../contact/personal.html">포인트 충전하러 가기 →</a></div>
+<div class="block-title pt-title"><h3>포인트 충전 · 사용 내역</h3><small>최근 내역부터</small></div>
+${pts.history.length?`<ul class="my-items pt-history">${pts.history.map(h=>`<li><span><b class="${h.amount<0?'minus':'plus'}">${h.amount<0?'사용':'충전'}</b>${date(h.date)} · ${esc(h.memo||'')}</span><span class="${h.amount<0?'minus':'plus'}">${h.amount>0?'+':''}${point(h.amount)}</span></li>`).join('')}</ul>`:'<div class="my-none">아직 포인트 내역이 없습니다.</div>'}
 </section>`;
 }
 
@@ -40,13 +40,20 @@ ${pts.history.length?`<ul class="my-items pt-history">${pts.history.slice(0,10).
 let editing=false;
 const isPhone=v=>/^01[016789]-\d{3,4}-\d{4}$/.test(v),isEmail=v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 const fmtPhone=v=>{const d=String(v||'').replace(/\D/g,'').slice(0,11);return d.length<4?d:d.length<8?`${d.slice(0,3)}-${d.slice(3)}`:`${d.slice(0,3)}-${d.slice(3,d.length-4)}-${d.slice(-4)}`};
+// 1단계: 현재 비밀번호 확인 → 2단계: 맞으면 수정 칸이 열린다
+let editPw='';
 function editHTML(m){
  const a=m.address||{},f=(n,label,v,attr='')=>`<label class="my-edit-f"><span>${label}</span><input name="${n}" value="${esc(v||'')}" ${attr}></label>`;
- return `<form class="my-edit" novalidate>
+ if(editing==='check')return `<form class="my-edit" data-step="check" novalidate>
+<p class="my-edit-guide">회원 정보를 보호하기 위해 비밀번호를 한 번 더 입력해 주세요.</p>
+${f('password','현재 비밀번호 *','','type="password" autocomplete="current-password" placeholder="비밀번호"')}
+<p class="my-edit-msg" role="status"></p>
+<button type="submit" class="cta">확인</button><button type="button" class="sub-cta" data-edit-cancel>취소</button></form>`;
+ return `<form class="my-edit" data-step="form" novalidate>
 ${f('name','이름',m.name,'autocomplete="name"')}${f('phone','휴대폰',m.phone,'type="tel" inputmode="numeric" maxlength="13"')}${f('email','이메일',m.email,'type="email"')}
 ${f('zip','우편번호',a.zip)}${f('addr1','주소',a.addr1)}${f('addr2','상세 주소',a.addr2)}
 ${f('newPassword','새 비밀번호 (변경할 때만)','','type="password" autocomplete="new-password" placeholder="영문·숫자 포함 8자 이상"')}
-${f('password','현재 비밀번호 *','','type="password" autocomplete="current-password" placeholder="본인 확인을 위해 입력"')}
+${f('newPassword2','새 비밀번호 확인','','type="password" autocomplete="new-password" placeholder="새 비밀번호 다시 입력"')}
 <p class="my-edit-msg" role="status"></p>
 <button type="submit" class="cta">저장</button><button type="button" class="sub-cta" data-edit-cancel>취소</button></form>`;
 }
@@ -92,20 +99,8 @@ ${editing?editHTML(m):'<button type="button" class="sub-cta" data-edit>회원정
 shop.addEventListener('click',e=>{
  const b=e.target.closest('button');if(!b)return;
  if(b.hasAttribute('data-login')){openLogin();return}
- if(b.hasAttribute('data-edit')){editing=true;render();shop.querySelector('.my-edit input')?.focus();return}
- if(b.hasAttribute('data-edit-cancel')){editing=false;render();return}
- if(b.dataset.charge){
-  const p=C?.plans.find(x=>x.id===b.dataset.charge);if(!p)return;
-  // 충전 상품은 장바구니에 담아 결제한다 (이미 담겨 있으면 장바구니로만 이동)
-  const c=read(CART,{})||{},list=Array.isArray(c.items)?c.items:[];
-  if(!list.some(i=>i.plan===p.id)){
-   const next=Math.max(Number(c.nextId)||0,...list.map(i=>Number(i.id)||0))+1;
-   write(CART,{items:[...list,{id:String(next),plan:p.id,quantity:1,addedAt:new Date().toISOString()}],nextId:next});
-   window.dispatchEvent(new Event('sangsang-cart-change'));
-  }
-  location.href='../cart/index.html';
-  return;
- }
+ if(b.hasAttribute('data-edit')){editing='check';editPw='';render();shop.querySelector('.my-edit input')?.focus();return}
+ if(b.hasAttribute('data-edit-cancel')){editing=false;editPw='';render();return}
  // 로그인 · 탈퇴는 member-db.js(Firebase)가 처리하고, 끝나면 sangsang-member-change 로 다시 그린다
  if(b.hasAttribute('data-logout')){window.SangsangDB?.logout().catch(()=>{});return}
  if(b.hasAttribute('data-leave')){
@@ -135,13 +130,21 @@ shop.addEventListener('click',e=>{
 shop.addEventListener('input',e=>{if(e.target.closest('.my-edit')&&e.target.name==='phone')e.target.value=fmtPhone(e.target.value)});
 shop.addEventListener('submit',e=>{
  const f=e.target.closest('.my-edit');if(!f)return;e.preventDefault();
- const el=f.elements,v=n=>el[n].value.trim(),msg=f.querySelector('.my-edit-msg');
- const pw=el.password.value,npw=el.newPassword.value;
- const err=!v('name')?'이름을 입력해 주세요.':!isPhone(v('phone'))?'휴대폰 번호를 정확히 입력해 주세요.':!isEmail(v('email'))?'이메일 형식으로 입력해 주세요.':npw&&!(npw.length>=8&&/[a-zA-Z]/.test(npw)&&/\d/.test(npw))?'새 비밀번호는 영문과 숫자를 섞어 8자 이상 입력해 주세요.':!pw?'현재 비밀번호를 입력해 주세요.':'';
+ const el=f.elements,v=n=>el[n].value.trim(),msg=f.querySelector('.my-edit-msg'),btn=f.querySelector('[type=submit]');
+ // 1단계: 비밀번호가 맞으면 수정 칸을 연다
+ if(f.dataset.step==='check'){
+  const pw=el.password.value;if(!pw){msg.textContent='비밀번호를 입력해 주세요.';return}
+  btn.disabled=true;msg.textContent='확인하는 중입니다…';
+  window.SangsangDB.verifyPassword(pw).then(()=>{editPw=pw;editing='form';f.remove();render();shop.querySelector('.my-edit input')?.focus()})
+   .catch(er=>{btn.disabled=false;msg.textContent=window.SangsangDB.errorText(er)});
+  return;
+ }
+ const npw=el.newPassword.value,npw2=el.newPassword2.value;
+ const err=!v('name')?'이름을 입력해 주세요.':!isPhone(v('phone'))?'휴대폰 번호를 정확히 입력해 주세요.':!isEmail(v('email'))?'이메일 형식으로 입력해 주세요.':npw&&!(npw.length>=8&&/[a-zA-Z]/.test(npw)&&/\d/.test(npw))?'새 비밀번호는 영문과 숫자를 섞어 8자 이상 입력해 주세요.':npw!==npw2?'새 비밀번호와 새 비밀번호 확인이 다릅니다.':'';
  if(err){msg.textContent=err;return}
- const btn=f.querySelector('[type=submit]');btn.disabled=true;msg.textContent='저장하는 중입니다…';
- window.SangsangDB.updateMyInfo(pw,{name:v('name'),phone:v('phone'),email:v('email'),address:{zip:v('zip'),addr1:v('addr1'),addr2:v('addr2')}},npw||null)
-  .then(()=>{editing=false;render();alert(npw?'회원 정보와 비밀번호를 바꿨습니다.':'회원 정보를 저장했습니다.')})
+ btn.disabled=true;msg.textContent='저장하는 중입니다…';
+ window.SangsangDB.updateMyInfo(editPw,{name:v('name'),phone:v('phone'),email:v('email'),address:{zip:v('zip'),addr1:v('addr1'),addr2:v('addr2')}},npw||null)
+  .then(()=>{editing=false;editPw='';render();alert(npw?'회원 정보와 비밀번호를 바꿨습니다.':'회원 정보를 저장했습니다.')})
   .catch(er=>{btn.disabled=false;msg.textContent=window.SangsangDB.errorText(er)});
 });
 // 헤더의 MEMBER 창에서 로그인 · 로그아웃하면 바로 다시 그린다
