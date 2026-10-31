@@ -341,7 +341,8 @@ forms.join.addEventListener('submit',async e=>{
  done.dataset.mode='to-login';done.querySelector('button').textContent='로그인하러 가기';
 });
 // 찾기 방법 고르기 (이메일 / 질문)
-layer.querySelectorAll('[data-method]').forEach(b=>b.addEventListener('click',()=>{
+// 폼에도 data-method가 붙어 있으므로 버튼만 고른다
+layer.querySelectorAll('button[data-method]').forEach(b=>b.addEventListener('click',()=>{
  const f=b.closest('form');f.dataset.method=b.dataset.method;
  f.querySelectorAll('[data-method]').forEach(x=>x.setAttribute('aria-checked',String(x===b)));
  f.querySelectorAll('.error').forEach(x=>x.classList.remove('error'));f.querySelector('.member-form-msg').textContent='';

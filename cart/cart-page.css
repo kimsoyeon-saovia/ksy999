@@ -219,3 +219,20 @@ a{color:inherit}
 .cart-plan.chosen{background:#e0ff4f;border-color:#e0ff4f}
 .cart-plan-note{margin:10px 0 0;font-size:14px;color:#333}
 @media(max-width:520px){.cart-plan-list{grid-template-columns:1fr}}
+/* 포인트 충전: 제목은 한 줄, 설명은 제목 아래 / 휴대폰에서도 카드 두 개를 한 줄에 작게 */
+.cart-plans .block-title{display:block}
+.cart-plans .block-title h2{white-space:nowrap}
+.cart-plans .block-title small{display:block;margin-top:4px}
+@media(max-width:520px){
+ .cart-plan-list{grid-template-columns:1fr 1fr;gap:8px}
+ .cart-plan{gap:2px;padding:12px 10px}
+ .cart-plan b{font-size:13px}.cart-plan strong{font-size:16px}
+ .cart-plan small{font-size:10.5px;line-height:1.4}.cart-plan em{margin-top:4px;font-size:11.5px}
+ .cart-plan-note{font-size:12px}
+}
+.cart-plan small{word-break:keep-all}
+/* 결제 화면 "포인트 차감 결제": 제목 한 줄, 보유 포인트 안내는 아래 줄 */
+#pt-block .block-title{display:block}
+#pt-block .block-title h2{white-space:nowrap}
+#pt-block .block-title small{display:block;margin-top:6px;line-height:1.5}
+@media(max-width:520px){.pt-use input{width:120px}}
