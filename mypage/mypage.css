@@ -74,5 +74,3 @@
 .my-edit-q{margin-top:8px;padding-top:14px;border-top:1px dashed #ccc}
 .my-edit-qtitle{margin:0 0 8px;font-size:14px;font-weight:700}.my-edit-qtitle small{font-weight:400;color:#777}
 .my-stats li a{transition:background .2s}.my-stats li:not(:last-child) a:hover{background:rgba(22,71,255,.08)}
-.my-flash{animation:my-flash 1.4s ease}
-@keyframes my-flash{0%,40%{background:rgba(224,255,79,.45)}100%{background:transparent}}

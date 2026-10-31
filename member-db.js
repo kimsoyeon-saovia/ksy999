@@ -249,6 +249,15 @@ window.SangsangDB={
  // 아이디 찾기: 가입 이메일 + 질문 + 답이 모두 맞으면 아이디를 돌려준다 (없으면 null)
  async findId(email,question,answer){await ready;return (await db.doc(`finder/${await finderKey('id',email,question,answer)}`).get()).data()?.id||null},
  // 이 아이디(또는 메일)로 찾기 질문을 등록했는지 (질문으로 못 찾았을 때 안내 문구를 고르기 위해)
+ // 예전에 등록한 답(열쇠로만 저장)과 같은지 확인하고, 같으면 회원 정보에 답을 저장해 다음부터 칸에 보이게 한다
+ async keepOldAnswer(question,answer){
+  await ready;const u=auth.currentUser,id=idOf(u);if(!u||!id)return false;
+  const d=(await db.doc(`finder/${await finderKey('pw',id,question,answer)}`).get()).data();
+  if(d?.uid!==u.uid)return false;
+  await db.doc(`members/${id}`).update({answer:String(answer).trim()});
+  const s=await db.doc(`members/${id}`).get();cache({id,...s.data()});
+  return true;
+ },
  async hasQuestion(who){await ready;return (await db.doc(`finder/${await finderKey('qmark',who,'','')}`).get()).exists},
  async idExists(id){await ready;return (await db.doc(`usernames/${String(id).toLowerCase()}`).get()).exists},
  // 비밀번호 찾기: 아이디 + 질문 + 답이 맞으면 가입 이메일로 재설정 메일을 보내고, 가린 이메일을 돌려준다 (없으면 null)
