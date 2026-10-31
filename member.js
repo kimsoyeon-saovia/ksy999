@@ -30,11 +30,10 @@ form[hidden],.member-done[hidden]{display:none}
 .field input{width:100%;padding:10px 0;border:0;border-bottom:1px solid #bbb;font:400 16px UnifiedSeoul,Arial,sans-serif;color:#080808;background:none;border-radius:0}
 .field input:focus{outline:0;border-bottom:2px solid #080808;padding-bottom:9px}
 .field.error input{border-bottom-color:#e5402f}
-/* 찾기 질문: 다른 칸처럼 밑줄 모양으로, 질문과 답 사이를 넉넉하게 */
-.field select{display:block;width:100%;margin:0 0 14px;padding:10px 28px 10px 0;border:0;border-bottom:1px solid #bbb;border-radius:0;font:500 15px UnifiedSeoul,Arial,sans-serif;color:#080808;background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23080808' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 4px center;appearance:none;-webkit-appearance:none;cursor:pointer}
-.field select:focus{outline:0;border-bottom:2px solid #080808;padding-bottom:9px}
-.field.q-field{margin:28px 0 26px;padding:18px 18px 6px;background:#f6f6f6}
-.field.q-field label{margin-bottom:2px}
+/* 찾기 질문: 처음 모양(테두리 상자) 그대로, 위아래 간격만 다른 칸과 맞춘다 */
+.field select{display:block;width:100%;margin:2px 0 12px;padding:10px 8px;border:1px solid #bbb;font:400 15px UnifiedSeoul,Arial,sans-serif;color:#080808;background:#fff;border-radius:0}
+.field.q-field{margin-top:24px;margin-bottom:24px}
+.field.q-field label{margin-bottom:8px}
 form[data-method="mail"] .by-q,form[data-method="q"] .by-mail{display:none}
 .find-method{display:grid;grid-template-columns:1fr 1fr;margin:0 0 22px;padding-bottom:22px;border-bottom:1px solid #ddd}
 .find-method button{height:44px;border:1px solid #080808;background:#fff;font:500 15px UnifiedSeoul,Arial,sans-serif;color:#080808;cursor:pointer;transition:background .2s,color .2s,border-color .2s}

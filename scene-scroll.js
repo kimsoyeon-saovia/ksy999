@@ -5,7 +5,8 @@ if(!selectors[page])return;
 let lockedUntil=0,lastWheel=0;
 const header=()=>document.querySelector('sangsang-header')?.shadowRoot?.querySelector('header')?.getBoundingClientRect().height||(innerWidth<=520?104:81);
 addEventListener('wheel',e=>{
- if(e.ctrlKey||Math.abs(e.deltaY)<3||Math.abs(e.deltaX)>Math.abs(e.deltaY)||document.querySelector('dialog[open]')||e.target.closest?.('input,textarea,select,video'))return;
+ // 회원 · 장바구니 창이 열려 있으면(문서 스크롤 잠금) 뒤 페이지를 움직이지 않는다
+ if(e.ctrlKey||Math.abs(e.deltaY)<3||Math.abs(e.deltaX)>Math.abs(e.deltaY)||document.querySelector('dialog[open]')||document.documentElement.style.overflow==='hidden'||e.target.closest?.('input,textarea,select,video'))return;
  const now=performance.now(),gap=now-lastWheel;lastWheel=now;
  if(now<lockedUntil){e.preventDefault();return;}
  const points=[...document.querySelectorAll(selectors[page])].map(el=>({el,y:Math.max(0,Math.round(el.getBoundingClientRect().top+scrollY-header())),h:el.getBoundingClientRect().height}));

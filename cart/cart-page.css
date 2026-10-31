@@ -197,3 +197,6 @@ a{color:inherit}
 .methods:disabled{opacity:.4}
 .member-only{display:inline-block;margin-left:6px;padding:1px 7px;background:#1647ff;color:#fff;font-size:12px;font-weight:700;vertical-align:1px}
 .summary .member-note{color:#1647ff;font-weight:700}
+/* 결제 전 상담 신청 버튼: 화살표 없이 굵은 글자 가운데, 버튼도 가운데 */
+.cta.consult-submit{justify-content:center;max-width:440px;height:64px;margin:18px auto 0;font-size:19px;font-weight:800}
+.cta.consult-submit::after{content:none}
