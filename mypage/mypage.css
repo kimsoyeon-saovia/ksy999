@@ -58,10 +58,10 @@
 .pt-history li b.plus{background:#1647ff}.pt-history li b.minus{background:#e5402f}
 .my-edit-guide{margin:0 0 4px;font-size:13px;line-height:1.5;color:#555}
 /* 포인트 내역 접기 · 펼치기 */
-.pt-detail{margin-top:22px;border-top:1px solid #e5e5e5}
+.pt-detail{margin-top:14px}
 .pt-detail summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0;cursor:pointer;list-style:none}
 .pt-detail summary::-webkit-details-marker{display:none}
-.pt-detail summary b{font-size:17px;font-weight:800}
+.pt-detail summary b{padding-left:12px;font-size:16px;font-weight:500}
 .pt-detail summary b::before{content:"▸";display:inline-block;margin-right:8px;transition:transform .2s}
 .pt-detail[open] summary b::before{transform:rotate(90deg)}
 .pt-detail summary small{font-size:13px;color:#777}
@@ -69,3 +69,7 @@
 .my-edit-f select{height:40px;padding:0 8px;border:1px solid #c9c9c9;font-size:14px;color:#080808;background:#fff}
 .my-info .sub-cta+.sub-cta{margin-top:10px}
 .my-find-need{border-color:#1647ff;color:#1647ff;font-weight:700}
+.pt-detail summary{justify-content:flex-start;padding:10px 0}
+.pt-detail .pt-history{border-top:0;border-bottom:0;padding-left:12px}
+.my-edit-q{margin-top:8px;padding-top:14px;border-top:1px dashed #ccc}
+.my-edit-qtitle{margin:0 0 8px;font-size:14px;font-weight:700}.my-edit-qtitle small{font-weight:400;color:#777}

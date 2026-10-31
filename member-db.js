@@ -69,15 +69,20 @@ async function finishFindLink(){
 // ---------------- 예전 가입자(찾기 기능 전에 가입) ----------------
 // 로그인할 때마다: 표시 이름에 아이디를 넣어 두고(나중에 메일 계정으로 바뀌어도 아이디를 알 수 있게),
 // 회원 정보의 메일로 아이디 찾기 열쇠(mail)를 만든다 → 메일 인증 링크로 아이디를 찾을 수 있다
+// 질문 등록 표시: '질문으로 찾기'에서 질문을 등록하지 않은 회원에게 그렇다고 알려 주기 위한 표시 (답은 들어 있지 않음)
+const markKeys=(id,email)=>Promise.all([finderKey('qmark',id,'',''),finderKey('qmark',email,'','')]);
+async function addKeys(user,profile,keys){
+ const had=new Set(profile.finderKeys||[]),add=keys.filter(k=>!had.has(k));if(!add.length)return;
+ for(const k of add){const ref=db.doc(`finder/${k}`);if(!(await ref.get()).exists)await ref.set({uid:user.uid,id:profile.id})}
+ await db.doc(`members/${profile.id}`).update({finderKeys:firebase.firestore.FieldValue.arrayUnion(...add)});
+}
 async function prepareLegacy(user,profile){
+ // 질문을 등록한 회원은 질문 등록 표시가 있는지 확인한다 (표시가 생기기 전에 등록한 회원용)
+ if(profile.question)await addKeys(user,profile,await markKeys(profile.id,user.email?.endsWith('@'+ID_DOMAIN)?profile.email:user.email)).catch(()=>{});
  if(!user.email?.endsWith('@'+ID_DOMAIN))return;
  if(!user.displayName)await user.updateProfile({displayName:profile.id}).catch(()=>{});
  if(!profile.email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profile.email))return;
- const key=await finderKey('mail',profile.email,'','');
- if((profile.finderKeys||[]).includes(key))return;
- const ref=db.doc(`finder/${key}`);
- if(!(await ref.get()).exists)await ref.set({uid:user.uid,id:profile.id});
- await db.doc(`members/${profile.id}`).update({finderKeys:firebase.firestore.FieldValue.arrayUnion(key)});
+ await addKeys(user,profile,[await finderKey('mail',profile.email,'','')]);
 }
 const ready=(async()=>{
  if(!window.firebase?.firestore){for(const f of ['firebase-app-compat.js','firebase-auth-compat.js','firebase-firestore-compat.js'])await load(SDK+f)}
@@ -213,12 +218,13 @@ window.SangsangDB={
    const cred=await auth.createUserWithEmailAndPassword(email,password);
    const user=cred.user,uid=user.uid;
    await user.updateProfile({displayName:id});
-   const idKey=await finderKey('id',email,question,answer),pwKey=await finderKey('pw',id,question,answer);
+   // 찾기 질문은 선택: 답을 넣은 경우에만 질문으로 찾는 열쇠와 질문 등록 표시를 만든다 (안 넣어도 메일 인증으로 찾을 수 있음)
+   const withQ=!!(question&&String(answer||'').trim());
+   const keys=withQ?[await finderKey('id',email,question,answer),await finderKey('pw',id,question,answer),...await markKeys(id,email)]:[];
    const b=db.batch();
    b.set(db.doc(`usernames/${id}`),{uid,email});
-   b.set(db.doc(`members/${id}`),{uid,name,phone,email,address,question,finderKeys:[idKey,pwKey],joined:new Date().toISOString()});
-   b.set(db.doc(`finder/${idKey}`),{uid,id});
-   b.set(db.doc(`finder/${pwKey}`),{uid,email});
+   b.set(db.doc(`members/${id}`),{uid,name,phone,email,address,...(withQ?{question}:{}),finderKeys:keys,joined:new Date().toISOString()});
+   if(withQ){b.set(db.doc(`finder/${keys[0]}`),{uid,id});b.set(db.doc(`finder/${keys[1]}`),{uid,email});b.set(db.doc(`finder/${keys[2]}`),{uid,id});b.set(db.doc(`finder/${keys[3]}`),{uid,id})}
    try{await b.commit()}catch(e){await user.delete().catch(()=>{});throw e}
    await user.sendEmailVerification().catch(()=>{});
   }finally{
@@ -242,6 +248,9 @@ window.SangsangDB={
  async logout(){await ready;await auth.signOut()},
  // 아이디 찾기: 가입 이메일 + 질문 + 답이 모두 맞으면 아이디를 돌려준다 (없으면 null)
  async findId(email,question,answer){await ready;return (await db.doc(`finder/${await finderKey('id',email,question,answer)}`).get()).data()?.id||null},
+ // 이 아이디(또는 메일)로 찾기 질문을 등록했는지 (질문으로 못 찾았을 때 안내 문구를 고르기 위해)
+ async hasQuestion(who){await ready;return (await db.doc(`finder/${await finderKey('qmark',who,'','')}`).get()).exists},
+ async idExists(id){await ready;return (await db.doc(`usernames/${String(id).toLowerCase()}`).get()).exists},
  // 비밀번호 찾기: 아이디 + 질문 + 답이 맞으면 가입 이메일로 재설정 메일을 보내고, 가린 이메일을 돌려준다 (없으면 null)
  async resetPassword(id,question,answer){
   await ready;const email=(await db.doc(`finder/${await finderKey('pw',id,question,answer)}`).get()).data()?.email;
@@ -262,6 +271,8 @@ window.SangsangDB={
  // 찾기 질문을 아직 등록하지 않은 회원(예전 가입자 등)인지
  async needsFindSetup(){
   await ready;const u=auth.currentUser,id=idOf(u);if(!u||!id)return false;
+  // 안내창은 찾기 기능 전에 가입한 회원에게만 (새 가입자는 가입할 때 질문을 고를 수 있었으므로 띄우지 않음)
+  if(!u.email?.endsWith('@'+ID_DOMAIN))return false;
   return !(await db.doc(`members/${id}`).get()).data()?.question;
  },
  isLegacy(){return !!auth?.currentUser?.email?.endsWith('@'+ID_DOMAIN)},
@@ -274,7 +285,8 @@ window.SangsangDB={
   const ref=db.doc(`members/${id}`),old=(await ref.get()).data()||{};
   const idKey=await finderKey('id',mail,question,answer),pwKey=await finderKey('pw',id,question,answer);
   const mailKey=legacy?await finderKey('mail',mail,'',''):null;
-  const keep=new Set([idKey,pwKey,mailKey].filter(Boolean));
+  const marks=await markKeys(id,mail);
+  const keep=new Set([idKey,pwKey,mailKey,...marks].filter(Boolean));
   const b=db.batch();
   for(const k of old.finderKeys||[])if(!keep.has(k))b.delete(db.doc(`finder/${k}`));
   // 열쇠 문서는 새로 만들기만 할 수 있으므로(규칙), 이미 있는 열쇠는 그대로 둔다
@@ -282,6 +294,7 @@ window.SangsangDB={
   if(!had.has(idKey))b.set(db.doc(`finder/${idKey}`),{uid:u.uid,id});
   if(!had.has(pwKey))b.set(db.doc(`finder/${pwKey}`),{uid:u.uid,email:mail});
   if(mailKey&&!had.has(mailKey))b.set(db.doc(`finder/${mailKey}`),{uid:u.uid,id});
+  for(const k of new Set(marks))if(!had.has(k))b.set(db.doc(`finder/${k}`),{uid:u.uid,id});
   b.update(ref,{question,finderKeys:[...keep],email:mail});
   if(legacy)b.update(db.doc(`usernames/${id}`),{email:mail});
   await b.commit();

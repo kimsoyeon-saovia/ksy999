@@ -31,7 +31,7 @@ function pointsHTML(){
  const used=pts.history.filter(h=>h.amount<0).reduce((n,h)=>n-h.amount,0);
  return `<section class="block my-points"><div class="block-title"><h2>포인트</h2><small>1포인트 = ${C?.pointValue||1}원 · 결제할 때 사용</small></div>
 <div class="pt-balance"><span>현재 남은 포인트</span><strong>${point(pts.balance)}</strong>${used?`<em>지금까지 ${point(used)} 사용</em>`:''}<a class="pt-go" href="../contact/personal.html#points">포인트 충전하러 가기 →</a></div>
-<details class="pt-detail"${ptOpen?' open':''}><summary><b>포인트 충전 · 사용 내역</b><small>${pts.history.length}건 · 눌러서 ${ptOpen?'접기':'펼치기'}</small></summary>
+<details class="pt-detail"${ptOpen?' open':''}><summary><b>포인트 사용 내역 보기</b><small>${pts.history.length}건</small></summary>
 ${pts.history.length?`<ul class="my-items pt-history">${pts.history.map(h=>`<li><span><b class="${h.amount<0?'minus':'plus'}">${h.amount<0?'사용':'충전'}</b>${date(h.date)} · ${esc(h.memo||'')}</span><span class="${h.amount<0?'minus':'plus'}">${h.amount>0?'+':''}${point(h.amount)}</span></li>`).join('')}</ul>`:'<div class="my-none">아직 포인트 내역이 없습니다.</div>'}
 </details>
 </section>`;
@@ -55,6 +55,10 @@ ${f('name','이름',m.name,'autocomplete="name"')}${f('phone','휴대폰',m.phon
 ${f('zip','우편번호',a.zip)}${f('addr1','주소',a.addr1)}${f('addr2','상세 주소',a.addr2)}
 ${f('newPassword','새 비밀번호 (변경할 때만)','','type="password" autocomplete="new-password" placeholder="영문·숫자 포함 8자 이상"')}
 ${f('newPassword2','새 비밀번호 확인','','type="password" autocomplete="new-password" placeholder="새 비밀번호 다시 입력"')}
+<div class="my-edit-q"><p class="my-edit-qtitle">아이디 · 비밀번호 찾기 질문 <small>(선택 · ${m.question?'등록됨':'아직 등록하지 않음'})</small></p>
+<label class="my-edit-f"><span>찾기 질문</span><select name="question">${(window.SangsangDB?.questions||[]).map(q=>`<option${m.question===q?' selected':''}>${esc(q)}</option>`).join('')}</select></label>
+${f('answer','질문의 답','',`autocomplete="off" placeholder="${m.question?'바꿀 때만 입력 (비워 두면 그대로)':'등록할 때만 입력 (비워 두면 등록 안 함)'}"`)}
+${window.SangsangDB?.isLegacy()?'<p class="my-edit-guide">답을 등록하면 위 이메일로 인증 링크를 보내 드립니다. 인증하면 메일로도 비밀번호를 찾을 수 있습니다.</p>':''}</div>
 <p class="my-edit-msg" role="status"></p>
 <button type="submit" class="cta">저장</button><button type="button" class="sub-cta" data-edit-cancel>취소</button></form>`;
 }
@@ -105,7 +109,7 @@ ${consults.length?consults.map(r=>`<article class="my-card">
 <aside class="summary my-info" aria-label="회원 정보"><h2>회원 정보</h2>
 <dl><div><dt>아이디</dt><dd>${esc(m.id)}</dd></div><div><dt>이름</dt><dd>${esc(m.name)}</dd></div><div><dt>휴대폰</dt><dd>${esc(m.phone||'-')}</dd></div><div><dt>이메일</dt><dd>${esc(m.email||'-')}</dd></div>
 <div class="addr"><dt>주소</dt><dd>${a.addr1?`(${esc(a.zip)}) ${esc(a.addr1)}${a.addr2?'<br>'+esc(a.addr2):''}`:'등록된 주소 없음'}</dd></div><div><dt>가입일</dt><dd>${date(m.joined).slice(0,10)}</dd></div></dl>
-${editing?editHTML(m):findForm&&window.SangsangDB?.questions?findHTML(m):`<button type="button" class="sub-cta" data-edit>회원정보 수정</button><button type="button" class="sub-cta${m.question?'':' my-find-need'}" data-find-setup>${m.question?'찾기 질문 변경':'아이디 · 비밀번호 찾기 질문 등록'}</button>`}
+${editing?editHTML(m):'<button type="button" class="sub-cta" data-edit>회원정보 수정</button>'}
 <button type="button" class="sub-cta" data-logout>로그아웃</button>
 <button type="button" class="my-leave" data-leave>회원 탈퇴</button>
 <p class="note">회원 정보 · 장바구니 · 주문 내역은 회원 계정에 저장되어 다른 기기에서 로그인해도 그대로 보입니다. 결제는 시연용입니다.</p>
@@ -174,8 +178,12 @@ shop.addEventListener('submit',e=>{
  const err=!v('name')?'이름을 입력해 주세요.':!isPhone(v('phone'))?'휴대폰 번호를 정확히 입력해 주세요.':!isEmail(v('email'))?'이메일 형식으로 입력해 주세요.':npw&&!(npw.length>=8&&/[a-zA-Z]/.test(npw)&&/\d/.test(npw))?'새 비밀번호는 영문과 숫자를 섞어 8자 이상 입력해 주세요.':npw!==npw2?'새 비밀번호와 새 비밀번호 확인이 다릅니다.':'';
  if(err){msg.textContent=err;return}
  btn.disabled=true;msg.textContent='저장하는 중입니다…';
- window.SangsangDB.updateMyInfo(editPw,{name:v('name'),phone:v('phone'),email:v('email'),address:{zip:v('zip'),addr1:v('addr1'),addr2:v('addr2')}},npw||null)
-  .then(()=>{editing=false;editPw='';render();alert(npw?'회원 정보와 비밀번호를 바꿨습니다.':'회원 정보를 저장했습니다.')})
+ // 찾기 질문은 선택: 답을 넣었을 때만 등록 · 변경한다 (비밀번호를 바꾸기 전에 먼저 처리)
+ const answer=v('answer'),DB=window.SangsangDB;
+ const setQ=answer?DB.setupFind({password:editPw,question:el.question.value,answer,email:v('email')}):Promise.resolve(null);
+ let qResult=null;
+ setQ.then(r=>{qResult=r;return DB.updateMyInfo(editPw,{name:v('name'),phone:v('phone'),email:v('email'),address:{zip:v('zip'),addr1:v('addr1'),addr2:v('addr2')}},npw||null)})
+  .then(()=>{editing=false;editPw='';render();alert([npw?'회원 정보와 비밀번호를 바꿨습니다.':'회원 정보를 저장했습니다.',qResult?'찾기 질문을 등록했습니다.':'',qResult?.legacy&&qResult.mailSent?`${v('email')}(으)로 인증 메일을 보냈습니다. 메일의 링크를 누르면 메일로도 비밀번호를 찾을 수 있습니다.`:''].filter(Boolean).join('\n'))})
   .catch(er=>{btn.disabled=false;msg.textContent=window.SangsangDB.errorText(er)});
 });
 // 헤더의 MEMBER 창에서 로그인 · 로그아웃하면 바로 다시 그린다

@@ -133,7 +133,7 @@ ${methodSwitch}
 <div class="field"><label for="m-join-name">이름 <b>*</b></label><input id="m-join-name" name="name" type="text" autocomplete="name" placeholder="홍길동"><p class="msg">이름을 입력해 주세요.</p></div>
 <div class="field"><label for="m-join-phone">휴대폰 번호 <b>*</b></label><input id="m-join-phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="13" placeholder="010-0000-0000"><p class="msg">휴대폰 번호를 정확히 입력해 주세요.</p></div>
 <div class="field"><label for="m-join-email">이메일 <b>*</b></label><input id="m-join-email" name="email" type="email" autocomplete="email" placeholder="example@email.com"><p class="msg">이메일 형식으로 입력해 주세요.</p></div>
-<div class="field q-field"><label for="m-join-q">아이디 · 비밀번호 찾기 질문 <b>*</b></label><select id="m-join-q" name="question">${qOptions}</select><input name="answer" type="text" autocomplete="off" placeholder="질문의 답" aria-label="질문의 답"><p class="msg">질문을 고르고 답을 입력해 주세요.</p></div>
+<div class="field q-field"><label for="m-join-q">아이디 · 비밀번호 찾기 질문 (선택)</label><select id="m-join-q" name="question">${qOptions}</select><input name="answer" type="text" autocomplete="off" placeholder="질문의 답 (안 넣으면 메일 인증으로만 찾을 수 있습니다)" aria-label="질문의 답"><p class="msg">질문을 고르고 답을 입력해 주세요.</p></div>
 <div class="field" data-address><label for="m-join-zip">주소 (선택)</label><div class="with-btn"><input id="m-join-zip" name="zip" readonly placeholder="우편번호"><button type="button" class="check-btn" data-addr>주소 검색</button></div><input class="addr-line" name="addr1" readonly placeholder="주소 검색을 눌러 주세요" aria-label="기본 주소"><input class="addr-line" name="addr2" autocomplete="address-line2" placeholder="상세 주소 (동 · 호수)" aria-label="상세 주소"><p class="msg">주소 검색으로 주소를 입력해 주세요.</p></div>
 <label class="agree"><input name="agree" type="checkbox"> 개인정보 수집 및 이용에 동의합니다 (필수)</label>
 <p class="member-form-msg" aria-live="polite"></p>
@@ -331,7 +331,7 @@ forms.join.addEventListener('submit',async e=>{
  else if(checkedId!==id)setIdMsg('아이디 중복확인을 해 주세요.',false);
  const address={zip:el.zip.value.trim(),addr1:el.addr1.value.trim(),addr2:el.addr2.value.trim()};
  const question=el.question.value,answer=el.answer.value.trim();
- const bad=[idBad,mark(el.password,!isPw(pw)),mark(el.password2,!pw2||pw!==pw2),mark(el.name,!name),mark(el.phone,!isPhone(phone)),mark(el.email,!isEmail(email)),mark(el.answer,!answer),mark(el.zip,false),agreeBad].some(Boolean);
+ const bad=[idBad,mark(el.password,!isPw(pw)),mark(el.password2,!pw2||pw!==pw2),mark(el.name,!name),mark(el.phone,!isPhone(phone)),mark(el.email,!isEmail(email)),mark(el.zip,false),agreeBad].some(Boolean);
  if(bad){msg.textContent=agreeBad?'필수 약관에 동의해 주세요.':'';return}
  msg.textContent='';
  try{await busy(f.querySelector('.member-submit'),()=>DB.signup({id,password:pw,name,phone,email,address,question,answer}))}
@@ -357,7 +357,7 @@ forms.findid.addEventListener('submit',async e=>{
   done.dataset.mode='';return;
  }
  let id;try{id=await busy(f.querySelector('.member-submit'),()=>DB.findId(email,el.question.value,answer))}catch(err){msg.textContent=DB.errorText(err);return}
- if(!id){msg.textContent='입력하신 정보와 맞는 회원이 없습니다. 이메일 · 질문 · 답을 다시 확인해 주세요.';return}
+ if(!id){msg.textContent=await DB.hasQuestion(email).catch(()=>true)?'질문 또는 답이 맞지 않습니다. 다시 확인해 주세요.':'회원님은 질문이 등록되어 있지 않습니다. 이메일로 인증을 이용해 주세요.';return}
  f.reset();showDone('아이디를 찾았습니다',`회원님의 아이디는 「${id}」입니다.`);
  done.dataset.mode='to-login';done.querySelector('button').textContent='로그인하러 가기';
 });
@@ -367,7 +367,7 @@ forms.findpw.addEventListener('submit',async e=>{
  const id=el.userid.value.trim().toLowerCase(),answer=el.answer.value.trim(),email=el.email.value.trim(),byQ=f.dataset.method==='q';
  if([mark(el.userid,!id),byQ?mark(el.answer,!answer):mark(el.email,!isEmail(email))].some(Boolean)){msg.textContent='';return}
  let sent;try{sent=await busy(f.querySelector('.member-submit'),()=>byQ?DB.resetPassword(id,el.question.value,answer):DB.resetByEmail(id,email))}catch(err){msg.textContent=DB.errorText(err);return}
- if(!sent){msg.textContent='입력하신 정보와 맞는 회원이 없습니다. (2026년 10월 31일 이전 가입 회원은 관리자에게 문의해 주세요)';return}
+ if(!sent){msg.textContent=!byQ?'아이디와 가입한 이메일이 맞지 않습니다. 다시 확인해 주세요.':!await DB.idExists(id).catch(()=>true)?'가입된 아이디가 없습니다. 아이디를 다시 확인해 주세요.':await DB.hasQuestion(id).catch(()=>true)?'질문 또는 답이 맞지 않습니다. 다시 확인해 주세요.':'회원님은 질문이 등록되어 있지 않습니다. 이메일로 인증을 이용해 주세요.';return}
  f.reset();showDone('재설정 메일을 보냈습니다',`${sent}(으)로 비밀번호 재설정 링크를 보냈습니다. 메일의 링크에서 새 비밀번호를 정한 뒤 로그인해 주세요. (스팸함도 확인해 주세요)`);
  done.dataset.mode='to-login';done.querySelector('button').textContent='로그인하러 가기';
 });
