@@ -5,17 +5,17 @@ if(!selectors[page])return;
 let lockedUntil=0,lastWheel=0;
 const header=()=>document.querySelector('sangsang-header')?.shadowRoot?.querySelector('header')?.getBoundingClientRect().height||(innerWidth<=520?104:81);
 
-// 장면 이동: 브라우저의 부드러운 스크롤 대신 직접 움직인다 (천천히 부드럽게, 0.78초).
+// 장면 이동: 브라우저의 부드러운 스크롤 대신 직접 움직인다 (0.6초: 바로 출발해서 끝에서 부드럽게 멈춘다).
 // 이동하는 동안 장면 맞춤(scroll-snap)을 꺼서 아이폰에서 원래 장면으로 튕겨 돌아가지 않고,
 // 매 순간 목표 위치를 다시 재서 주소창이 접히고 펴져도 정확한 자리에 멈춘다.
 let gliding=false;
 function glide(target){
  const html=document.documentElement,from=scrollY,t0=performance.now();
- const dur=matchMedia('(prefers-reduced-motion: reduce)').matches?0:780;
+ const dur=matchMedia('(prefers-reduced-motion: reduce)').matches?0:600;
  gliding=true;html.style.scrollSnapType='none';
  const step=now=>{
-  // 천천히 출발해 가운데서 빨라지고 끝에서 부드럽게 멈춘다 (ease-in-out)
-  const p=dur?Math.min(1,(now-t0)/dur):1,ease=p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2,t=target();
+  // 손가락을 따라 바로 움직이기 시작하고 끝에서 부드럽게 멈춘다 (ease-out)
+  const p=dur?Math.min(1,(now-t0)/dur):1,ease=1-Math.pow(1-p,3),t=target();
   scrollTo(0,from+(t-from)*ease);
   if(p<1){requestAnimationFrame(step);return;}
   scrollTo(0,target());
@@ -71,19 +71,23 @@ if(scenes){
  // 장면에서는 브라우저 스크롤을 처음 움직임부터 막는다. 조금이라도 늦으면 안드로이드가 주소창을 접었다 폈다 하며
  // 스스로 스크롤을 시작해 버려(손가락 놓기가 취소됨) 여러 번 끌어야 넘어가고 배너 글자가 들썩였다.
  // 본문에서는 startY가 비어 있어 바로 돌아간다.
- let lastTouchY=0;
+ // 손가락을 놓을 때까지 기다리지 않고, 16px만 끌면 그 순간 바로 다음 장면으로 출발한다 (뻑뻑하지 않게)
+ let lastTouchY=0,fired=false;
+ const release=dy=>{
+  if(fired||Math.abs(dy)<12)return;                  // a tap, or already moving
+  fired=true;
+  const to=dy>0?from+1:from-1;
+  if(to>=0&&to<scenes.length)go(to);
+ };
+ addEventListener('touchstart',()=>{fired=false;},{passive:true,capture:true});
  addEventListener('touchmove',e=>{
   if(startY===null)return;
   lastTouchY=e.touches[0].clientY;
   const dy=startY-lastTouchY;                        // > 0: finger moves up, page would scroll down
-  if(edge&&dy>0){startY=null;return;}                // scrolling into the content: native scroll
+  if(edge&&dy>0&&!fired){startY=null;return;}        // scrolling into the content: native scroll
   if(e.cancelable)e.preventDefault();
+  if(Math.abs(dy)>=16)release(dy);
  },{passive:false});
- const release=dy=>{
-  if(Math.abs(dy)<12)return;                         // a tap (손가락을 조금만 끌어도 넘어가게: 12px 이상이면 넘긴다)
-  const to=dy>0?from+1:from-1;
-  if(to>=0&&to<scenes.length)go(to);
- };
  addEventListener('touchend',e=>{
   touching=false;
   if(startY===null){queueSettle();return;}
