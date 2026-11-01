@@ -359,7 +359,8 @@ body[data-site-page="main"] .logo-musinsa img.official-brand{width:200px}
 @media(max-width:750px){
  body[data-site-page="main"] .services-panel .service-reveal img{filter:none!important;transition:opacity .9s ease,transform .9s cubic-bezier(.22,1,.36,1)!important}
  body[data-site-page="main"] .statement-panel.motion-ready.is-visible .statement-word{animation-name:statement-burst-m!important}
- @keyframes statement-burst-m{from{opacity:0}to{opacity:1}}
+ @keyframes statement-burst-m{0%{opacity:0;transform:translateY(80px) rotate(-7deg) scale(.75)}65%{opacity:1;transform:translateY(-8px) rotate(1deg) scale(1.04)}100%{opacity:1;transform:none}}
+ @keyframes statement-fade-m{from{opacity:0}to{opacity:1}}
 }
 /* PORTFOLIO 영상 보기: 검은 틀 없이 영상만 화면 가운데에 띄우고, 닫기(X)는 영상 오른쪽 위의 작은 정사각형 */
 #video-dialog{display:none;padding:0!important;margin:auto!important;border:0!important;border-radius:0!important;background:transparent!important;overflow:visible!important;max-height:none!important}
@@ -373,7 +374,7 @@ body[data-site-page="main"] .logo-musinsa img.official-brand{width:200px}
    이 화면으로 넘어갈 때는 여백만큼 더 내려가서 제목이 맨 위에 온다 (음수 scroll-margin) */
 @media(max-width:750px){
  body[data-site-page="main"] main>.services-ab{border-top:34svh solid #fff!important;scroll-margin-top:-34svh}
- body[data-site-page="main"] .statement-panel.motion-ready.is-visible .statement-follow{animation-name:statement-burst-m!important}
+ body[data-site-page="main"] .statement-panel.motion-ready.is-visible .statement-follow{animation-name:statement-fade-m!important}
 }
 /* 포트폴리오 상세 창 닫기: 박스 · 테두리 없이 X만 */
 #project-dialog .project-close,#project-dialog .project-close:hover,#project-dialog .project-close:focus,#project-dialog .project-close:focus-visible{background:transparent!important;border:0!important;outline:none!important;box-shadow:none!important}

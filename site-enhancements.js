@@ -108,7 +108,8 @@ if(page==='main'){
  const syncSnap=()=>{
   if(!services)return;
   const head=document.querySelector('sangsang-header')?.shadowRoot?.querySelector('header')?.getBoundingClientRect().height||104;
-  const start=services.getBoundingClientRect().top+scrollY-head;
+  // 위쪽 흰 여백(border-top)은 건너뛰고 "생각? 상상?" 제목 위치부터 자유 스크롤: 거기서 위로 올리면 다시 앞 장면으로 넘어간다
+  const start=services.getBoundingClientRect().top+scrollY-head+(parseFloat(getComputedStyle(services).borderTopWidth)||0);
   document.documentElement.classList.toggle('main-snap-off',phone.matches&&scrollY>=start-4);
  };
  let snapQueued=false;const queueSnap=()=>{if(snapQueued)return;snapQueued=true;requestAnimationFrame(()=>{snapQueued=false;syncSnap();});};

@@ -34,20 +34,14 @@ if(firstJump){
   if(scrollY<y-8)mode='banner';else if(scrollY<=y+8)mode='edge';else return;
   startY=e.touches[0].clientY;
  },{passive:true});
- // 막는(passive:false) 손가락 이동은 첫 배너 위에서만 받는다. 페이지 전체에 걸면 본문을 스크롤할 때마다
- // 브라우저가 이 코드를 기다려서 스크롤이 버벅인다. 본문 맨 위에서는 브라우저 스크롤에 그대로 맡긴다.
- // (컨텍트는 첫 화면을 다시 그리므로, 새 배너가 생기면 손가락을 댈 때 다시 연결한다)
- const bound=new WeakSet();
- const holdBanner=e=>{
-  if(startY===null||mode!=='banner')return;
-  if(Math.abs(startY-e.touches[0].clientY)>6&&e.cancelable)e.preventDefault();
- };
- const bindBanner=()=>{const el=document.querySelector(firstJump[0]);if(el&&!bound.has(el)){bound.add(el);el.addEventListener('touchmove',holdBanner,{passive:false});}};
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindBanner,{once:true});else bindBanner();
- addEventListener('load',bindBanner,{once:true});addEventListener('touchstart',bindBanner,{passive:true,capture:true});
+ // 첫 배너에서는 브라우저 스크롤을 막고 살짝 끌어도 다음 장면으로 넘긴다 (배너에만 걸면 아이폰에서 막히지 않아 세게 끌어야 넘어갔다).
+ // 본문에서는 startY가 비어 있어 바로 돌아가므로 스크롤을 거의 기다리게 하지 않는다.
  addEventListener('touchmove',e=>{
-  if(startY!==null&&mode==='edge'&&startY-e.touches[0].clientY>6)startY=null;   // scrolling into the content: native scroll
- },{passive:true});
+  if(startY===null)return;
+  const dy=startY-e.touches[0].clientY;            // > 0: finger moves up, page would scroll down
+  if(mode==='edge'&&dy>6){startY=null;return;}       // scrolling into the content: native scroll
+  if(Math.abs(dy)>6&&e.cancelable)e.preventDefault();
+ },{passive:false});
  addEventListener('touchend',e=>{
   if(startY===null)return;
   const dy=startY-e.changedTouches[0].clientY,y=contentY();startY=null;
