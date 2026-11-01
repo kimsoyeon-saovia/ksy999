@@ -363,10 +363,9 @@ body[data-site-page="main"] .logo-musinsa img.official-brand{width:200px}
 }
 /* PORTFOLIO 영상 보기: 검은 틀 없이 영상만 화면 가운데에 띄우고, 닫기(X)는 영상 오른쪽 위의 작은 정사각형 */
 #video-dialog{display:none;padding:0!important;margin:auto!important;border:0!important;border-radius:0!important;background:transparent!important;overflow:visible!important;max-height:none!important}
-#video-dialog[open]{display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+#video-dialog[open]{display:flex;flex-direction:column;align-items:flex-end;gap:0}
 #video-dialog video{max-height:calc(100dvh - 120px)!important;border-radius:0}
-#video-dialog .video-close{position:static!important;display:flex;align-items:center;justify-content:center;width:40px!important;height:40px!important;padding:0;background:#000!important;color:#fff!important;font-size:26px!important;line-height:1;border:0;border-radius:0}
-#video-dialog .video-close:hover,#video-dialog .video-close:focus-visible{background:#333!important;color:#fff!important}
-@media(max-width:600px){#video-dialog .video-close{margin-right:12px}}
+#video-dialog .video-close{position:static!important;display:flex;align-items:center;justify-content:center;width:40px!important;height:40px!important;padding:0;background:#000!important;color:rgba(255,255,255,.6)!important;font-size:26px!important;line-height:1;border:0;border-radius:8px 8px 0 0}
+#video-dialog .video-close:hover,#video-dialog .video-close:focus-visible{background:#000!important;color:#fff!important}
 /* 휴대폰 상세 창: 맨 위 영상 썸네일을 줄이지 않고 창 너비에 꽉 차게 (내용이 길면 창 안에서 스크롤) */
 @media(max-width:600px){#project-dialog.has-info .clean-player{max-width:none!important;width:100%!important}}
