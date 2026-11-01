@@ -337,7 +337,7 @@ forms.join.addEventListener('submit',async e=>{
  try{await busy(f.querySelector('.member-submit'),()=>DB.signup({id,password:pw,name,phone,email,address,question,answer}))}
  catch(err){const t=DB.errorText(err);if(/^이미 사용 중인 아이디/.test(t)){resetIdCheck();setIdMsg(t,false)}else msg.textContent=t;return}
  f.reset();resetIdCheck();
- showDone(`${name}님, 가입을 환영합니다`,`${email}(으)로 인증 메일을 보냈습니다. 메일의 링크를 눌러 이메일 인증을 마쳐 주세요. (메일이 안 보이면 스팸함도 확인해 주세요)`);
+ showDone(`${name}님, 가입을 환영합니다`,'이제 로그인한 상태로 견적 · 장바구니 · 마이페이지를 이용하실 수 있습니다.');
  done.dataset.mode='to-login';done.querySelector('button').textContent='로그인하러 가기';
 });
 // 찾기 방법 고르기 (이메일 / 질문)

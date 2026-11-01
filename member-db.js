@@ -213,7 +213,7 @@ window.SangsangDB={
  // 아이디 중복 확인: usernames 컬렉션에는 아이디 → uid 만 저장되어 누구나 존재 여부만 확인할 수 있다
  async isIdTaken(id){await ready;return (await db.doc(`usernames/${id}`).get()).exists},
  questions:QUESTIONS,
- // 가입: 진짜 이메일로 계정을 만들고 인증 메일을 보낸다. 찾기 질문의 답은 열쇠(finder)로만 남긴다
+ // 가입: 진짜 이메일로 계정을 만든다. 찾기 질문의 답은 열쇠(finder)로만 남긴다
  async signup({id,password,name,phone,email,address,question,answer}){
   await ready;signingUp=true;
   try{
@@ -229,7 +229,7 @@ window.SangsangDB={
    b.set(db.doc(`members/${id}`),{uid,name,phone,email,address,...(withQ?{question}:{}),finderKeys:keys,joined:new Date().toISOString()});
    if(withQ){b.set(db.doc(`finder/${keys[0]}`),{uid,id});b.set(db.doc(`finder/${keys[1]}`),{uid,email});b.set(db.doc(`finder/${keys[2]}`),{uid,id});b.set(db.doc(`finder/${keys[3]}`),{uid,id})}
    try{await b.commit()}catch(e){await user.delete().catch(()=>{});throw e}
-   await user.sendEmailVerification().catch(()=>{});
+   // 가입 인증 메일은 보내지 않는다 (인증 없이도 메일로 아이디 · 비밀번호를 찾을 수 있음)
   }finally{
    signingUp=false;
    // 기존 흐름처럼 가입 후에는 로그인 화면으로 보낸다
