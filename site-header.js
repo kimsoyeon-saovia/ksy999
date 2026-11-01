@@ -24,9 +24,12 @@ const setHeaderH=()=>{const h=document.querySelector('sangsang-header')?.getBoun
 //  --site-bars-h:   주소창 · 버튼 바가 펴졌을 때 가려지는 높이 → 글자를 '보이는 부분'의 가운데에 두는 데 쓴다
 let screenW=0;
 const measure=unit=>{const probe=document.createElement('div');probe.style.cssText='position:fixed;top:0;left:0;width:0;height:100'+unit+';visibility:hidden;pointer-events:none';document.documentElement.append(probe);const h=probe.getBoundingClientRect().height;probe.remove();return h||innerHeight};
-const setScreenH=()=>{if(innerWidth===screenW)return;screenW=innerWidth;const big=Math.round(Math.max(measure('lvh'),innerHeight)),small=Math.round(Math.min(measure('svh'),innerHeight));document.documentElement.style.setProperty('--site-screen-h',big+'px');document.documentElement.style.setProperty('--site-bars-h',Math.max(0,big-small)+'px')};
+// 일부 안드로이드(삼성 인터넷 등)는 lvh를 작게 알려 준다: 브라우저 창 전체 높이(outerHeight)도 함께 보고,
+// 그래도 주소창이 접힌 뒤 더 큰 화면이 나오면 그때 한 번 늘린다 (배너 아래로 다음 내용이 비치지 않게)
+const android=/Android/i.test(navigator.userAgent);
+const setScreenH=()=>{if(innerWidth===screenW){const cur=parseFloat(document.documentElement.style.getPropertyValue('--site-screen-h'))||0;if(innerHeight>cur+1){document.documentElement.style.setProperty('--site-screen-h',innerHeight+'px');const small=cur-(parseFloat(document.documentElement.style.getPropertyValue('--site-bars-h'))||0);document.documentElement.style.setProperty('--site-bars-h',Math.max(0,innerHeight-small)+'px')}return;}screenW=innerWidth;const big=Math.round(Math.max(measure('lvh'),innerHeight,android&&outerHeight<innerHeight*1.4?outerHeight:0)),small=Math.round(Math.min(measure('svh'),innerHeight));document.documentElement.style.setProperty('--site-screen-h',big+'px');document.documentElement.style.setProperty('--site-bars-h',Math.max(0,big-small)+'px')};
 setScreenH();
-addEventListener('resize',()=>{setHeaderH();setScreenH()});
+addEventListener('resize',()=>{setHeaderH();setScreenH()});visualViewport?.addEventListener('resize',setScreenH);
 const finish=()=>{setHeaderH();requestAnimationFrame(setHeaderH);
 const enhancements=document.createElement('script');enhancements.src=new URL('site-enhancements.js'+new URL(script.src).search,root);document.body.append(enhancements);
 // Keep displayed copy clean without changing JavaScript, media URLs or data URLs.
