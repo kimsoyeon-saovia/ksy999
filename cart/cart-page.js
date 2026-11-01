@@ -240,7 +240,10 @@ function checkoutSubmit(e){
  if(list.some(i=>i.plan)&&!me){alert('포인트 충전 상품은 로그인한 뒤 결제할 수 있습니다.');openLogin();return}
  const gained=list.reduce((n,i)=>n+C.itemPoints(i)*qty(i),0);
  const no=`SS-${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}-${String(Math.floor(Math.random()*9000)+1000)}`;
- const used=me?Math.min(ptUse,maxUse(t)):0,paid=t.total-used*PV;
+ let used=me?Math.min(ptUse,maxUse(t)):0;
+ // 포인트 충전 상품과 영상을 함께 결제하면, 충전한 포인트로 영상까지 결제할지 한 번 묻는다
+ if(me&&gained&&videoTotal())used=confirm('충전하신 포인트로 영상 상품을 결제하시겠습니까?')?maxUse(t):0;
+ const paid=t.total-used*PV;
  const method=paid===0?'포인트 결제':used?`포인트 + ${el.method.value}`:el.method.value;
  const order={no,date:now.toISOString(),method,buyer:{name,phone,email},memberId:me?.id||null,request:el.request.value.trim(),
   items:list.map(i=>({quality:quality(i)?.name,duration:duration(i)?.name,quantity:qty(i),price:unit(i)*qty(i)})),...t,pointsUsed:used,pointsGained:gained,paid};

@@ -93,7 +93,7 @@ ${orders.length?orders.map(o=>`<article class="my-card">
  <div class="my-card-top"><div><strong class="my-no">${esc(o.no)}</strong><span class="my-date">${date(o.date)}</span></div><span class="my-state">결제 완료</span></div>
  <ul class="my-items">${(o.items||[]).map(i=>`<li><span>${esc(i.quality)} · ${esc(i.duration)} × ${i.quantity}</span><span>${money(i.price)}</span></li>`).join('')}</ul>
  <div class="my-card-foot"><span>${esc(o.method)}${o.pointsUsed?` · 포인트 ${point(o.pointsUsed)} 사용`:''}</span><span>총 결제 금액 <strong>${money(o.paid??o.total)}</strong></span></div>
- <button type="button" class="ghost my-again" data-again="${esc(o.no)}">같은 영상 다시 담기</button>
+ <button type="button" class="ghost my-again" data-again="${esc(o.no)}">같은 상품 다시 담기</button>
 </article>`).join(''):`<div class="my-none">아직 주문 내역이 없습니다. <a class="text-link" href="../contact/index.html">견적 내러 가기</a></div>`}
 </section>
 <section class="block" id="my-consults"><div class="block-title"><h2>상담 신청 내역</h2><small>견적서 · 장바구니에서 신청한 상담</small></div>
@@ -148,16 +148,15 @@ shop.addEventListener('click',e=>{
  }
 });
 // ---------------- 아이디 · 비밀번호 찾기 질문 수정 창 ----------------
-// 회원정보 수정(비밀번호 확인 후)의 작은 버튼으로 연다. 지금 등록된 질문 · 답을 채워 보여 주고, 바꿔서 저장할 때만 한 번 더 묻는다
+// 회원정보 수정(비밀번호 확인 후)의 작은 버튼으로 연다. 등록된 질문을 보여 주고, 답은 글자로 저장하지 않으므로(관리자도 볼 수 없음) 새로 입력받는다
 const qDialog=document.createElement('dialog');qDialog.className='my-q-dialog';document.body.append(qDialog);
 function openQuestion(){
  const m=me();if(!m||!editPw)return;
  const DB=window.SangsangDB,legacy=DB?.isLegacy();
  qDialog.innerHTML=`<form method="dialog" class="my-q-form" novalidate><h2>아이디 · 비밀번호 찾기 질문</h2>
-<p class="my-q-state">${m.question?'지금 등록된 질문과 답입니다. 바꿀 부분만 고쳐 주세요.':'아직 등록된 질문이 없습니다. 등록하면 질문으로 아이디 · 비밀번호를 찾을 수 있습니다.'}</p>
+<p class="my-q-state">${m.question?'지금 등록된 질문입니다. 답은 안전하게 암호화되어 보이지 않으니, 저장하려면 답을 다시 입력해 주세요.':'아직 등록된 질문이 없습니다. 등록하면 질문으로 아이디 · 비밀번호를 찾을 수 있습니다.'}</p>
 <label class="my-edit-f"><span>찾기 질문</span><select name="question">${(DB?.questions||[]).map(q=>`<option${m.question===q?' selected':''}>${esc(q)}</option>`).join('')}</select></label>
-<label class="my-edit-f"><span>질문의 답</span><input name="answer" autocomplete="off" value="${esc(m.answer||'')}" placeholder="${m.question&&!m.answer?'등록한 답을 한 번만 다시 입력해 주세요':'질문의 답'}"></label>
-${m.question&&!m.answer?'<p class="my-edit-guide">예전에 등록한 답은 글자로 저장되지 않아 여기에 보이지 않습니다. 같은 답을 한 번 입력해 저장하면 다음부터 보입니다.</p>':''}
+<label class="my-edit-f"><span>질문의 답</span><input name="answer" autocomplete="off" placeholder="질문의 답"></label>
 ${legacy?'<p class="my-edit-guide">등록하면 회원 정보의 이메일로 인증 링크를 보내 드립니다. 인증하면 메일로도 비밀번호를 찾을 수 있습니다.</p>':''}
 <p class="my-edit-msg" role="status"></p>
 <div class="my-q-btns"><button type="button" class="sub-cta" data-q-close>닫기</button><button type="submit" class="cta">저장</button></div></form>`;
@@ -166,10 +165,7 @@ ${legacy?'<p class="my-edit-guide">등록하면 회원 정보의 이메일로 �
   e.preventDefault();const f=e.target,msg=f.querySelector('.my-edit-msg'),btn=f.querySelector('[type=submit]');
   const question=f.elements.question.value,answer=f.elements.answer.value.trim(),mm=me()||{};
   if(!answer){msg.textContent='질문의 답을 입력해 주세요.';return}
-  if(question===mm.question&&answer===(mm.answer||'')){qDialog.close();return}
   btn.disabled=true;
-  // 예전에 등록한 답과 같으면 바뀐 게 아니므로 확인 없이 답만 저장
-  if(question===mm.question&&!mm.answer&&await DB.keepOldAnswer(question,answer).catch(()=>false)){qDialog.close();alert('등록된 답을 확인했습니다. 다음부터 여기에 보입니다.');return}
   if(!confirm(mm.question?'질문의 답을 수정하시겠습니까?':'찾기 질문을 등록하시겠습니까?')){btn.disabled=false;return}
   msg.textContent='저장하는 중입니다…';
   const email=shop.querySelector('.my-edit [name=email]')?.value.trim()||mm.email;

@@ -77,6 +77,8 @@ async function addKeys(user,profile,keys){
  await db.doc(`members/${profile.id}`).update({finderKeys:firebase.firestore.FieldValue.arrayUnion(...add)});
 }
 async function prepareLegacy(user,profile){
+ // 예전에 글자로 저장해 둔 찾기 답이 있으면 지운다 (로그인할 때 한 번)
+ if(profile.answer!==undefined)await db.doc(`members/${profile.id}`).update({answer:firebase.firestore.FieldValue.delete()}).catch(()=>{});
  // 질문을 등록한 회원은 질문 등록 표시가 있는지 확인한다 (표시가 생기기 전에 등록한 회원용)
  if(profile.question)await addKeys(user,profile,await markKeys(profile.id,user.email?.endsWith('@'+ID_DOMAIN)?profile.email:user.email)).catch(()=>{});
  if(!user.email?.endsWith('@'+ID_DOMAIN))return;
@@ -111,7 +113,7 @@ ready.catch(()=>resolveFirst());
 // 다른 스크립트가 읽는 로그인 사본 (현재 로그인한 회원 한 명만)
 function cache(p){
  if(!p){write(SESSION,null);write(MEMBERS,null);return}
- const {id,uid,...rest}=p;
+ const {id,uid,answer,...rest}=p;
  write(SESSION,{id,name:p.name});write(MEMBERS,{[id]:rest});
 }
 const errCode=e=>String(e?.code||'').replace('auth/','');
@@ -223,7 +225,8 @@ window.SangsangDB={
    const keys=withQ?[await finderKey('id',email,question,answer),await finderKey('pw',id,question,answer),...await markKeys(id,email)]:[];
    const b=db.batch();
    b.set(db.doc(`usernames/${id}`),{uid,email});
-   b.set(db.doc(`members/${id}`),{uid,name,phone,email,address,...(withQ?{question,answer:String(answer).trim()}:{}),finderKeys:keys,joined:new Date().toISOString()});
+   // 찾기 질문의 답은 글자로 남기지 않는다 (암호화한 열쇠로만 비교 → 관리자도 답을 볼 수 없다)
+   b.set(db.doc(`members/${id}`),{uid,name,phone,email,address,...(withQ?{question}:{}),finderKeys:keys,joined:new Date().toISOString()});
    if(withQ){b.set(db.doc(`finder/${keys[0]}`),{uid,id});b.set(db.doc(`finder/${keys[1]}`),{uid,email});b.set(db.doc(`finder/${keys[2]}`),{uid,id});b.set(db.doc(`finder/${keys[3]}`),{uid,id})}
    try{await b.commit()}catch(e){await user.delete().catch(()=>{});throw e}
    await user.sendEmailVerification().catch(()=>{});
@@ -249,15 +252,6 @@ window.SangsangDB={
  // 아이디 찾기: 가입 이메일 + 질문 + 답이 모두 맞으면 아이디를 돌려준다 (없으면 null)
  async findId(email,question,answer){await ready;return (await db.doc(`finder/${await finderKey('id',email,question,answer)}`).get()).data()?.id||null},
  // 이 아이디(또는 메일)로 찾기 질문을 등록했는지 (질문으로 못 찾았을 때 안내 문구를 고르기 위해)
- // 예전에 등록한 답(열쇠로만 저장)과 같은지 확인하고, 같으면 회원 정보에 답을 저장해 다음부터 칸에 보이게 한다
- async keepOldAnswer(question,answer){
-  await ready;const u=auth.currentUser,id=idOf(u);if(!u||!id)return false;
-  const d=(await db.doc(`finder/${await finderKey('pw',id,question,answer)}`).get()).data();
-  if(d?.uid!==u.uid)return false;
-  await db.doc(`members/${id}`).update({answer:String(answer).trim()});
-  const s=await db.doc(`members/${id}`).get();cache({id,...s.data()});
-  return true;
- },
  async hasQuestion(who){await ready;return (await db.doc(`finder/${await finderKey('qmark',who,'','')}`).get()).exists},
  async idExists(id){await ready;return (await db.doc(`usernames/${String(id).toLowerCase()}`).get()).exists},
  // 비밀번호 찾기: 아이디 + 질문 + 답이 맞으면 가입 이메일로 재설정 메일을 보내고, 가린 이메일을 돌려준다 (없으면 null)
@@ -304,7 +298,7 @@ window.SangsangDB={
   if(!had.has(pwKey))b.set(db.doc(`finder/${pwKey}`),{uid:u.uid,email:mail});
   if(mailKey&&!had.has(mailKey))b.set(db.doc(`finder/${mailKey}`),{uid:u.uid,id});
   for(const k of new Set(marks))if(!had.has(k))b.set(db.doc(`finder/${k}`),{uid:u.uid,id});
-  b.update(ref,{question,answer:String(answer).trim(),finderKeys:[...keep],email:mail});
+  b.update(ref,{question,answer:firebase.firestore.FieldValue.delete(),finderKeys:[...keep],email:mail});
   if(legacy)b.update(db.doc(`usernames/${id}`),{email:mail});
   await b.commit();
   let mailSent=false;
@@ -316,7 +310,10 @@ window.SangsangDB={
  emailVerified(){const u=auth?.currentUser;return !u||u.email?.endsWith('@'+ID_DOMAIN)?null:u.emailVerified},
  current(){const id=idOf(auth?.currentUser);return id?{id}:null},
  async isAdmin(){await ready;const u=auth.currentUser;if(!u)return false;try{return (await db.doc(`admins/${u.uid}`).get()).exists}catch{return false}},
- async listMembers(){await ready;return (await db.collection('members').get()).docs.map(d=>({id:d.id,...d.data()}))},
+ // 예전에 글자로 저장된 찾기 답이 남아 있으면 관리자가 목록을 열 때 모두 지운다 (관리자 화면에도 답을 넘기지 않음)
+ async listMembers(){await ready;const docs=(await db.collection('members').get()).docs;
+  for(const d of docs)if('answer' in d.data())d.ref.update({answer:firebase.firestore.FieldValue.delete()}).catch(()=>{});
+  return docs.map(d=>{const {answer,...rest}=d.data();return {id:d.id,...rest}})},
  // 비회원 주문도 관리자가 볼 수 있도록 guestOrders에 남긴다 (읽기는 관리자만)
  async saveGuestOrder(order){await ready;if(!order?.no||order.memberId)return;await db.doc(`guestOrders/${order.no}`).set(plain(order))},
  async listGuestOrders(){await ready;return (await db.collection('guestOrders').get()).docs.map(d=>d.data())},
