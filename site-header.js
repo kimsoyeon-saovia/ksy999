@@ -21,13 +21,18 @@ const setHeaderH=()=>{const h=document.querySelector('sangsang-header')?.getBoun
 // 휴대폰 화면 높이는 픽셀로 한 번 정해 두고, 가로 폭이 바뀔 때(회전)만 다시 잰다. 주소창 · 아래 버튼 바가 접히고 펴져도
 // 그대로라서 메인 장면과 배너 사진의 크기가 스크롤 중에 바뀌지 않는다.
 //  --site-screen-h: 주소창 · 버튼 바가 다 접혔을 때의 화면 높이(가장 큼) → 장면이 늘 화면을 꽉 채워 다음 장면이 비치지 않는다
-//  --site-bars-h:   주소창 · 버튼 바가 펴졌을 때 가려지는 높이 → 글자를 '보이는 부분'의 가운데에 두는 데 쓴다
-let screenW=0;
+//  --site-bars-h:   지금 주소창 · 버튼 바에 가려진 높이(펴지면 커지고 접히면 0) → 글자를 늘 '보이는 부분'의 가운데에 둔다
+//                   (내릴 때 주소창이 접혀도, 올릴 때 펴져도 글자가 같은 가운데에 온다)
+let screenW=0,screenH=0;
 const measure=unit=>{const probe=document.createElement('div');probe.style.cssText='position:fixed;top:0;left:0;width:0;height:100'+unit+';visibility:hidden;pointer-events:none';document.documentElement.append(probe);const h=probe.getBoundingClientRect().height;probe.remove();return h||innerHeight};
-// 일부 안드로이드(삼성 인터넷 등)는 lvh를 작게 알려 준다: 브라우저 창 전체 높이(outerHeight)도 함께 보고,
-// 그래도 주소창이 접힌 뒤 더 큰 화면이 나오면 그때 한 번 늘린다 (배너 아래로 다음 내용이 비치지 않게)
-const android=/Android/i.test(navigator.userAgent);
-const setScreenH=()=>{if(innerWidth===screenW){const cur=parseFloat(document.documentElement.style.getPropertyValue('--site-screen-h'))||0;if(innerHeight>cur+1){document.documentElement.style.setProperty('--site-screen-h',innerHeight+'px');const small=cur-(parseFloat(document.documentElement.style.getPropertyValue('--site-bars-h'))||0);document.documentElement.style.setProperty('--site-bars-h',Math.max(0,innerHeight-small)+'px')}return;}screenW=innerWidth;const big=Math.round(Math.max(measure('lvh'),innerHeight,android&&outerHeight<innerHeight*1.4?outerHeight:0)),small=Math.round(Math.min(measure('svh'),innerHeight));document.documentElement.style.setProperty('--site-screen-h',big+'px');document.documentElement.style.setProperty('--site-bars-h',Math.max(0,big-small)+'px')};
+// 일부 안드로이드(삼성 인터넷 등)는 lvh를 작게 알려 준다: 주소창이 접힌 뒤 더 큰 화면이 나오면 그때 한 번 늘린다
+const setScreenH=()=>{
+ const root=document.documentElement;
+ if(innerWidth!==screenW){screenW=innerWidth;screenH=Math.round(Math.max(measure('lvh'),innerHeight));}
+ else if(innerHeight>screenH+1)screenH=innerHeight;
+ root.style.setProperty('--site-screen-h',screenH+'px');
+ root.style.setProperty('--site-bars-h',Math.max(0,screenH-innerHeight)+'px');
+};
 setScreenH();
 addEventListener('resize',()=>{setHeaderH();setScreenH()});visualViewport?.addEventListener('resize',setScreenH);
 const finish=()=>{setHeaderH();requestAnimationFrame(setHeaderH);

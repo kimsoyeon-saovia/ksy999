@@ -378,3 +378,7 @@ body[data-site-page="main"] .logo-musinsa img.official-brand{width:200px}
 }
 /* 포트폴리오 상세 창 닫기: 박스 · 테두리 없이 X만 */
 #project-dialog .project-close,#project-dialog .project-close:hover,#project-dialog .project-close:focus,#project-dialog .project-close:focus-visible{background:transparent!important;border:0!important;outline:none!important;box-shadow:none!important}
+/* 휴대폰 메인: 아이폰에서 튕기고 꼬이던 CSS 장면 맞춤(scroll-snap)은 끄고, 장면 넘김은 scene-scroll.js가 맡는다 */
+@media(max-width:750px){
+ html:has(body[data-site-page="main"]),html.main-snap-off:has(body[data-site-page="main"]){scroll-snap-type:none!important}
+}
