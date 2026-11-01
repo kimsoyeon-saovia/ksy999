@@ -263,8 +263,9 @@ function prepareHero(){
   play();
  },{threshold:[0,.1,.2,.3,.4,.5,.6,.7,.8,.9,1]});
  heroObserver.observe(hero);
- // 글꼴(약 1MB)을 기다리되 최대 0.4초만: 늦으면 먼저 보여 주고 글꼴은 받아지면 바뀐다 (휴대폰에서 배너가 비어 보이는 시간 줄이기)
- Promise.race([Promise.all([document.fonts.load('900 124pt Seoul'),document.fonts.load('500 52pt Seoul')]),new Promise(r=>setTimeout(r,400))]).then(()=>{
+ // 서울알림체가 올 때까지 기다린 뒤 배너 글자를 보여 준다 (0.4초만 기다리면 LTE에서 휴대폰 기본 글꼴로 먼저 보였다).
+ // 글꼴은 페이지 맨 앞에서 미리 받기 시작하고(preload), 아주 느린 경우만 3초 뒤 먼저 보여 준다
+ Promise.race([Promise.all([document.fonts.load('900 124pt Seoul'),document.fonts.load('500 52pt Seoul')]),new Promise(r=>setTimeout(r,3000))]).then(()=>{
   fontsReady=true;play();
  });
 }
