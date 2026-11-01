@@ -80,7 +80,7 @@ if(scenes){
   if(e.cancelable)e.preventDefault();
  },{passive:false});
  const release=dy=>{
-  if(Math.abs(dy)<30)return;                         // a tap
+  if(Math.abs(dy)<12)return;                         // a tap (손가락을 조금만 끌어도 넘어가게: 12px 이상이면 넘긴다)
   const to=dy>0?from+1:from-1;
   if(to>=0&&to<scenes.length)go(to);
  };
