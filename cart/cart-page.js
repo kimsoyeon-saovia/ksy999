@@ -70,6 +70,15 @@ function toggleCartPlan(id){
  renderCart();
 }
 
+// 포인트 충전 상품과 영상을 함께 고르면, 충전 포인트로 영상까지 결제할 때의 금액을 미리 보여 준다
+function ptPreview(picked){
+ const vids=picked.filter(i=>!i.plan).reduce((n,i)=>n+unit(i)*qty(i),0);
+ const gain=picked.reduce((n,i)=>n+C.itemPoints(i)*qty(i),0);
+ if(!vids||!gain)return '';
+ const all=picked.reduce((n,i)=>n+unit(i)*qty(i),0),use=Math.min(gain,Math.floor(vids/C.pointValue))*C.pointValue;
+ return `<dl class="pt-rows"><div><dt>포인트 차감 결제 시</dt><dd>−${money(use)}</dd></div><div class="total"><dt>실제 결제 금액</dt><dd>${money(all-use)}</dd></div></dl><p class="note">충전하는 ${C.comma(gain)}포인트로 영상 금액을 바로 차감할 수 있습니다.</p>`;
+}
+
 // ---------------- 장바구니 ----------------
 let selected=null; // 선택된 항목 id (처음엔 전부 선택)
 function renderCart(){
@@ -86,7 +95,7 @@ function renderCart(){
 <div class="list-tools"><label class="check"><input type="checkbox" data-all ${all?'checked':''}> 전체 선택 (${picked.length}/${list.length})</label><div class="tool-btns"><button type="button" class="ghost" data-remove-picked ${picked.length?'':'disabled'}>선택 삭제</button><button type="button" class="ghost" data-clear>전체 삭제</button></div></div>
 ${(view=>view.map((item,i)=>{const n=qty(item),day=groupTitle(item),newDay=i===0||groupKey(item)!==groupKey(view[i-1]);const gk=groupKey(item),gItems=list.filter(x=>groupKey(x)===gk),gAll=gItems.every(x=>selected.has(x.id));return `${newDay?`<h3 class="cart-day"><label class="check"><input type="checkbox" data-group="${esc(gk)}" ${gAll?'checked':''} aria-label="${item.plan?'담긴 포인트 상품':'이 시간에 담은 상품'} 모두 선택"> ${item.plan?'담긴 포인트 상품':day?esc(day)+'<span class="cart-day-label">담은 상품</span>':'이전에 담은 상품'}</label></h3>`:''}<article class="row"><label class="check"><input type="checkbox" data-pick="${esc(item.id)}" ${selected.has(item.id)?'checked':''} aria-label="개인 맞춤 영상 ${i+1} 선택"></label>${thumb(item)}<div class="info"><h2>${esc(title(item,i-view.filter(x=>x.plan).length))}</h2><p>${item.plan?esc(C.itemLabel(item)):`화질 ${esc(quality(item)?.name)} · 길이 ${esc(duration(item)?.name)}`}</p><p class="unit">개당 ${money(unit(item))}</p></div><div class="stepper" role="group" aria-label="개인 맞춤 영상 ${i+1} 수량"><button type="button" data-step="-1" data-id="${esc(item.id)}" aria-label="수량 줄이기" ${n<=1?'disabled':''}>−</button><output>${n}</output><button type="button" data-step="1" data-id="${esc(item.id)}" aria-label="수량 늘리기" ${n>=999?'disabled':''}>+</button></div><strong class="line-total">${money(unit(item)*n)}</strong><button type="button" class="remove" data-remove="${esc(item.id)}" aria-label="개인 맞춤 영상 ${i+1} 삭제">×</button></article>`}).join(''))([...list.filter(x=>x.plan),...list.filter(x=>!x.plan)])}
 <div class="list-foot"><span>담은 영상은 결제 전까지 장바구니에 보관됩니다.</span><a class="text-link" href="${ESTIMATE_URL}">+ 영상 더 담기</a></div>
-</section><aside class="summary" aria-label="결제 예정 금액"><h2>결제 예정 금액</h2>${summaryRows(t)}<p class="note">선택한 ${picked.length}개 항목 · 최종 금액은 상담 후 확정될 수 있습니다.</p><button type="button" class="cta" data-order ${picked.length?'':'disabled'}>주문하기</button><button type="button" class="sub-cta" data-consult aria-expanded="${consult.open}" aria-controls="consult">${consult.open?'상담 신청 닫기':'결제 전에 상담 먼저 받기'}</button></aside></div>${consult.open?consultHTML(picked):''}`;
+</section><aside class="summary" aria-label="결제 예정 금액"><h2>결제 예정 금액</h2>${summaryRows(t)}${ptPreview(picked)}<p class="note">선택한 ${picked.length}개 항목 · 최종 금액은 상담 후 확정될 수 있습니다.</p><button type="button" class="cta" data-order ${picked.length?'':'disabled'}>주문하기</button><button type="button" class="sub-cta" data-consult aria-expanded="${consult.open}" aria-controls="consult">${consult.open?'상담 신청 닫기':'결제 전에 상담 먼저 받기'}</button></aside></div>${consult.open?consultHTML(picked):''}`;
 }
 
 // ---------------- 결제 전 상담 신청 (장바구니 아래에 펼쳐짐) ----------------
