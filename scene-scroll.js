@@ -5,16 +5,17 @@ if(!selectors[page])return;
 let lockedUntil=0,lastWheel=0;
 const header=()=>document.querySelector('sangsang-header')?.shadowRoot?.querySelector('header')?.getBoundingClientRect().height||(innerWidth<=520?104:81);
 
-// 장면 이동: 브라우저의 부드러운 스크롤 대신 직접 움직인다 (빠르고 부드럽게, 0.45초).
+// 장면 이동: 브라우저의 부드러운 스크롤 대신 직접 움직인다 (천천히 부드럽게, 0.78초).
 // 이동하는 동안 장면 맞춤(scroll-snap)을 꺼서 아이폰에서 원래 장면으로 튕겨 돌아가지 않고,
 // 매 순간 목표 위치를 다시 재서 주소창이 접히고 펴져도 정확한 자리에 멈춘다.
 let gliding=false;
 function glide(target){
  const html=document.documentElement,from=scrollY,t0=performance.now();
- const dur=matchMedia('(prefers-reduced-motion: reduce)').matches?0:450;
+ const dur=matchMedia('(prefers-reduced-motion: reduce)').matches?0:780;
  gliding=true;html.style.scrollSnapType='none';
  const step=now=>{
-  const p=dur?Math.min(1,(now-t0)/dur):1,ease=1-Math.pow(1-p,3),t=target();
+  // 천천히 출발해 가운데서 빨라지고 끝에서 부드럽게 멈춘다 (ease-in-out)
+  const p=dur?Math.min(1,(now-t0)/dur):1,ease=p<.5?4*p*p*p:1-Math.pow(-2*p+2,3)/2,t=target();
   scrollTo(0,from+(t-from)*ease);
   if(p<1){requestAnimationFrame(step);return;}
   scrollTo(0,target());
@@ -35,7 +36,7 @@ addEventListener('wheel',e=>{
  // The first banner always jumps to the next content, even when it is a little taller than the screen.
  if(down){if(!next)return;if(i>0&&current.h>view+8&&scrollY+view<next.y-8)return;target=next.y;}
  else {if(scrollY>current.y+8){if(current.h>view+8)return;target=current.y;}else {if(i===0)return;target=points[i-1].y;}}
- e.preventDefault();lockedUntil=now+700;glide(()=>target);
+ e.preventDefault();lockedUntil=now+900;glide(()=>target);
 },{passive:false});
 
 // Touch (phones): one swipe moves a whole scene. A short drag up goes to the next scene, a short drag
@@ -67,22 +68,29 @@ if(scenes){
   }
   startY=e.touches[0].clientY;
  },{passive:true});
- // 장면에서는 브라우저 스크롤을 막고 살짝 끌어도 넘긴다. 본문에서는 startY가 비어 있어 바로 돌아간다.
+ // 장면에서는 브라우저 스크롤을 처음 움직임부터 막는다. 조금이라도 늦으면 안드로이드가 주소창을 접었다 폈다 하며
+ // 스스로 스크롤을 시작해 버려(손가락 놓기가 취소됨) 여러 번 끌어야 넘어가고 배너 글자가 들썩였다.
+ // 본문에서는 startY가 비어 있어 바로 돌아간다.
+ let lastTouchY=0;
  addEventListener('touchmove',e=>{
   if(startY===null)return;
-  const dy=startY-e.touches[0].clientY;            // > 0: finger moves up, page would scroll down
-  if(edge&&dy>6){startY=null;return;}                // scrolling into the content: native scroll
-  if(Math.abs(dy)>6&&e.cancelable)e.preventDefault();
+  lastTouchY=e.touches[0].clientY;
+  const dy=startY-lastTouchY;                        // > 0: finger moves up, page would scroll down
+  if(edge&&dy>0){startY=null;return;}                // scrolling into the content: native scroll
+  if(e.cancelable)e.preventDefault();
  },{passive:false});
- addEventListener('touchend',e=>{
-  touching=false;
-  if(startY===null){queueSettle();return;}
-  const dy=startY-e.changedTouches[0].clientY;startY=null;
+ const release=dy=>{
   if(Math.abs(dy)<30)return;                         // a tap
   const to=dy>0?from+1:from-1;
   if(to>=0&&to<scenes.length)go(to);
+ };
+ addEventListener('touchend',e=>{
+  touching=false;
+  if(startY===null){queueSettle();return;}
+  const dy=startY-e.changedTouches[0].clientY;startY=null;release(dy);
  },{passive:true});
- addEventListener('touchcancel',()=>{touching=false;startY=null;},{passive:true});
+ // 브라우저가 손가락 놓기를 취소해도 마지막으로 끈 만큼 넘긴다
+ addEventListener('touchcancel',()=>{touching=false;if(startY===null)return;const dy=startY-lastTouchY;startY=null;release(dy);},{passive:true});
 
  // 손가락으로 그냥 스크롤하다 장면들 사이에 멈추면(예: 아래 내용에서 위로 올라오다가), 움직이던 쪽의 장면에 맞춰 준다
  let lastY=scrollY,dir=0,timer=0;

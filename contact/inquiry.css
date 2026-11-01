@@ -388,6 +388,11 @@ body{font-synthesis:none;font-kerning:normal;text-rendering:optimizeLegibility}
 
 /* 포인트 충전 박스: 왼쪽 위 모서리에 '할인 행사중' 리본 (박스 밖은 잘림) */
 .plans .plan{overflow:hidden}
-.plans .plan .plan-ribbon{position:absolute;top:20px;left:-38px;width:150px;padding:5px 0;background:#e5402f;color:#fff;font-size:13px;font-weight:800;line-height:1.2;letter-spacing:.02em;text-align:center;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.18);pointer-events:none;z-index:1}
+.plans .plan .plan-ribbon{position:absolute;top:20px;left:-38px;width:150px;padding:5px 0;overflow:hidden;background:linear-gradient(180deg,#ff7a66 0%,#f04a35 42%,#d0301f 58%,#b82616 100%);color:#fff;font-size:13px;font-weight:800;line-height:1.2;letter-spacing:.02em;text-align:center;text-shadow:0 1px 1px rgba(0,0,0,.25);transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.45);pointer-events:none;z-index:1}
+/* 유광: 위쪽 반사광 + 천천히 지나가는 빛줄기 */
+.plans .plan .plan-ribbon::before{content:"";position:absolute;inset:0 0 50% 0;background:linear-gradient(180deg,rgba(255,255,255,.35),rgba(255,255,255,.05))}
+.plans .plan .plan-ribbon::after{content:"";position:absolute;top:0;bottom:0;left:-40%;width:30%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);transform:skewX(-20deg);animation:ribbon-shine 3.2s ease-in-out infinite}
+@keyframes ribbon-shine{0%,55%{left:-40%}100%{left:130%}}
+@media(prefers-reduced-motion:reduce){.plans .plan .plan-ribbon::after{animation:none;display:none}}
 .plans .plan h4{padding-left:44px}
-@media(max-width:800px){.plans .plan .plan-ribbon{top:13px;left:-34px;width:118px;padding:3px 0;font-size:10px}.plans .plan h4{padding-left:30px}}
+@media(max-width:800px){.plans .plan .plan-ribbon{top:11px;left:-36px;width:112px;padding:2px 0;font-size:9px}.plans .plan h4{padding-left:40px;padding-top:6px}}

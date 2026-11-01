@@ -381,4 +381,5 @@ body[data-site-page="main"] .logo-musinsa img.official-brand{width:200px}
 /* 휴대폰 메인: 아이폰에서 튕기고 꼬이던 CSS 장면 맞춤(scroll-snap)은 끄고, 장면 넘김은 scene-scroll.js가 맡는다 */
 @media(max-width:750px){
  html:has(body[data-site-page="main"]),html.main-snap-off:has(body[data-site-page="main"]){scroll-snap-type:none!important}
-}
+}/* 휴대폰 메인 첫 세 장면: 브라우저가 스스로 위아래로 움직이지 않게(주소창 들썩임 방지), 넘기기는 scene-scroll.js가 맡는다 */
+@media(max-width:750px){body[data-site-page="main"] main>.partner,body[data-site-page="main"] main>.statement-panel{touch-action:pan-x pinch-zoom}}
